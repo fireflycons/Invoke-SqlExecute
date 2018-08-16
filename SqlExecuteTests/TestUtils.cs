@@ -105,7 +105,7 @@
             }
         }
 
-        public static void UnpackAdventureWorksSchema()
+        public static string UnpackAdventureWorksSchema()
         {
             var resourceNamespace = typeof(IAdventureWorksLocator).Namespace;
             var outputFolder = Path.Combine(Path.GetTempPath(), "AdventureWorks");
@@ -117,7 +117,8 @@
 
             foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
             {
-                var filename = Path.Combine(outputFolder, resource.Substring(resource.Length));
+                var f = resource.Substring(resourceNamespace.Length + 1);
+                var filename = Path.Combine(outputFolder, f);
 
                 using (var fs = new FileStream(filename, FileMode.Create))
                 {
@@ -127,6 +128,8 @@
                     }
                 }
             }
+
+            return outputFolder;
         }
     }
 }

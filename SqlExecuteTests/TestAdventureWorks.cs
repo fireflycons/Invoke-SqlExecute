@@ -12,6 +12,9 @@ namespace SqlExecuteTests
     [TestClass]
     public class TestAdventureWorks
     {
+
+        private static string SchemaDirectory;
+
         /// <summary>
         /// Gets or sets the test context which provides
         /// information about and functionality for the current test run.
@@ -20,32 +23,30 @@ namespace SqlExecuteTests
         /// The test context.
         /// </value>
         public TestContext TestContext { get; set; }
-        [TestMethod]
-        public void TestMethod1()
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext context)
         {
-            var path = this.GetThisFilePath();
+            SchemaDirectory = TestUtils.UnpackAdventureWorksSchema();    
+        }
 
-            if (string.IsNullOrEmpty(path))
+        [TestMethod]
+        public void BuildAdventureWorksDatabase()
+        {
+            if (!Directory.Exists(SchemaDirectory))
             {
-                Assert.Inconclusive("Cannot get path to this file. Are you running a release build (where it doesn't work)?");
-            }
-
-            var adventureWorksDir = Path.Combine(Path.GetDirectoryName(path), @"Resources\AdventureWorks");
-
-            if (!Directory.Exists(adventureWorksDir))
-            {
-                Assert.Inconclusive($"Directory not found: {adventureWorksDir}");
+                Assert.Inconclusive($"Directory not found: {SchemaDirectory}");
             }
 
             var variables = new Dictionary<string, string>
                                 {
-                                    { "SqlSamplesSourceDataPath", adventureWorksDir + @"\" },
+                                    { "SqlSamplesSourceDataPath", SchemaDirectory + @"\" },
                                     { "EnableFullTextFeature", "0" }
                                 };
 
             var initArgs = new TestArguments
                                {
-                                   InputFile = Path.Combine(adventureWorksDir, "instawdb.sql"),
+                                   InputFile = Path.Combine(SchemaDirectory, "instawdb.sql"),
                                    ConnectionString =
                                        $"Server={TestUtils.ServerName};Application Name={this.TestContext.TestName}",
                                    AbortOnErrorSet = false,
@@ -69,3 +70,4 @@ namespace SqlExecuteTests
         }
     }
 }
+
