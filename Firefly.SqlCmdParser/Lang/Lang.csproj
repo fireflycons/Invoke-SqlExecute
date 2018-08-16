@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{37F13707-0783-424E-8D35-7518377A3A7A}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Lang</RootNamespace>
+    <AssemblyName>Lang</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="nunit.framework, Version=2.6.2.12296, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\NUnit.2.6.2\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AST\ArrayDeclrAst.cs" />
+    <Compile Include="AST\ArrayIndexAst.cs" />
+    <Compile Include="AST\Ast.cs" />
+    <Compile Include="AST\AstTypes.cs" />
+    <Compile Include="AST\ClassAst.cs" />
+    <Compile Include="AST\ClassReference.cs" />
+    <Compile Include="AST\Conditional.cs" />
+    <Compile Include="AST\Expr.cs" />
+    <Compile Include="AST\ForLoop.cs" />
+    <Compile Include="AST\FuncInvoke.cs" />
+    <Compile Include="AST\LambdaDeclr.cs" />
+    <Compile Include="AST\MethodDeclr.cs" />
+    <Compile Include="AST\NewArrayAst.cs" />
+    <Compile Include="AST\NewAst.cs" />
+    <Compile Include="AST\PrintAst.cs" />
+    <Compile Include="AST\ReturnAst.cs" />
+    <Compile Include="AST\ScopeDeclr.cs" />
+    <Compile Include="AST\TryCatchAst.cs" />
+    <Compile Include="AST\VarDeclrAst.cs" />
+    <Compile Include="AST\WhileLoop.cs" />
+    <Compile Include="Data\SpecialNames.cs" />
+    <Compile Include="Data\ValueMemory.cs" />
+    <Compile Include="Exceptions\ReturnException.cs" />
+    <Compile Include="Exceptions\UndefinedElementException.cs" />
+    <Compile Include="Matches\MatchNumber.cs" />
+    <Compile Include="Parser\ParseableTokenStream.cs" />
+    <Compile Include="Spaces\IScopeable.cs" />
+    <Compile Include="Spaces\MemorySpace.cs" />
+    <Compile Include="Spaces\ScopeContainer.cs" />
+    <Compile Include="Spaces\ScopeStack.cs" />
+    <Compile Include="Symbols\ExpressionTypes.cs" />
+    <Compile Include="Symbols\UserDefinedType.cs" />
+    <Compile Include="Symbols\BuiltInType.cs" />
+    <Compile Include="Symbols\ClassSymbol.cs" />
+    <Compile Include="Symbols\IType.cs" />
+    <Compile Include="Symbols\MethodSymbol.cs" />
+    <Compile Include="Spaces\Scope.cs" />
+    <Compile Include="Symbols\Symbol.cs" />
+    <Compile Include="Utils\CollectionUtil.cs" />
+    <Compile Include="Data\Token.cs" />
+    <Compile Include="Data\TokenType.cs" />
+    <Compile Include="Exceptions\InvalidSyntax.cs" />
+    <Compile Include="Lexers\TokenizableStreamBase.cs" />
+    <Compile Include="Lexers\Tokenizer.cs" />
+    <Compile Include="Matches\IMatcher.cs" />
+    <Compile Include="Matches\MatcherBase.cs" />
+    <Compile Include="Matches\MatchKeyword.cs" />
+    <Compile Include="Matches\MatchString.cs" />
+    <Compile Include="Matches\MatchWhiteSpace.cs" />
+    <Compile Include="Matches\MatchWord.cs" />
+    <Compile Include="Parser\LanguageParser.cs" />
+    <Compile Include="Lexers\Lexer.cs" />
+    <Compile Include="Utils\ExtensionMethods.cs" />
+    <Compile Include="Utils\Maybe.cs" />
+    <Compile Include="Utils\NullTester.cs" />
+    <Compile Include="Utils\ScopeUtil.cs" />
+    <Compile Include="Utils\TokenUtil.cs" />
+    <Compile Include="Visitors\InterpretorVisitor.cs" />
+    <Compile Include="Visitors\PrintAstVisitor.cs" />
+    <Compile Include="Visitors\IAcceptVisitor.cs" />
+    <Compile Include="Visitors\IAstVisitor.cs" />
+    <Compile Include="Visitors\ScopeBuilderVisitor.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

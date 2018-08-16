@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{8296D7EB-D3A8-44C2-B0BD-471564A3A1E6}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Firefly.SqlCmdParser</RootNamespace>
+    <AssemblyName>Firefly.SqlCmdParser</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ICurrentDirectoryResolver.cs" />
+    <Compile Include="InputSourceChangedEventArgs.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleParser\Commands\CommandSyntaxException.cs" />
+    <Compile Include="SimpleParser\Commands\CommandType.cs" />
+    <Compile Include="SimpleParser\Commands\ConnectCommand.cs" />
+    <Compile Include="SimpleParser\Commands\EdCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ErrorCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ExitCommand.cs" />
+    <Compile Include="SimpleParser\Commands\GoCommand.cs" />
+    <Compile Include="SimpleParser\Commands\HelpCommand.cs" />
+    <Compile Include="SimpleParser\Commands\IncludeCommand.cs" />
+    <Compile Include="SimpleParser\Commands\InvalidCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ListCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ListVarCommand.cs" />
+    <Compile Include="SimpleParser\Commands\OnErrorCommand.cs" />
+    <Compile Include="SimpleParser\Commands\FileParameterCommand.cs" />
+    <Compile Include="SimpleParser\Commands\OutCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ParameterlessCommand.cs" />
+    <Compile Include="SimpleParser\Commands\PerftraceCommand.cs" />
+    <Compile Include="SimpleParser\Commands\QuitCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ResetCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ServerListCommand.cs" />
+    <Compile Include="SimpleParser\Commands\SetvarCommand.cs" />
+    <Compile Include="SimpleParser\Commands\ShellCommand.cs" />
+    <Compile Include="SimpleParser\NetRuntimeCurrentDirectoryResolver.cs" />
+    <Compile Include="SqlBatch.cs" />
+    <Compile Include="SimpleParser\Tokenizer.cs" />
+    <Compile Include="ErrorAction.cs" />
+    <Compile Include="IBatchSource.cs" />
+    <Compile Include="ICommandExecuter.cs" />
+    <Compile Include="SimpleParser\Commands\ICommandMatcher.cs" />
+    <Compile Include="IVariableResolver.cs" />
+    <Compile Include="OutputDestination.cs" />
+    <Compile Include="Parser.cs" />
+    <Compile Include="ParserException.cs" />
+    <Compile Include="SimpleParser\Token.cs" />
+    <Compile Include="SimpleParser\TokenizerState.cs" />
+    <Compile Include="SimpleParser\TokenType.cs" />
+    <Compile Include="UnclosedBlockCommentException.cs" />
+    <Compile Include="UnclosedStringLiteralException.cs" />
+    <Compile Include="XmlStatus.cs" />
+    <Compile Include="SimpleParser\Commands\StringExtensions.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
