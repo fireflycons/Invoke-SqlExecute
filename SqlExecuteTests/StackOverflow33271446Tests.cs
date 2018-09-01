@@ -18,8 +18,8 @@ namespace SqlExecuteTests
         [TestInitialize]
         public void TestInitialize()
         {
-            TestUtils.ExecuteNonQuery($"Server={TestUtils.ServerName};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("TestInitialize"));
-            TestUtils.ExecuteNonQuery($"Server={TestUtils.ServerName};Database={TestUtils.DatabaseName};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("SetupStackOverflow33271446"));
+            TestUtils.ExecuteNonQuery($"{TestUtils.ServerConnection};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("TestInitialize"));
+            TestUtils.ExecuteNonQuery($"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("SetupStackOverflow33271446"));
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace SqlExecuteTests
                                    Query = TestUtils.LoadSqlResource(
                                        "RunStackOverflow33271446"),
                                    ConnectionString =
-                                       $"Server={TestUtils.ServerName};Database={TestUtils.DatabaseName};Application Name={this.TestContext.TestName}",
+                                       $"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name={this.TestContext.TestName}",
                                    QueryTimeout = 1,
                                    AbortOnErrorSet = true
                                };
@@ -68,7 +68,7 @@ namespace SqlExecuteTests
 
             // Now assert only one row was inserted into table 's'
             Debug.WriteLine("Asserting that only one row was inserted");
-            Assert.AreEqual(1, TestUtils.ExecuteScalar<int>($"Server={TestUtils.ServerName};Database={TestUtils.DatabaseName};Application Name=RESULT_{this.TestContext.TestName}", "select count(*) from s"), "More than one row inserted/");
+            Assert.AreEqual(1, TestUtils.ExecuteScalar<int>($"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name=RESULT_{this.TestContext.TestName}", "select count(*) from s"), "More than one row inserted/");
         }
     }
 }

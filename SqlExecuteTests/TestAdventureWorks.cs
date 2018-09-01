@@ -1,19 +1,22 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace SqlExecuteTests
+﻿namespace SqlExecuteTests
 {
     using System.Collections.Generic;
     using System.IO;
-    using System.Runtime.CompilerServices;
 
     using Firefly.SqlCmdParser.Client;
 
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    /// <summary>
+    /// Build the Adventure Works database from the schema published on github using this tool.
+    /// </summary>
     [TestClass]
     public class TestAdventureWorks
     {
-
-        private static string SchemaDirectory;
+        /// <summary>
+        /// The schema directory
+        /// </summary>
+        private static string schemaDirectory;
 
         /// <summary>
         /// Gets or sets the test context which provides
@@ -24,35 +27,45 @@ namespace SqlExecuteTests
         /// </value>
         public TestContext TestContext { get; set; }
 
+        /// <summary>
+        /// Initialize the test class
+        /// </summary>
+        /// <param name="context">The context.</param>
         [ClassInitialize]
         public static void ClassInitialize(TestContext context)
         {
-            SchemaDirectory = TestUtils.UnpackAdventureWorksSchema();    
+            schemaDirectory = TestUtils.UnpackAdventureWorksSchema();
         }
 
+        /// <summary>
+        /// Builds the adventure works database from the schema published on github.
+        /// This schema exercises many SQL server features.
+        /// </summary>
         [TestMethod]
         public void BuildAdventureWorksDatabase()
         {
-            if (!Directory.Exists(SchemaDirectory))
+            if (!Directory.Exists(schemaDirectory))
             {
-                Assert.Inconclusive($"Directory not found: {SchemaDirectory}");
+                Assert.Inconclusive($"Directory not found: {schemaDirectory}");
             }
 
+            // TODO: Detect full text capability of target server.
             var variables = new Dictionary<string, string>
                                 {
-                                    { "SqlSamplesSourceDataPath", SchemaDirectory + @"\" },
+                                    { "SqlSamplesSourceDataPath", schemaDirectory + @"\" },
                                     { "EnableFullTextFeature", "0" }
                                 };
 
             var initArgs = new TestArguments
                                {
-                                   InputFile = Path.Combine(SchemaDirectory, "instawdb.sql"),
+                                   InputFile = Path.Combine(schemaDirectory, "instawdb.sql"),
                                    ConnectionString =
-                                       $"Server={TestUtils.ServerName};Application Name={this.TestContext.TestName}",
+                                       $"{TestUtils.ServerConnection};Application Name={this.TestContext.TestName}",
                                    AbortOnErrorSet = false,
                                    InitialVariables = variables,
-                                   OverrideScriptVariablesSet = true // Override :SETVAR SqlSamplesSourceDataPath in th script with our value.
-            };
+                                   OverrideScriptVariablesSet =
+                                       true // Override :SETVAR SqlSamplesSourceDataPath in th script with our value.
+                               };
 
             using (var impl = new SqlExecuteImpl(initArgs))
             {
@@ -63,11 +76,5 @@ namespace SqlExecuteTests
                 Assert.AreEqual(2, impl.ErrorCount);
             }
         }
-
-        private string GetThisFilePath([CallerFilePath] string sourceFilePath = "")
-        {
-            return sourceFilePath;
-        }
     }
 }
-

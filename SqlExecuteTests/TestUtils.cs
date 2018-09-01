@@ -4,9 +4,12 @@
     using System.CodeDom;
     using System.Data;
     using System.Data.SqlClient;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     using SqlExecuteTests.Resources.AdventureWorks;
 
@@ -21,14 +24,55 @@
         public const string DatabaseName = "Test1";
 
         /// <summary>
-        /// The server name
-        /// </summary>
-        public const string ServerName = @"(localdb)\mssqllocaldb";
-
-        /// <summary>
         /// The resource names
         /// </summary>
         private static readonly string[] ResourceNames = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+
+        /// <summary>
+        /// Gets the server connection, which amounts to server name and authentication.
+        /// If AppVeyor is detected, test for all known AppVeyor SQL services and return the first found.
+        /// Otherwise default to (localdb)\mssqllocaldb;Integrated Security=true
+        /// </summary>
+        /// <value>
+        /// The server name and authentication part of a connection string.
+        /// </value>
+        /// <exception cref="InvalidOperationException">Unable to determine AppVeyor SQL server environment</exception>
+        public static string ServerConnection
+        {
+            get
+            {
+                var appveyor = Environment.GetEnvironmentVariable("APPVEYOR");
+
+                if (appveyor == null)
+                {
+                    // ReSharper disable once ConvertToConstant.Local
+                    var serverConnection = @"Server=(localdb)\mssqllocaldb;Integrated Security=true";
+                    var version = ExecuteScalar<string>(serverConnection, "SELECT @@VERSION");
+                    Debug.WriteLine($"localdb:\n{version}");
+                    return serverConnection;
+                }
+
+                // Try to detect what SQL server AppVeyor has provided
+                foreach (var server in new[] { "SQL2008R2SP2", "SQL2012SP1", "SQL2014", "SQL2016", "SQL2017" })
+                {
+                    var serverConnection = $"Server=(local)\\{server};;User ID=sa;Password=Password12!";
+
+                    try
+                    {
+                        var version = ExecuteScalar<string>(serverConnection, "SELECT @@VERSION");
+                        Debug.WriteLine($"AppVeyor:\n{version}");
+                        return serverConnection;
+                    }
+                    catch
+                    {
+                        // Do nothing - next instance type
+                    }
+                }
+
+                // If we get here, no dice
+                throw new InvalidOperationException("Unable to determine AppVeyor SQL server environment");
+            }
+        }
 
         /// <summary>
         /// Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection"/>.
@@ -105,9 +149,16 @@
             }
         }
 
+        /// <summary>
+        /// Unpacks the adventure works schema.
+        /// </summary>
+        /// <returns>Folder where the resource files were unpacked to.</returns>
         public static string UnpackAdventureWorksSchema()
         {
             var resourceNamespace = typeof(IAdventureWorksLocator).Namespace;
+
+            Assert.IsNotNull(resourceNamespace, "Unable to retrieve resource namespace");
+
             var outputFolder = Path.Combine(Path.GetTempPath(), "AdventureWorks");
 
             if (!Directory.Exists(outputFolder))
@@ -124,6 +175,7 @@
                 {
                     using (var rs = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
                     {
+                        Assert.IsNotNull(rs, $"Unable to retrieve resource: {resource}");
                         rs.CopyTo(fs);
                     }
                 }

@@ -36,7 +36,7 @@ namespace SqlExecuteTests
         [TestInitialize]
         public void MyTestInitialize()
         {
-            TestUtils.ExecuteNonQuery($"Server={TestUtils.ServerName};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("TestInitialize"));
+            TestUtils.ExecuteNonQuery($"{TestUtils.ServerConnection};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("TestInitialize"));
         }
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace SqlExecuteTests
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure"),
                                    ConnectionString =
-                                       $"Server={TestUtils.ServerName};Database={TestUtils.DatabaseName};Application Name=1_{this.TestContext.TestName}"
+                                       $"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name=1_{this.TestContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -61,7 +61,7 @@ namespace SqlExecuteTests
 
             initArgs.Query = "EXEC dbo.geterror";
             initArgs.ConnectionString =
-                $"Server={TestUtils.ServerName};Database={TestUtils.DatabaseName};Application Name=2_{this.TestContext.TestName}";
+                $"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name=2_{this.TestContext.TestName}";
 
             using (var impl = new SqlExecuteImpl(initArgs))
             {
@@ -94,7 +94,7 @@ namespace SqlExecuteTests
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode"),
                                    ConnectionString =
-                                       $"Server={TestUtils.ServerName};Application Name={this.TestContext.TestName}"
+                                       $"{TestUtils.ServerConnection};Application Name={this.TestContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -126,7 +126,7 @@ namespace SqlExecuteTests
                                {
                                    Query = "SELECT convert(int,100000000000)",
                                    ConnectionString =
-                                       $"Server={TestUtils.ServerName};Application Name={this.TestContext.TestName}"
+                                       $"{TestUtils.ServerConnection};Application Name={this.TestContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
