@@ -11,6 +11,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.InvokeSqlExecute", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.SqlCmdParser.Client", "Firefly.SqlCmdParser.Client\Firefly.SqlCmdParser.Client.csproj", "{E2BB3E81-1F3B-44FB-8ADC-1F88E6193597}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".SolutionItems", ".SolutionItems", "{EDA74B29-EED5-4FB6-9CE7-CDBDD335338A}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
