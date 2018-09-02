@@ -2,9 +2,19 @@
 
 *Work In Progress*
 
-A complete replacement for Invoke-Sqlcmd with bugs in the former addressed.
+A complete replacement for Invoke-Sqlcmd with bugs in the former addressed. The code has no external dependencies and should 
+work with whatever SMO version it finds when running within the PowerShell SQL provider context.
 
 This implementation also includes support for nearly all the non-interactive 'colon directives' that are available in sqlcmd.exe such as `:CONNECT`, `:OUT` etc.
+
+## Supported Environments
+
+CI builds are run against the following SQL server versions. This is not to say that other versions won't work,
+however they aren't present in the AppVeyor CI system.
+
+* Microsoft SQL Server 2014 - 12.0.4100.1
+* Microsoft SQL Server 2016 (SP1-CU8) (KB4077064) - 13.0.4474.0
+* Microsoft SQL Server 2017 (RTM) - 14.0.1000.169
 
 ## Specific Bugs Addressed
 
