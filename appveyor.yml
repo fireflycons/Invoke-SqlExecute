@@ -6,10 +6,19 @@ environment:
   matrix:
     - platform: Any CPU
       configuration: Debug
+      SQL: MSSQL$SQL2008R2SP2
+    - platform: Any CPU
+      configuration: Debug
+      SQL: MSSQL$SQL2012SP1
+    - platform: Any CPU
+      configuration: Debug
       SQL: MSSQL$SQL2014
     - platform: Any CPU
       configuration: Debug
       SQL: MSSQL$SQL2016
+    - platform: Any CPU
+      configuration: Debug
+      SQL: MSSQL$SQL2017
 #    - platform: Any CPU
 #      configuration: Release
 matrix:
