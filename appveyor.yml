@@ -1,0 +1,15 @@
+version: 0.1.{build}
+image: Visual Studio 2017
+environment:
+  matrix:
+    - platform: Any CPU
+      configuration: Debug
+    - platform: Any CPU
+      configuration: Release
+matrix:
+  fast_finish: false
+build:
+  parallel: true
+  verbosity: normal
+services:
+  - mssql2014
