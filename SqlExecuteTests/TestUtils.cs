@@ -1,7 +1,6 @@
 ﻿namespace SqlExecuteTests
 {
     using System;
-    using System.CodeDom;
     using System.Data;
     using System.Data.SqlClient;
     using System.Diagnostics;
@@ -29,6 +28,11 @@
         private static readonly string[] ResourceNames = Assembly.GetExecutingAssembly().GetManifestResourceNames();
 
         /// <summary>
+        /// The server connection
+        /// </summary>
+        private static string serverConnection = null;
+
+        /// <summary>
         /// Gets the server connection, which amounts to server name and authentication.
         /// If AppVeyor is detected, test for all known AppVeyor SQL services and return the first found.
         /// Otherwise default to (localdb)\mssqllocaldb;Integrated Security=true
@@ -41,12 +45,17 @@
         {
             get
             {
+                if (serverConnection != null)
+                {
+                    return serverConnection;
+                }
+
                 var appveyor = Environment.GetEnvironmentVariable("APPVEYOR");
 
                 if (appveyor == null)
                 {
                     // ReSharper disable once ConvertToConstant.Local
-                    var serverConnection = @"Server=(localdb)\mssqllocaldb;Integrated Security=true";
+                    serverConnection = @"Server=(localdb)\mssqllocaldb;Integrated Security=true";
                     var version = ExecuteScalar<string>(serverConnection, "SELECT @@VERSION");
                     Debug.WriteLine($"localdb:\n{version}");
                     return serverConnection;
@@ -55,12 +64,12 @@
                 // Try to detect what SQL server AppVeyor has provided
                 foreach (var server in new[] { "SQL2008R2SP2", "SQL2012SP1", "SQL2014", "SQL2016", "SQL2017" })
                 {
-                    var serverConnection = $"Server=(local)\\{server};;User ID=sa;Password=Password12!";
+                    serverConnection = $"Server=(local)\\{server};User ID=sa;Password=Password12!";
 
                     try
                     {
                         var version = ExecuteScalar<string>(serverConnection, "SELECT @@VERSION");
-                        Debug.WriteLine($"AppVeyor:\n{version}");
+                        Debug.WriteLine($"AppVeyor SQL Server:\n{version}");
                         return serverConnection;
                     }
                     catch
