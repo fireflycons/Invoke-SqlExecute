@@ -1,9 +1,15 @@
 version: 0.1.{build}
 image: Visual Studio 2017
+init:
+  - cmd: net start %SQL%
 environment:
   matrix:
     - platform: Any CPU
       configuration: Debug
+      SQL: MSSQL$SQL2014
+    - platform: Any CPU
+      configuration: Debug
+      SQL: MSSQL$SQL2016
 #    - platform: Any CPU
 #      configuration: Release
 matrix:
@@ -11,7 +17,5 @@ matrix:
 build:
   parallel: true
   verbosity: normal
-services:
-  - mssql2014
 before_build:
   - nuget restore
