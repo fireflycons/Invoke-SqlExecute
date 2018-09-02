@@ -4,8 +4,8 @@ environment:
   matrix:
     - platform: Any CPU
       configuration: Debug
-    - platform: Any CPU
-      configuration: Release
+#    - platform: Any CPU
+#      configuration: Release
 matrix:
   fast_finish: false
 build:
@@ -13,3 +13,5 @@ build:
   verbosity: normal
 services:
   - mssql2014
+before_build:
+  - nuget restore
