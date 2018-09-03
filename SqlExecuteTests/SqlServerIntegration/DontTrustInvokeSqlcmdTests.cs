@@ -1,6 +1,6 @@
 ﻿// ReSharper disable InconsistentNaming
 // ReSharper disable InheritdocConsiderUsage
-namespace SqlExecuteTests
+namespace SqlExecuteTests.SqlServerIntegration
 {
     using System;
     using System.Data.SqlClient;

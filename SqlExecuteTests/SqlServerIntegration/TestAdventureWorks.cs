@@ -1,4 +1,4 @@
-﻿namespace SqlExecuteTests
+﻿namespace SqlExecuteTests.SqlServerIntegration
 {
     using System.Collections.Generic;
     using System.IO;
