@@ -11,29 +11,21 @@
     /// <seealso cref="SqlExecuteTests.SqlServerIntegration.ISqlServerInstanceInfo" />
     public abstract class AbstractSqlServerInstanceInfo : ISqlServerInstanceInfo
     {
-        /// <summary>
-        /// The instance specific server connection
-        /// </summary>
-        private string serverConnection;
-
         /// <inheritdoc />
         /// <summary>
         /// Gets the server and authentication parts of the connection string.
         /// </summary>
-        /// <value>
-        /// The partial connection string.
-        /// </value>
-        public string ServerConnection
+        /// <returns>
+        ///     The partial connection string.
+        /// </returns>
+        public string GetServerConnection()
         {
-            get
-            {
-                if (this.serverConnection != null)
-                {
-                    return this.serverConnection;
-                }
+            var cb = new SqlConnectionStringBuilder(this.VersionSpecificServerConnection);
 
-                if (!this.HaveCheckedConnection)
-                {
+            switch (this.InstanceState)
+            {
+                case InstanceState.Unknown:
+
                     // Try the connection
                     try
                     {
@@ -41,31 +33,51 @@
                             this.VersionSpecificServerConnection,
                             "SELECT @@VERSION");
                         Debug.WriteLine(version);
-                        this.serverConnection = this.VersionSpecificServerConnection;
-                        this.HaveCheckedConnection = true;
-                        return this.serverConnection;
+
+                        this.InstanceState = InstanceState.Available;
+
+                        this.FullTextInstalled = TestUtils.ExecuteScalar<int>(this.VersionSpecificServerConnection,
+                                                     "SELECT FULLTEXTSERVICEPROPERTY('IsFullTextInstalled')") == 1;
+
+                        return this.VersionSpecificServerConnection;
                     }
                     catch
                     {
-                        // Do nothing...
+                        this.InstanceState = InstanceState.Unavailable;
                     }
-                }
 
-                var cb = new SqlConnectionStringBuilder(this.VersionSpecificServerConnection);
-                Assert.Inconclusive($"{cb.DataSource} - SQL instance not found.");
+                    Assert.Inconclusive($"{cb.DataSource} - SQL instance not found.");
+                    break;
 
-                // Assert will throw anyway.
-                return null;
+                case InstanceState.Available:
+
+                    return this.VersionSpecificServerConnection;
+
+                case InstanceState.Unavailable:
+
+                    Assert.Inconclusive($"{cb.DataSource} - SQL instance not found.");
+                    break;
             }
+
+            // Won't get here as Assert will have thrown.
+            return null;
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether [have checked connection].
+        /// Gets a value indicating whether [full text installed].
         /// </summary>
         /// <value>
-        ///   <c>true</c> if [have checked connection]; otherwise, <c>false</c>.
+        ///   <c>true</c> if [full text installed]; otherwise, <c>false</c>.
         /// </value>
-        protected abstract bool HaveCheckedConnection { get; set; }
+        public abstract bool FullTextInstalled { get; protected set; }
+
+        /// <summary>
+        /// Gets or sets the state of the instance represented by the derived class.
+        /// </summary>
+        /// <value>
+        /// The state of the instance.
+        /// </value>
+        protected abstract InstanceState InstanceState { get; set; }
 
         /// <summary>
         /// Gets the version specific server connection.

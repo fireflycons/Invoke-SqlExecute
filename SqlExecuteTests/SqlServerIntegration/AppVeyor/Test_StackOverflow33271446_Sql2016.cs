@@ -34,10 +34,10 @@
         public void TestInitialize()
         {
             TestUtils.ExecuteNonQuery(
-                $"{this.SqlServerInstanceInfo.ServerConnection};Application Name=INIT_{this.TestContext.TestName}",
+                $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name=INIT_{this.TestContext.TestName}",
                 TestUtils.LoadSqlResource("TestInitialize"));
             TestUtils.ExecuteNonQuery(
-                $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name=INIT_{this.TestContext.TestName}",
+                $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=INIT_{this.TestContext.TestName}",
                 TestUtils.LoadSqlResource("SetupStackOverflow33271446"));
         }
     }

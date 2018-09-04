@@ -26,7 +26,7 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <value>
         /// The SQL server instance information.
         /// </value>
-        public T SqlServerInstanceInfo { get; } = new T();
+        public ISqlServerInstanceInfo SqlServerInstanceInfo { get; } = new T();
 
         /// <summary>
         /// Tests the invoke SQLCMD does not return sp name nor line when error occurs in procedure.
@@ -38,7 +38,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name=1_{testContext.TestName}"
+                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=1_{testContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -49,7 +49,7 @@ namespace SqlExecuteTests.SqlServerIntegration
 
             initArgs.Query = "EXEC dbo.geterror";
             initArgs.ConnectionString =
-                $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name=2_{testContext.TestName}";
+                $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=2_{testContext.TestName}";
 
             using (var impl = new SqlExecuteImpl(initArgs))
             {
@@ -81,7 +81,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.ServerConnection};Application Name={testContext.TestName}"
+                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -112,7 +112,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                                {
                                    Query = "SELECT convert(int,100000000000)",
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.ServerConnection};Application Name={testContext.TestName}"
+                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))

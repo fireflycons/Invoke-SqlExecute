@@ -1,7 +1,10 @@
 version: 0.1.{build}
 image: Visual Studio 2017
+services:
+  - mssql2014
+  - mssql2016
+  - mssql2017
 init:
-  - cmd: net start %SQL%
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - ps: "dir env: | where { $_.Name -ine 'APPVEYOR_RDP_PASSWORD'}"
 environment:
@@ -10,13 +13,6 @@ environment:
   matrix:
     - platform: Any CPU
       configuration: Debug
-      SQL: MSSQL$SQL2014
-    - platform: Any CPU
-      configuration: Debug
-      SQL: MSSQL$SQL2016
-    - platform: Any CPU
-      configuration: Debug
-      SQL: MSSQL$SQL2017
 #    - platform: Any CPU
 #      configuration: Release
 matrix:

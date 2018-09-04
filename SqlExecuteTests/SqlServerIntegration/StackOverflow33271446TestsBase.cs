@@ -29,7 +29,7 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <value>
         /// The SQL server instance information.
         /// </value>
-        public T SqlServerInstanceInfo { get; } = new T();
+        public ISqlServerInstanceInfo SqlServerInstanceInfo { get; } = new T();
 
         /// <summary>
         /// Tests the insert does not execute twice on not null violation base.
@@ -41,7 +41,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                                {
                                    Query = TestUtils.LoadSqlResource("RunStackOverflow33271446"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name={testContext.TestName}",
+                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name={testContext.TestName}",
                                    QueryTimeout = 1,
                                    AbortOnErrorSet = true
                                };
@@ -70,7 +70,7 @@ namespace SqlExecuteTests.SqlServerIntegration
             Assert.AreEqual(
                 1,
                 TestUtils.ExecuteScalar<int>(
-                    $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name=RESULT_{testContext.TestName}",
+                    $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=RESULT_{testContext.TestName}",
                     "select count(*) from s"),
                 "More than one row inserted/");
         }

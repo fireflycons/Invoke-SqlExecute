@@ -15,22 +15,38 @@
         private const string _ServerConnection = @"Server=(local)\SQL2016;User ID=sa;Password=Password12!";
 
         /// <summary>
-        /// The have checked connection
+        /// The instance state
         /// </summary>
-        private static bool haveCheckedConnection = false;
+        private static InstanceState state = InstanceState.Unknown;
 
-        /// <inheritdoc />
         /// <summary>
-        /// Gets or sets a value indicating whether [have checked connection].
+        /// The full text installed
+        /// </summary>
+        private static bool fullTextInstalled;
+
+        /// <summary>
+        /// Gets a value indicating whether [full text installed].
         /// </summary>
         /// <value>
-        ///   <c>true</c> if [have checked connection]; otherwise, <c>false</c>.
+        ///   <c>true</c> if [full text installed]; otherwise, <c>false</c>.
         /// </value>
-        protected override bool HaveCheckedConnection
+        public override bool FullTextInstalled
         {
-            get => haveCheckedConnection;
+            get => fullTextInstalled;
+            protected set => fullTextInstalled = value;
+        }
 
-            set => haveCheckedConnection = value;
+        /// <summary>
+        /// Gets or set the state of the instance represented by this class.
+        /// </summary>
+        /// <value>
+        /// The state of the instance.
+        /// </value>
+        protected override InstanceState InstanceState
+        {
+            get => state;
+
+            set => state = value;
         }
 
         /// <inheritdoc />

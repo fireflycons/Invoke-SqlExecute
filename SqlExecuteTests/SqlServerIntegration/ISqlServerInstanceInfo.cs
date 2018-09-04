@@ -5,9 +5,17 @@
         /// <summary>
         /// Gets the server and authentication parts of the connection string.
         /// </summary>
+        /// <returns>
+        ///     The partial connection string.
+        /// </returns>
+        string GetServerConnection();
+
+        /// <summary>
+        /// Gets a value indicating whether [full text installed].
+        /// </summary>
         /// <value>
-        /// The partial connection string.
+        ///   <c>true</c> if [full text installed]; otherwise, <c>false</c>.
         /// </value>
-        string ServerConnection { get; }
+        bool FullTextInstalled { get; }
     }
 }
