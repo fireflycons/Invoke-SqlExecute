@@ -13,44 +13,32 @@ namespace SqlExecuteTests.SqlServerIntegration
     /// These tests assert that the issues with <c>Invoke-sqlcmd</c> listed on the following site do not affect this implementation.
     /// <see href="https://sqldevelopmentwizard.blogspot.co.uk/2016/12/invoke-sqlcmd-and-error-results.html" />
     /// </summary>
-    [TestClass]
-    public class DontTrustInvokeSqlcmdTests
+    public class DontTrustInvokeSqlcmdTestsBase<T> where T : ISqlServerInstanceInfo, new()
     {
         /// <summary>
-        /// The arithmetic overflow error
+        /// SQL server error code for arithmetic overflow
         /// </summary>
         private const int ArithmeticOverflowError = 8115;
 
         /// <summary>
-        /// Gets or sets the test context which provides
-        /// information about and functionality for the current test run.
+        /// Gets the SQL server instance information.
         /// </summary>
         /// <value>
-        /// The test context.
+        /// The SQL server instance information.
         /// </value>
-        public TestContext TestContext { get; set; }
-
-        /// <summary>
-        /// Mies the test initialize.
-        /// </summary>
-        [TestInitialize]
-        public void MyTestInitialize()
-        {
-            TestUtils.ExecuteNonQuery($"{TestUtils.ServerConnection};Application Name=INIT_{this.TestContext.TestName}", TestUtils.LoadSqlResource("TestInitialize"));
-        }
+        public T SqlServerInstanceInfo { get; } = new T();
 
         /// <summary>
         /// Tests the invoke SQLCMD does not return sp name nor line when error occurs in procedure.
         /// </summary>
-        [TestMethod]
-        public void Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure()
+        public void Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure(TestContext testContext)
         {
             var initArgs = new TestArguments
                                {
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure"),
                                    ConnectionString =
-                                       $"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name=1_{this.TestContext.TestName}"
+                                       $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name=1_{testContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -61,7 +49,7 @@ namespace SqlExecuteTests.SqlServerIntegration
 
             initArgs.Query = "EXEC dbo.geterror";
             initArgs.ConnectionString =
-                $"{TestUtils.ServerConnection};Database={TestUtils.DatabaseName};Application Name=2_{this.TestContext.TestName}";
+                $"{this.SqlServerInstanceInfo.ServerConnection};Database={TestUtils.DatabaseName};Application Name=2_{testContext.TestName}";
 
             using (var impl = new SqlExecuteImpl(initArgs))
             {
@@ -86,15 +74,14 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <summary>
         /// Tests the invoke SQLCMD does return raised error if query was run in single user mode.
         /// </summary>
-        [TestMethod]
-        public void Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode()
+        public void Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode(TestContext testContext)
         {
             var initArgs = new TestArguments
                                {
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode"),
                                    ConnectionString =
-                                       $"{TestUtils.ServerConnection};Application Name={this.TestContext.TestName}"
+                                       $"{this.SqlServerInstanceInfo.ServerConnection};Application Name={testContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -119,14 +106,13 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <summary>
         /// Tests the invoke SQLCMD returns error for arithmetic overflow error.
         /// </summary>
-        [TestMethod]
-        public void Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError()
+        public void Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError(TestContext testContext)
         {
             var initArgs = new TestArguments
                                {
                                    Query = "SELECT convert(int,100000000000)",
                                    ConnectionString =
-                                       $"{TestUtils.ServerConnection};Application Name={this.TestContext.TestName}"
+                                       $"{this.SqlServerInstanceInfo.ServerConnection};Application Name={testContext.TestName}"
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))

@@ -9,7 +9,7 @@
     /// Base class for tests that use a SQL server
     /// </summary>
     /// <seealso cref="SqlExecuteTests.SqlServerIntegration.ISqlServerInstanceInfo" />
-    public abstract class SqlServerInstanceInfoBase : ISqlServerInstanceInfo
+    public abstract class AbstractSqlServerInstanceInfo : ISqlServerInstanceInfo
     {
         /// <summary>
         /// The instance specific server connection

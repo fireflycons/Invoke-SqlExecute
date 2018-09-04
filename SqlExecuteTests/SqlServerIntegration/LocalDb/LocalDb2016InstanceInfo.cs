@@ -5,7 +5,7 @@
     /// Instance connection info for SQL 2016 local DB
     /// </summary>
     /// <seealso cref="T:SqlExecuteTests.SqlServerIntegration.SqlServerInstanceInfoBase" />
-    public class LocalDb2016InstanceInfo : SqlServerInstanceInfoBase
+    public class LocalDb2016InstanceInfo : AbstractSqlServerInstanceInfo
     {
         /// <summary>
         /// The server connection
@@ -28,9 +28,9 @@
         /// </value>
         protected override bool HaveCheckedConnection
         {
-            get => haveCheckedConnection;
+            get => LocalDb2016InstanceInfo.haveCheckedConnection;
 
-            set => haveCheckedConnection = value;
+            set => LocalDb2016InstanceInfo.haveCheckedConnection = value;
         }
 
         /// <inheritdoc />

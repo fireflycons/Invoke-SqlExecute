@@ -55,15 +55,20 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="SqlServerIntegration\AppVeyor\Sql2017InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Sql2016InstanceInfo.cs" />
     <Compile Include="SqlServerIntegration\AppVeyor\Sql2014InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_StackOverflow33271446_Sql2016.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_StackOverflow33271446_Sql2017.cs" />
     <Compile Include="SqlServerIntegration\AppVeyor\Test_StackOverflow33271446_Sql2014.cs" />
-    <Compile Include="SqlServerIntegration\DontTrustInvokeSqlcmdTests.cs" />
+    <Compile Include="SqlServerIntegration\DontTrustInvokeSqlcmdTestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\AdventureWorks\_IAdventureWorksLocator.cs" />
     <Compile Include="SqlServerIntegration\ISqlServerInstanceInfo.cs" />
     <Compile Include="SqlServerIntegration\LocalDb\LocalDb2016InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\LocalDb\Test_DontTrustInvokeSqlcmd_LocalDB2016.cs" />
     <Compile Include="SqlServerIntegration\LocalDb\Test_StackOverflow33271446_LocalDB2016.cs" />
-    <Compile Include="SqlServerIntegration\SqlServerInstanceInfoBase.cs" />
+    <Compile Include="SqlServerIntegration\AbstractSqlServerInstanceInfo.cs" />
     <Compile Include="TestArguments.cs" />
     <Compile Include="TestBatchExecuter.cs" />
     <Compile Include="CommentTokenizerTests.cs" />

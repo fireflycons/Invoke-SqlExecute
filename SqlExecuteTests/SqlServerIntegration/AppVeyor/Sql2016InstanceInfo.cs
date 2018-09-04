@@ -5,14 +5,14 @@
     /// Instance connection info for AppVeyor SQL 2014 
     /// </summary>
     /// <seealso cref="T:SqlExecuteTests.SqlServerIntegration.SqlServerInstanceInfoBase" />
-    public class Sql2014InstanceInfo : AbstractSqlServerInstanceInfo
+    public class Sql2016InstanceInfo : AbstractSqlServerInstanceInfo
     {
         /// <summary>
         /// The server connection
         /// </summary>
         // ReSharper disable once StyleCop.SA1309
         // ReSharper disable once InconsistentNaming
-        private const string _ServerConnection = @"Server=(local)\SQL2014;User ID=sa;Password=Password12!";
+        private const string _ServerConnection = @"Server=(local)\SQL2016;User ID=sa;Password=Password12!";
 
         /// <summary>
         /// The have checked connection
