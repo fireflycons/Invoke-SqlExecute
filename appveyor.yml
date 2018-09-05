@@ -1,9 +1,12 @@
 version: 0.1.{build}
 image: Visual Studio 2017
 services:
+  - mssql2014
   - mssql2016
+  - mssql2017
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
   - ps: "dir env: | where { $_.Name -ine 'APPVEYOR_RDP_PASSWORD'}"
   - ps: Get-Service | where { $_.Name -like 'MSSQL*'} | select Name
 environment:
@@ -24,5 +27,5 @@ before_build:
 skip_commits:
   message: /NO_CI/      # Regex for matching commit message
 
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
