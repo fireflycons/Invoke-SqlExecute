@@ -6,9 +6,8 @@ services:
   - mssql2017
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  # Enumerate installed SQL servers and set them to dynamic ports
   - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
-  - ps: "dir env: | where { $_.Name -ine 'APPVEYOR_RDP_PASSWORD'}"
-  - ps: Get-Service | where { $_.Name -like 'MSSQL*'} | select Name
 environment:
   APPVEYOR_RDP_PASSWORD:
     secure: 6RnJH3K6Be0FsXWvj3TxTQ==
