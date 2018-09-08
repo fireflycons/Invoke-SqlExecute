@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using Firefly.SqlCmdParser.Client;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace SqlExecuteTests.SqlServerIntegration
+﻿namespace SqlExecuteTests.SqlServerIntegration
 {
+    using System.Collections.Generic;
+    using System.IO;
+
+    using Firefly.SqlCmdParser.Client;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
     /// <summary>
     ///     Build the Adventure Works database from the schema published on github using this tool.
     /// </summary>
@@ -23,27 +25,40 @@ namespace SqlExecuteTests.SqlServerIntegration
         ///     Builds the adventure works database from the schema published on github.
         ///     This schema exercises many SQL server features.
         /// </summary>
-        public void BuildAdventureWorksDatabase(TestContext testContext)
+        public void BuildAdventureWorksOltpDatabase(TestContext testContext)
         {
-            if (!Directory.Exists(TestUtils.AdventureWorksSchemaDirectory))
-                Assert.Inconclusive($"Directory not found: {TestUtils.AdventureWorksSchemaDirectory}");
+            if (!this.SqlServerInstanceInfo.FullTextInstalled)
+            {
+                Assert.Inconclusive("Full Text not supported on this instance.");
+            }
+
+            var oltpSchemaDirectory = Path.Combine(TestUtils.AdventureWorksSchemaDirectory, "oltp_install_script");
+
+            if (!Directory.Exists(oltpSchemaDirectory))
+                Assert.Inconclusive($"Directory not found: {oltpSchemaDirectory}");
 
             var variables = new Dictionary<string, string>
-            {
-                {"SqlSamplesSourceDataPath", TestUtils.AdventureWorksSchemaDirectory + @"\"},
-                {"EnableFullTextFeature", SqlServerInstanceInfo.FullTextInstalled ? "1" : "0"}
-            };
+                                {
+                                    {
+                                        "SqlSamplesSourceDataPath",
+                                        oltpSchemaDirectory + @"\"
+                                    },
+                                    {
+                                        "EnableFullTextFeature",
+                                        this.SqlServerInstanceInfo.FullTextInstalled ? "1" : "0"
+                                    }
+                                };
 
             var initArgs = new TestArguments
-            {
-                InputFile = Path.Combine(TestUtils.AdventureWorksSchemaDirectory, "instawdb.sql"),
-                ConnectionString =
-                    $"{SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}",
-                AbortOnErrorSet = false,
-                InitialVariables = variables,
-                OverrideScriptVariablesSet =
-                    true // Override :SETVAR SqlSamplesSourceDataPath in th script with our value.
-            };
+                               {
+                                   InputFile = Path.Combine(oltpSchemaDirectory, "instawdb.sql"),
+                                   ConnectionString =
+                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}",
+                                   AbortOnErrorSet = false,
+                                   InitialVariables = variables,
+                                   OverrideScriptVariablesSet =
+                                       true // Override :SETVAR SqlSamplesSourceDataPath in the script with our value.
+                               };
 
             using (var impl = new SqlExecuteImpl(initArgs))
             {

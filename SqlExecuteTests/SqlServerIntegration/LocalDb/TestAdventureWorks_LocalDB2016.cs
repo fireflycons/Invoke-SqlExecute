@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace SqlExecuteTests.SqlServerIntegration.LocalDb
+﻿namespace SqlExecuteTests.SqlServerIntegration.LocalDb
 {
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
     [TestClass]
     public class TestAdventureWorks_LocalDB2016 : TestAdventureWorksBase<LocalDb2016InstanceInfo>
     {
@@ -22,7 +17,7 @@ namespace SqlExecuteTests.SqlServerIntegration.LocalDb
         [TestMethod]
         public void BuildAdventureWorksDatabase_LocalDB2016()
         {
-            this.BuildAdventureWorksDatabase(this.TestContext);
+            this.BuildAdventureWorksOltpDatabase(this.TestContext);
         }
     }
 }

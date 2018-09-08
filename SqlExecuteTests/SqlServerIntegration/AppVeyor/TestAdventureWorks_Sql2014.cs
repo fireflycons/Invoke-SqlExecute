@@ -17,7 +17,7 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         [TestMethod]
         public void BuildAdventureWorksDatabase_Sql2014()
         {
-            this.BuildAdventureWorksDatabase(this.TestContext);
+            this.BuildAdventureWorksOltpDatabase(this.TestContext);
         }
     }
 }

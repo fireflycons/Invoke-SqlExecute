@@ -3,10 +3,10 @@
     using System;
     using System.Data;
     using System.Data.SqlClient;
-    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Text.RegularExpressions;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -125,10 +125,23 @@
 
             foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
             {
-                var f = resource.Substring(resourceNamespace.Length + 1);
-                var filename = Path.Combine(outputFolder, f);
+                var f = Regex.Replace(resource.Substring(resourceNamespace.Length + 1), @"\.(?=.*?.\.)", @"\");
 
-                using (var fs = new FileStream(filename, FileMode.Create))
+                var relativePath = Path.GetDirectoryName(f);
+
+                if (!string.IsNullOrEmpty(relativePath))
+                {
+                    var d = Path.Combine(outputFolder, relativePath);
+
+                    if (!Directory.Exists(d))
+                    {
+                        Directory.CreateDirectory(d);
+                    }
+                }
+
+                var pathname = Path.Combine(outputFolder, f);
+
+                using (var fs = new FileStream(pathname, FileMode.Create))
                 {
                     using (var rs = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
                     {
