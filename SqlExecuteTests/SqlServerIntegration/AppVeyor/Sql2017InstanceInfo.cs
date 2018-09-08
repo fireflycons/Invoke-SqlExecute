@@ -24,6 +24,8 @@
         /// </summary>
         private static bool fullTextInstalled;
 
+        private static string versionString;
+
         /// <summary>
         /// Gets a value indicating whether [full text installed].
         /// </summary>
@@ -57,5 +59,11 @@
         /// The version specific server connection.
         /// </value>
         protected override string VersionSpecificServerConnection => _ServerConnection;
+        protected override string VersionString
+        {
+            get => versionString;
+
+            set => versionString = value;
+        }
     }
 }

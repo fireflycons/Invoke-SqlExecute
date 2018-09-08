@@ -1,4 +1,6 @@
-﻿namespace SqlExecuteTests.SqlServerIntegration.LocalDb
+﻿using System.Security;
+
+namespace SqlExecuteTests.SqlServerIntegration.LocalDb
 {
     /// <inheritdoc />
     /// <summary>
@@ -23,6 +25,8 @@
         /// The full text installed
         /// </summary>
         private static bool fullTextInstalled;
+
+        private static string versionString;
 
         /// <summary>
         /// Gets a value indicating whether [full text installed].
@@ -58,5 +62,11 @@
         /// </value>
         protected override string VersionSpecificServerConnection => _ServerConnection;
 
+        protected override string VersionString
+        {
+            get => versionString;
+
+            set => versionString = value;
+        }
     }
 }

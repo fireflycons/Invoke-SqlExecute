@@ -1,4 +1,6 @@
-﻿namespace SqlExecuteTests.SqlServerIntegration
+﻿using System.Text;
+
+namespace SqlExecuteTests.SqlServerIntegration
 {
     using System.Data.SqlClient;
     using System.Diagnostics;
@@ -29,16 +31,16 @@
                     // Try the connection
                     try
                     {
-                        var version = TestUtils.ExecuteScalar<string>(
+                        this.VersionString = TestUtils.ExecuteScalar<string>(
                             this.VersionSpecificServerConnection,
                             "SELECT @@VERSION");
-                        Debug.WriteLine(version);
 
                         this.InstanceState = InstanceState.Available;
 
                         this.FullTextInstalled = TestUtils.ExecuteScalar<int>(this.VersionSpecificServerConnection,
-                                                     "SELECT FULLTEXTSERVICEPROPERTY('IsFullTextInstalled')") == 1;
+                                                     "SELECT FULLTEXTSERVICEPROPERTY('IsFullTextInstalled')") != 0;
 
+                        Debug.WriteLine(this.ToString());
                         return this.VersionSpecificServerConnection;
                     }
                     catch
@@ -51,6 +53,7 @@
 
                 case InstanceState.Available:
 
+                    Debug.WriteLine(this.ToString());
                     return this.VersionSpecificServerConnection;
 
                 case InstanceState.Unavailable:
@@ -61,6 +64,23 @@
 
             // Won't get here as Assert will have thrown.
             return null;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Class: {this.GetType().Name}")
+                .AppendLine($"Instance {this.GetHashCode():X8}")
+                .AppendLine($"State: {this.InstanceState}");
+
+            if (!string.IsNullOrEmpty(this.VersionString))
+            {
+                sb.AppendLine($"Version: {this.VersionString}")
+                    .AppendLine($"Full Text: {this.FullTextInstalled}");
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
@@ -86,5 +106,7 @@
         /// The version specific server connection.
         /// </value>
         protected abstract string VersionSpecificServerConnection { get; }
+
+        protected abstract string VersionString { get; set; }
     }
 }
