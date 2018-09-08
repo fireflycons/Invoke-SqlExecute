@@ -9,7 +9,7 @@ init:
   # Enumerate installed SQL servers and set them to dynamic ports
   - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
   # Download AdventureWorks samples
-  - ps: md C:\TestData ; cd C:\TestData; git clone -n https://github.com/Microsoft/sql-server-samples ; cd sql-server-samples ; git config core.sparsecheckout true ; echo samples/databases/adventure-works/*| out-file -append -encoding ascii .git/info/sparse-checkout ; git checkout
+  - ps: "md C:\TestData ; cd C:\TestData; git clone -n https://github.com/Microsoft/sql-server-samples ; cd sql-server-samples ; git config core.sparsecheckout true ; echo samples/databases/adventure-works/*| out-file -append -encoding ascii .git/info/sparse-checkout ; git checkout"
 environment:
   APPVEYOR_RDP_PASSWORD:
     secure: 6RnJH3K6Be0FsXWvj3TxTQ==
