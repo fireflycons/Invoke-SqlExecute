@@ -29,6 +29,9 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// </summary>
         public void BuildAdventureWorksOltpDatabase(TestContext testContext)
         {
+            // Ensure connection initialised since there's no TestInitialize
+            var connection = this.SqlServerInstanceInfo.GetServerConnection();
+
             Debug.WriteLine(this.SqlServerInstanceInfo);
 
             if (!this.SqlServerInstanceInfo.FullTextInstalled)
@@ -57,7 +60,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                                {
                                    InputFile = Path.Combine(oltpSchemaDirectory, "instawdb.sql"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}",
+                                       $"{connection};Application Name={testContext.TestName}",
                                    AbortOnErrorSet = false,
                                    InitialVariables = variables,
                                    OverrideScriptVariablesSet =
