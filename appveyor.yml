@@ -6,8 +6,6 @@ services:
   - mssql2017
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-  # Download AdventureWorks samples
-  - ps: "md C:/TestData ; cd C:/TestData; git clone -n https://github.com/Microsoft/sql-server-samples ; cd sql-server-samples ; git config core.sparsecheckout true ; echo samples/databases/adventure-works/*| out-file -append -encoding ascii .git/info/sparse-checkout ; git checkout"
   # Enumerate installed SQL servers and set them to dynamic ports
   - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
 environment:
@@ -25,6 +23,8 @@ build:
   verbosity: normal
 before_build:
   - nuget restore
+  # Download AdventureWorks samples
+  - ps: "md C:/TestData ; Push-Location C:/TestData; git clone -n https://github.com/Microsoft/sql-server-samples ; cd sql-server-samples ; git config core.sparsecheckout true ; echo samples/databases/adventure-works/*| out-file -append -encoding ascii .git/info/sparse-checkout ; git checkout ; Pop-Location"
 skip_commits:
   message: /NO_CI/      # Regex for matching commit message
 
