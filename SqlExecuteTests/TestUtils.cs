@@ -1,4 +1,7 @@
-﻿namespace SqlExecuteTests
+﻿using System.Security.AccessControl;
+using System.Security.Principal;
+
+namespace SqlExecuteTests
 {
     using System;
     using System.Data;
@@ -149,9 +152,20 @@
                         rs.CopyTo(fs);
                     }
                 }
+
+                // So SQL server can read the file
+                GrantAccess(pathname);
             }
 
             AdventureWorksSchemaDirectory = outputFolder;
+        }
+
+        private static void GrantAccess(string fullPath)
+        {
+            DirectoryInfo dInfo = new DirectoryInfo(fullPath);
+            DirectorySecurity dSecurity = dInfo.GetAccessControl();
+            dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+            dInfo.SetAccessControl(dSecurity);
         }
     }
 }
