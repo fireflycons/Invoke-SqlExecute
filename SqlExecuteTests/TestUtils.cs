@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
@@ -116,8 +117,9 @@ namespace SqlExecuteTests
 
             if (!Directory.Exists(outputFolder)) Directory.CreateDirectory(outputFolder);
 
-            var enc = new UTF8Encoding(false);
-
+            var asciiEncoding = new ASCIIEncoding();
+            var ucs2leEncoding = new UnicodeEncoding(false, true);
+            
             foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
             {
                 var f = Regex.Replace(resource.Substring(resourceNamespace.Length + 1), @"\.(?=.*?.\.)", @"\");
@@ -137,7 +139,18 @@ namespace SqlExecuteTests
                 {
                     Assert.IsNotNull(rs, $"Unable to retrieve resource: {resource}");
 
-                    using (var sr = new StreamReader(rs))
+                    Encoding enc;
+
+                    if (Path.GetExtension(pathname) == ".sql")
+                    {
+                        enc = ucs2leEncoding;
+                    }
+                    else
+                    {
+                        enc = asciiEncoding;
+                    }
+
+                    using (var sr = new StreamReader(rs, enc))
                     {
                         using (var sw = new StreamWriter(pathname, false, enc))
                         {
