@@ -2,8 +2,9 @@ $ErrorActionPreference = 'Stop'
 
 try
 {
-	New-Item -Path C:\TestData -ItemType Directory | Out-Null
-	Push-Location C:\TestData
+	$cloneDir = Join-Path ${env:TEMP} TestData
+	New-Item -Path $cloneDir -ItemType Directory | Out-Null
+	Push-Location $cloneDir
 	git clone -n https://github.com/Microsoft/sql-server-samples 
 	cd sql-server-samples 
 	git config core.sparsecheckout true
