@@ -39,7 +39,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                 Assert.Inconclusive("Full Text not supported on this instance.");
             }
 
-            var oltpSchemaDirectory = Path.Combine(TestUtils.AdventureWorksSchemaDirectory, "oltp_install_script");
+            var oltpSchemaDirectory = Path.Combine(TestUtils.AdventureWorksBaseDir, "oltp_install_script");
 
             if (!Directory.Exists(oltpSchemaDirectory))
                 Assert.Inconclusive($"Directory not found: {oltpSchemaDirectory}");

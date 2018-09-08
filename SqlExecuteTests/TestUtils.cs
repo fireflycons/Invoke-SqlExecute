@@ -1,25 +1,32 @@
-﻿using System;
-using System.Data;
-using System.Data.SqlClient;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Security.AccessControl;
-using System.Security.Principal;
-using System.Text;
-using System.Text.RegularExpressions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlExecuteTests.Resources.AdventureWorks;
-
-namespace SqlExecuteTests
+﻿namespace SqlExecuteTests
 {
+    using System;
+    using System.Data;
+    using System.Data.SqlClient;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Security.AccessControl;
+    using System.Security.Principal;
+    using System.Text;
+    using System.Text.RegularExpressions;
+
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using SqlExecuteTests.Resources.AdventureWorks;
+
     /// <summary>
     ///     Helper methods for the tests
     /// </summary>
     [TestClass]
     public class TestUtils
     {
+        /// <summary>
+        /// The adventure works base directory - as downloaded by AppVeyor init.
+        /// </summary>
+        public const string AdventureWorksBaseDir = @"C:\TestData\sql-server-samples\samples\databases\adventure-works";
+
         /// <summary>
         ///     The database name
         /// </summary>
@@ -73,8 +80,27 @@ namespace SqlExecuteTests
                 {
                     cmd.CommandType = CommandType.Text;
                     cmd.CommandText = sql;
-                    return (T) cmd.ExecuteScalar();
+                    return (T)cmd.ExecuteScalar();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Grants everyone file access to adventure works schema.
+        /// </summary>
+        /// <param name="testcontext">The testcontext.</param>
+        [AssemblyInitialize]
+        public static void GrantAccessToAdventureWorksSchema(TestContext testcontext)
+        {
+            if (!Directory.Exists(AdventureWorksBaseDir))
+            {
+                Debug.WriteLine($"Can't find '{AdventureWorksBaseDir}'. AdventureWorks tests are going to fail.");
+                return;
+            }
+
+            foreach (var f in Directory.EnumerateFiles(AdventureWorksBaseDir, "*", SearchOption.AllDirectories))
+            {
+                GrantAccess(f);
             }
         }
 
@@ -86,13 +112,18 @@ namespace SqlExecuteTests
         /// <exception cref="FileNotFoundException">Cannot locate embedded resource <paramref name="resourceName" />.</exception>
         public static string LoadSqlResource(string resourceName)
         {
-            if (!resourceName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase)) resourceName += ".sql";
+            if (!resourceName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
+            {
+                resourceName += ".sql";
+            }
 
             var fullResourceName =
                 ResourceNames.FirstOrDefault(r => r.EndsWith(resourceName, StringComparison.OrdinalIgnoreCase));
 
             if (fullResourceName == null)
+            {
                 throw new FileNotFoundException($"Cannot locate embedded resource {resourceName}");
+            }
 
             // ReSharper disable once AssignNullToNotNullAttribute
             using (var sr =
@@ -106,7 +137,6 @@ namespace SqlExecuteTests
         ///     Unpacks the adventure works schema as the assembly initialize method
         /// </summary>
         /// <returns>Folder where the resource files were unpacked to.</returns>
-        [AssemblyInitialize]
         public static void UnpackAdventureWorksSchema(TestContext testContext)
         {
             var resourceNamespace = typeof(IAdventureWorksLocator).Namespace;
@@ -119,7 +149,7 @@ namespace SqlExecuteTests
 
             var asciiEncoding = new ASCIIEncoding();
             var ucs2leEncoding = new UnicodeEncoding(false, true);
-            
+
             foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
             {
                 var f = Regex.Replace(resource.Substring(resourceNamespace.Length + 1), @"\.(?=.*?.\.)", @"\");
@@ -174,9 +204,13 @@ namespace SqlExecuteTests
         {
             var dInfo = new DirectoryInfo(fullPath);
             var dSecurity = dInfo.GetAccessControl();
-            dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null),
-                FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit,
-                PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+            dSecurity.AddAccessRule(
+                new FileSystemAccessRule(
+                    new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                    FileSystemRights.FullControl,
+                    InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit,
+                    PropagationFlags.NoPropagateInherit,
+                    AccessControlType.Allow));
             dInfo.SetAccessControl(dSecurity);
         }
     }
