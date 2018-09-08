@@ -1,4 +1,6 @@
-﻿namespace SqlExecuteTests.SqlServerIntegration
+﻿using System.Diagnostics;
+
+namespace SqlExecuteTests.SqlServerIntegration
 {
     using System.Collections.Generic;
     using System.IO;
@@ -27,6 +29,8 @@
         /// </summary>
         public void BuildAdventureWorksOltpDatabase(TestContext testContext)
         {
+            Debug.WriteLine(this.SqlServerInstanceInfo);
+
             if (!this.SqlServerInstanceInfo.FullTextInstalled)
             {
                 Assert.Inconclusive("Full Text not supported on this instance.");
