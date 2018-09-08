@@ -1,40 +1,38 @@
-﻿using System.Security.AccessControl;
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SqlExecuteTests.Resources.AdventureWorks;
 
 namespace SqlExecuteTests
 {
-    using System;
-    using System.Data;
-    using System.Data.SqlClient;
-    using System.IO;
-    using System.Linq;
-    using System.Reflection;
-    using System.Text.RegularExpressions;
-
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-    using SqlExecuteTests.Resources.AdventureWorks;
-
     /// <summary>
-    /// Helper methods for the tests
+    ///     Helper methods for the tests
     /// </summary>
     [TestClass]
     public class TestUtils
     {
         /// <summary>
-        /// The database name
+        ///     The database name
         /// </summary>
         public const string DatabaseName = "Test1";
 
         /// <summary>
-        /// The resource names
+        ///     The resource names
         /// </summary>
         private static readonly string[] ResourceNames = Assembly.GetExecutingAssembly().GetManifestResourceNames();
 
         public static string AdventureWorksSchemaDirectory { get; private set; }
 
         /// <summary>
-        /// Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection"/>.
+        ///     Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" />.
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="sql">The SQL.</param>
@@ -55,13 +53,13 @@ namespace SqlExecuteTests
         }
 
         /// <summary>
-        /// Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" /> and return scalar result.
+        ///     Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" /> and return scalar result.
         /// </summary>
         /// <typeparam name="T">Type to cast scalar result to.</typeparam>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="sql">The SQL.</param>
         /// <returns>
-        /// Scalar result
+        ///     Scalar result
         /// </returns>
         public static T ExecuteScalar<T>(string connectionString, string sql)
         {
@@ -74,31 +72,26 @@ namespace SqlExecuteTests
                 {
                     cmd.CommandType = CommandType.Text;
                     cmd.CommandText = sql;
-                    return (T)cmd.ExecuteScalar();
+                    return (T) cmd.ExecuteScalar();
                 }
             }
         }
 
         /// <summary>
-        /// Loads an SQL resource from embedded resources.
+        ///     Loads an SQL resource from embedded resources.
         /// </summary>
         /// <param name="resourceName">Name of the resource.</param>
         /// <returns>SQL text.</returns>
-        /// <exception cref="FileNotFoundException">Cannot locate embedded resource <paramref name="resourceName"/>.</exception>
+        /// <exception cref="FileNotFoundException">Cannot locate embedded resource <paramref name="resourceName" />.</exception>
         public static string LoadSqlResource(string resourceName)
         {
-            if (!resourceName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
-            {
-                resourceName += ".sql";
-            }
+            if (!resourceName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase)) resourceName += ".sql";
 
             var fullResourceName =
                 ResourceNames.FirstOrDefault(r => r.EndsWith(resourceName, StringComparison.OrdinalIgnoreCase));
 
             if (fullResourceName == null)
-            {
                 throw new FileNotFoundException($"Cannot locate embedded resource {resourceName}");
-            }
 
             // ReSharper disable once AssignNullToNotNullAttribute
             using (var sr =
@@ -109,7 +102,7 @@ namespace SqlExecuteTests
         }
 
         /// <summary>
-        /// Unpacks the adventure works schema as the assembly initialize method
+        ///     Unpacks the adventure works schema as the assembly initialize method
         /// </summary>
         /// <returns>Folder where the resource files were unpacked to.</returns>
         [AssemblyInitialize]
@@ -121,10 +114,9 @@ namespace SqlExecuteTests
 
             var outputFolder = Path.Combine(Path.GetTempPath(), "AdventureWorks");
 
-            if (!Directory.Exists(outputFolder))
-            {
-                Directory.CreateDirectory(outputFolder);
-            }
+            if (!Directory.Exists(outputFolder)) Directory.CreateDirectory(outputFolder);
+
+            var enc = new UTF8Encoding(false);
 
             foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
             {
@@ -136,20 +128,25 @@ namespace SqlExecuteTests
                 {
                     var d = Path.Combine(outputFolder, relativePath);
 
-                    if (!Directory.Exists(d))
-                    {
-                        Directory.CreateDirectory(d);
-                    }
+                    if (!Directory.Exists(d)) Directory.CreateDirectory(d);
                 }
 
                 var pathname = Path.Combine(outputFolder, f);
 
-                using (var fs = new FileStream(pathname, FileMode.Create))
+                using (var rs = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
                 {
-                    using (var rs = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
+                    Assert.IsNotNull(rs, $"Unable to retrieve resource: {resource}");
+
+                    using (var sr = new StreamReader(rs))
                     {
-                        Assert.IsNotNull(rs, $"Unable to retrieve resource: {resource}");
-                        rs.CopyTo(fs);
+                        using (var sw = new StreamWriter(pathname, false, enc))
+                        {
+                            while (sr.Peek() >= 0)
+                            {
+                                var line = sr.ReadLine();
+                                sw.WriteLine(line);
+                            }
+                        }
                     }
                 }
 
@@ -162,9 +159,11 @@ namespace SqlExecuteTests
 
         private static void GrantAccess(string fullPath)
         {
-            DirectoryInfo dInfo = new DirectoryInfo(fullPath);
-            DirectorySecurity dSecurity = dInfo.GetAccessControl();
-            dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+            var dInfo = new DirectoryInfo(fullPath);
+            var dSecurity = dInfo.GetAccessControl();
+            dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit,
+                PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
             dInfo.SetAccessControl(dSecurity);
         }
     }
