@@ -24,7 +24,7 @@ build:
 before_build:
   - nuget restore
   # Download AdventureWorks samples
-  - ps: "md C:/TestData ; Push-Location C:/TestData; git clone -n https://github.com/Microsoft/sql-server-samples ; cd sql-server-samples ; git config core.sparsecheckout true ; echo samples/databases/adventure-works/*| out-file -append -encoding ascii .git/info/sparse-checkout ; git checkout ; Pop-Location"
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/fireflycons/Invoke-SqlExecute/dev/DownloadAdventureWorks.ps1'))
 skip_commits:
   message: /NO_CI/      # Regex for matching commit message
 
