@@ -10,8 +10,9 @@ namespace SqlExecuteTests.SqlServerIntegration
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
-    ///     Build the Adventure Works database from the schema published on github using this tool.
+    /// Build the Adventure Works database from the schema published on github using this tool.
     /// </summary>
+    /// <typeparam name="T">Version specific SQL Server instance data</typeparam>
     public class TestAdventureWorksBase<T>
         where T : ISqlServerInstanceInfo, new()
     {
@@ -24,9 +25,10 @@ namespace SqlExecuteTests.SqlServerIntegration
         public ISqlServerInstanceInfo SqlServerInstanceInfo { get; } = new T();
 
         /// <summary>
-        ///     Builds the adventure works database from the schema published on github.
-        ///     This schema exercises many SQL server features.
+        /// Builds the adventure works database from the schema published on github.
+        /// This schema exercises many SQL server features.
         /// </summary>
+        /// <param name="testContext">The test context.</param>
         public void BuildAdventureWorksOltpDatabase(TestContext testContext)
         {
             // Ensure connection initialised since there's no TestInitialize
@@ -39,20 +41,19 @@ namespace SqlExecuteTests.SqlServerIntegration
                 Assert.Inconclusive("Full Text not supported on this instance.");
             }
 
-            var oltpSchemaDirectory = Path.Combine(TestUtils.AdventureWorksBaseDir, "oltp_install_script");
+            var oltpSchemaDirectory = Path.Combine(TestUtils.AdventureWorksBaseDir, "oltp-install-script");
 
             if (!Directory.Exists(oltpSchemaDirectory))
+            {
                 Assert.Inconclusive($"Directory not found: {oltpSchemaDirectory}");
+            }
+
 
             var variables = new Dictionary<string, string>
                                 {
                                     {
                                         "SqlSamplesSourceDataPath",
                                         oltpSchemaDirectory + @"\"
-                                    },
-                                    {
-                                        "EnableFullTextFeature",
-                                        this.SqlServerInstanceInfo.FullTextInstalled ? "1" : "0"
                                     }
                                 };
 

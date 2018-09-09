@@ -23,16 +23,15 @@
     public class TestUtils
     {
         /// <summary>
+        /// The adventure works base directory - as downloaded by AppVeyor init.
+        /// Cloned by AppVeyor init from <see href="https://github.com/Microsoft/sql-server-samples/tree/master/samples/databases/adventure-works"/>
+        /// </summary>
+        public const string AdventureWorksBaseDir = @"C:\TestData\sql-server-samples\samples\databases\adventure-works";
+
+        /// <summary>
         ///     The database name
         /// </summary>
         public const string DatabaseName = "Test1";
-
-        /// <summary>
-        /// The adventure works base directory - as downloaded by AppVeyor init.
-        /// </summary>
-        public static readonly string AdventureWorksBaseDir = Path.Combine(
-            Path.GetTempPath(),
-            @"TestData\sql-server-samples\samples\databases\adventure-works");
 
         /// <summary>
         ///     The resource names
