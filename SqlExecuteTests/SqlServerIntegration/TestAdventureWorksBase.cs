@@ -25,11 +25,33 @@ namespace SqlExecuteTests.SqlServerIntegration
         public ISqlServerInstanceInfo SqlServerInstanceInfo { get; } = new T();
 
         /// <summary>
-        /// Builds the adventure works database from the schema published on github.
+        /// Builds the adventure works OLTP database from the schema published on github.
         /// This schema exercises many SQL server features.
         /// </summary>
         /// <param name="testContext">The test context.</param>
-        public void BuildAdventureWorksOltpDatabase(TestContext testContext)
+        public void BuildAdventureWorksOltp(TestContext testContext)
+        {
+            this.BuildAdventureWorks(testContext, Path.Combine(TestUtils.AdventureWorksBaseDir, "oltp-install-script"), "instawdb.sql");
+        }
+
+        /// <summary>
+        /// Builds the adventure works Data Warehouse from the schema published on github.
+        /// This schema exercises many SQL server features.
+        /// </summary>
+        /// <param name="testContext">The test context.</param>
+        public void BuildAdventureWorksDataWarehouse(TestContext testContext)
+        {
+            this.BuildAdventureWorks(testContext, Path.Combine(TestUtils.AdventureWorksBaseDir, "data-warehouse-install-script"), "instawdbdw.sql");
+        }
+
+
+        /// <summary>
+        /// Builds an adventure works schema.
+        /// </summary>
+        /// <param name="testContext">The test context.</param>
+        /// <param name="schemaDirectory">The schema directory.</param>
+        /// <param name="sqlFile">The SQL file.</param>
+        private void BuildAdventureWorks(TestContext testContext, string schemaDirectory, string sqlFile)
         {
             // Ensure connection initialised since there's no TestInitialize
             var connection = this.SqlServerInstanceInfo.GetServerConnection();
@@ -41,11 +63,9 @@ namespace SqlExecuteTests.SqlServerIntegration
                 Assert.Inconclusive("Full Text not supported on this instance.");
             }
 
-            var oltpSchemaDirectory = Path.Combine(TestUtils.AdventureWorksBaseDir, "oltp-install-script");
-
-            if (!Directory.Exists(oltpSchemaDirectory))
+            if (!Directory.Exists(schemaDirectory))
             {
-                Assert.Inconclusive($"Directory not found: {oltpSchemaDirectory}");
+                Assert.Inconclusive($"Directory not found: {schemaDirectory}");
             }
 
 
@@ -53,13 +73,13 @@ namespace SqlExecuteTests.SqlServerIntegration
                                 {
                                     {
                                         "SqlSamplesSourceDataPath",
-                                        oltpSchemaDirectory + @"\"
+                                        schemaDirectory + @"\"
                                     }
                                 };
 
             var initArgs = new TestArguments
                                {
-                                   InputFile = Path.Combine(oltpSchemaDirectory, "instawdb.sql"),
+                                   InputFile = Path.Combine(schemaDirectory, sqlFile),
                                    ConnectionString =
                                        $"{connection};Application Name={testContext.TestName}",
                                    AbortOnErrorSet = false,
@@ -73,8 +93,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                 // Create error proc
                 impl.Execute();
 
-                // 2 errors expected when running on localdb
-                Assert.AreEqual(2, impl.ErrorCount);
+                Assert.AreEqual(0, impl.ErrorCount);
             }
         }
     }

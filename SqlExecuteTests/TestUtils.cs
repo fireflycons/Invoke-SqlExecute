@@ -89,9 +89,9 @@
         /// <summary>
         /// Grants everyone file access to adventure works schema.
         /// </summary>
-        /// <param name="testcontext">The testcontext.</param>
+        /// <param name="testContext">The test context.</param>
         [AssemblyInitialize]
-        public static void GrantAccessToAdventureWorksSchema(TestContext testcontext)
+        public static void GrantAccessToAdventureWorksSchema(TestContext testContext)
         {
             if (!Directory.Exists(AdventureWorksBaseDir))
             {
@@ -99,9 +99,9 @@
                 return;
             }
 
-            foreach (var f in Directory.EnumerateFiles(AdventureWorksBaseDir, "*", SearchOption.AllDirectories))
+            foreach (var d in Directory.EnumerateDirectories(AdventureWorksBaseDir, "*", SearchOption.TopDirectoryOnly))
             {
-                GrantAccess(f);
+                GrantAccess(d);
             }
         }
 
@@ -135,84 +135,21 @@
         }
 
         /// <summary>
-        ///     Unpacks the adventure works schema as the assembly initialize method
+        /// Grants everyone access to the given directory.
         /// </summary>
-        /// <returns>Folder where the resource files were unpacked to.</returns>
-        public static void UnpackAdventureWorksSchema(TestContext testContext)
-        {
-            var resourceNamespace = typeof(IAdventureWorksLocator).Namespace;
-
-            Assert.IsNotNull(resourceNamespace, "Unable to retrieve resource namespace");
-
-            var outputFolder = Path.Combine(Path.GetTempPath(), "AdventureWorks");
-
-            if (!Directory.Exists(outputFolder)) Directory.CreateDirectory(outputFolder);
-
-            var asciiEncoding = new ASCIIEncoding();
-            var ucs2leEncoding = new UnicodeEncoding(false, true);
-
-            foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
-            {
-                var f = Regex.Replace(resource.Substring(resourceNamespace.Length + 1), @"\.(?=.*?.\.)", @"\");
-
-                var relativePath = Path.GetDirectoryName(f);
-
-                if (!string.IsNullOrEmpty(relativePath))
-                {
-                    var d = Path.Combine(outputFolder, relativePath);
-
-                    if (!Directory.Exists(d)) Directory.CreateDirectory(d);
-                }
-
-                var pathname = Path.Combine(outputFolder, f);
-
-                using (var rs = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
-                {
-                    Assert.IsNotNull(rs, $"Unable to retrieve resource: {resource}");
-
-                    Encoding enc;
-
-                    if (Path.GetExtension(pathname) == ".sql")
-                    {
-                        enc = ucs2leEncoding;
-                    }
-                    else
-                    {
-                        enc = asciiEncoding;
-                    }
-
-                    using (var sr = new StreamReader(rs, enc))
-                    {
-                        using (var sw = new StreamWriter(pathname, false, enc))
-                        {
-                            while (sr.Peek() >= 0)
-                            {
-                                var line = sr.ReadLine();
-                                sw.WriteLine(line);
-                            }
-                        }
-                    }
-                }
-
-                // So SQL server can read the file
-                GrantAccess(pathname);
-            }
-
-            AdventureWorksSchemaDirectory = outputFolder;
-        }
-
+        /// <param name="fullPath">The full path.</param>
         private static void GrantAccess(string fullPath)
         {
-            var dInfo = new DirectoryInfo(fullPath);
-            var dSecurity = dInfo.GetAccessControl();
-            dSecurity.AddAccessRule(
+            var directoryInfo = new DirectoryInfo(fullPath);
+            var directorySecurity = directoryInfo.GetAccessControl();
+            directorySecurity.AddAccessRule(
                 new FileSystemAccessRule(
                     new SecurityIdentifier(WellKnownSidType.WorldSid, null),
                     FileSystemRights.FullControl,
                     InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit,
                     PropagationFlags.NoPropagateInherit,
                     AccessControlType.Allow));
-            dInfo.SetAccessControl(dSecurity);
+            directoryInfo.SetAccessControl(directorySecurity);
         }
     }
 }

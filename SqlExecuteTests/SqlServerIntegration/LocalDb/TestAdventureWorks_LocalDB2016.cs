@@ -17,7 +17,7 @@
         [TestMethod]
         public void BuildAdventureWorksDatabase_LocalDB2016()
         {
-            this.BuildAdventureWorksOltpDatabase(this.TestContext);
+            this.BuildAdventureWorksOltp(this.TestContext);
         }
     }
 }
