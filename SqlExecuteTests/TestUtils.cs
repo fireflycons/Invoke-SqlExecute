@@ -9,12 +9,8 @@
     using System.Reflection;
     using System.Security.AccessControl;
     using System.Security.Principal;
-    using System.Text;
-    using System.Text.RegularExpressions;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-    using SqlExecuteTests.Resources.AdventureWorks;
 
     /// <summary>
     ///     Helper methods for the tests
@@ -37,8 +33,6 @@
         ///     The resource names
         /// </summary>
         private static readonly string[] ResourceNames = Assembly.GetExecutingAssembly().GetManifestResourceNames();
-
-        public static string AdventureWorksSchemaDirectory { get; private set; }
 
         /// <summary>
         ///     Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" />.
