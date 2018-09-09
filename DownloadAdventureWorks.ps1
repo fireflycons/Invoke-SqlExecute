@@ -10,6 +10,8 @@ try
 	cd sql-server-samples 
 	Write-Host "git config core.sparsecheckout true"
 	git config core.sparsecheckout true 2>&1 | % { $_.ToString() }
+	Write-Host "git config core.autocrlf true"
+	git config core.autocrlf true 2>&1 | % { $_.ToString() }
 	'samples/databases/adventure-works/*' | Out-File -Append -Encoding ascii .git/info/sparse-checkout 
 	Write-Host "git checkout -q"
 	git checkout -q 2>&1 | % { $_.ToString() }
