@@ -11,13 +11,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.SqlCmdParser.Client
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".SolutionItems", ".SolutionItems", "{EDA74B29-EED5-4FB6-9CE7-CDBDD335338A}"
 	ProjectSection(SolutionItems) = preProject
-		appveyor.yml = appveyor.yml
-		DownloadAdventureWorks.ps1 = DownloadAdventureWorks.ps1
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.InvokeSqlExecute.PowerShell", "Firefly.InvokeSqlExecute.PowerShell\Firefly.InvokeSqlExecute.PowerShell.csproj", "{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Build", ".Build", "{DFF78461-B618-4380-A391-DAD154FB595F}"
+	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+		DownloadAdventureWorks.ps1 = DownloadAdventureWorks.ps1
+		psake.ps1 = psake.ps1
+		TestAndDeploy.ps1 = TestAndDeploy.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

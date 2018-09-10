@@ -1,13 +1,16 @@
 version: 0.1.{build}
 image: Visual Studio 2017
+
 services:
   - mssql2014
   - mssql2016
   - mssql2017
+
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   # Enumerate installed SQL servers and set them to dynamic ports
   - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
+
 environment:
   APPVEYOR_RDP_PASSWORD:
     secure: 6RnJH3K6Be0FsXWvj3TxTQ==
@@ -16,17 +19,24 @@ environment:
       configuration: Debug
 #    - platform: Any CPU
 #      configuration: Release
+
 matrix:
   fast_finish: false
+
 build:
   parallel: true
   verbosity: normal
+
 before_build:
   - nuget restore
   # Download AdventureWorks samples
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/fireflycons/Invoke-SqlExecute/dev/DownloadAdventureWorks.ps1'))
+
 skip_commits:
   message: /NO_CI/      # Regex for matching commit message
+
+after_test:             # Now run pester tests and possibly deploy to PSGallery
+  - ps: . .\TestAndDeploy.ps1
 
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
