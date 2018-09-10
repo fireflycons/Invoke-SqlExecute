@@ -50,7 +50,7 @@
     /// </para>
     /// <para type="description">
     /// You can display SQL Server message output, such as those that result from the SQL PRINT statement by specifying the Verbose parameter.
-    /// Additionally, you can capture this output by providing a scriptblock that will receive the message along with its intended destination (StdOut/StdError) and route this data elsewhere.
+    /// Additionally, you can capture this output by providing a script block that will receive the message along with its intended destination (StdOut/StdError) and route this data elsewhere.
     /// </para>    /// </summary>
     /// <seealso cref="T:System.Management.Automation.PSCmdlet" />
     /// <seealso cref="T:Firefly.InvokeSqlExecute.IInvokeSqlExecuteArguments" />
@@ -74,7 +74,6 @@
         /// <summary>
         /// Gets or sets the abort on error.
         /// <para type="description">Indicates that this cmdlet stops the SQL Server command and returns an error level to the Windows PowerShell ERRORLEVEL variable if this cmdlet encounters an error.</para>
-        /// <para type="description">This is also part of the parameter description.</para>
         /// </summary>
         /// <value>
         /// The abort on error.
@@ -128,11 +127,11 @@
         /// This is an enhancement over standard Invoke-Sqlcmd behaviour.
         /// </para>
         /// <para type="description">
-        /// For server message output and sqlcmd commands that produce output, this argument specifies a scriptblock that will consume messages 
+        /// For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages 
         /// that would otherwise go to the console.
         /// </para>
         /// <para type="description">
-        /// The scriptblock is presented with a variable $OutputMessage which has two fields&#13;
+        /// The script block is presented with a variable $OutputMessage which has two fields&#13;
         /// - OutputDestination: Either 'StdOut' or 'StdError'<br/>
         /// - Message: The message text.<br/>
         /// </para>
@@ -279,11 +278,12 @@
         /// </value>
         /// <remarks>
         /// In the MS implementation, this parameter forces a datareader with no returned rows to iterate
-        /// all avaialble result sets in the batch. This is the only way an error raised on any statement 
+        /// all available result sets in the batch. This is the only way an error raised on any statement 
         /// within the batch other than the first one will raise a <see cref="SqlException"/>.
         /// This parameter is provided for command line compatibility with Invoke-Sqlcmd, 
         /// but the execution engine behaves as though it is always set.
         /// </remarks>
+        // ReSharper disable once UnusedMember.Global
         public SwitchParameter IncludeSqlUserErrors { get; set; }
 
         /// <inheritdoc />
@@ -315,13 +315,13 @@
 
                     case string[] _:
 
-                        // Array of varable=value
+                        // Array of variable=value
                         return GetCommandLineVariables((string[])this.Variable);
 
                     case string _:
 
                         // Split key/value pairs (name=value;name=value ... )
-                        // Note - does NOT handle semicolons in varualbe values - use a string array or hastable instead.
+                        // Note - does NOT handle semicolons in variable values - use a string array or hashtable instead.
                         return GetCommandLineVariables(
                             ((string)this.Variable).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
 
@@ -389,11 +389,11 @@
         /// Gets or sets the multi subnet failover.
         /// <para type="description">
         /// This is an enhancement over standard SQLCMD behaviour.
-        /// If set, enable Multi Subnet Failover - required for connection to Always On listeners.
+        /// If set, enable Multi Subnet Fail-over - required for connection to Always On listeners.
         /// </para>
         /// </summary>
         /// <value>
-        /// The multi subnet failover.
+        /// The multi subnet fail-over.
         /// </value>
         [Parameter(ParameterSetName = "ConnectionParameters")]
         public SwitchParameter MultiSubnetFailover { get; set; }
@@ -512,9 +512,9 @@
 
         /// <inheritdoc />
         /// <summary>
-        /// Gets the number of times to retry a retiable error (e.g. timed-out queries).
+        /// Gets the number of times to retry a retryable error (e.g. timed-out queries).
         /// <para type="Description">
-        /// Sets the number of times to retry a failed statement if the error is deemed retryable, e.g. timeout or deadlock victim. Errors like key violations are no retryable. 
+        /// Sets the number of times to retry a failed statement if the error is deemed retryable, e.g. timeout or deadlock victim. Errors like key violations are not retryable. 
         /// </para>
         /// </summary>
         /// <value>
@@ -577,7 +577,7 @@
         /// Specifies initial scripting variables for use in the sqlcmd script.
         /// </para>
         /// <para type="description">
-        /// Various opitons are available for the type of this input:
+        /// Various options are available for the type of this input:
         /// - IDictionary: e.g. a PowerShell hashtable
         /// - string: e.g. "VAR1=value1;VAR2=Value2". Note, does not handle semicolons or equals as part of variable's value -use one of the other types
         /// - string[]: e.g. @("VAR1=value1", "VAR2=Value2")
