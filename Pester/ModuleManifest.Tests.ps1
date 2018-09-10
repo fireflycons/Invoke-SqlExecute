@@ -6,7 +6,7 @@ $ModuleName = 'Firefly.InvokeSqlExecute'
 Get-Module -Name $ModuleName | Remove-Module
 
 # Find the Manifest file
-$global:ManifestFile = "$(Split-path (Split-Path -Parent -Path $MyInvocation.MyCommand.Definition))\$ModuleName\$ModuleName.psd1"
+$ManifestFile = "$(Split-path (Split-Path -Parent -Path $MyInvocation.MyCommand.Definition))\$ModuleName\$ModuleName.psd1"
 
 # Import the module and store the information about the module
 $ModuleInformation = Import-Module -Name $ManifestFile -PassThru
