@@ -7,7 +7,7 @@ services:
   - mssql2017
 
 # Allow WMF5 (i.e. PowerShellGallery functionality)
-os: WMF 5
+#os: WMF 5
 
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
