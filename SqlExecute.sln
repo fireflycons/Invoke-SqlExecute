@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlExecuteTests", "SqlExecu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.SqlCmdParser", "Firefly.SqlCmdParser\Firefly.SqlCmdParser.csproj", "{8296D7EB-D3A8-44C2-B0BD-471564A3A1E6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.InvokeSqlExecute", "Firefly.InvokeSqlExecute\Firefly.InvokeSqlExecute.csproj", "{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.SqlCmdParser.Client", "Firefly.SqlCmdParser.Client\Firefly.SqlCmdParser.Client.csproj", "{E2BB3E81-1F3B-44FB-8ADC-1F88E6193597}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".SolutionItems", ".SolutionItems", "{EDA74B29-EED5-4FB6-9CE7-CDBDD335338A}"
@@ -18,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".SolutionItems", ".Solution
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Firefly.InvokeSqlExecute.PowerShell", "Firefly.InvokeSqlExecute.PowerShell\Firefly.InvokeSqlExecute.PowerShell.csproj", "{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,14 +33,14 @@ Global
 		{8296D7EB-D3A8-44C2-B0BD-471564A3A1E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8296D7EB-D3A8-44C2-B0BD-471564A3A1E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8296D7EB-D3A8-44C2-B0BD-471564A3A1E6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E2BB3E81-1F3B-44FB-8ADC-1F88E6193597}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E2BB3E81-1F3B-44FB-8ADC-1F88E6193597}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E2BB3E81-1F3B-44FB-8ADC-1F88E6193597}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E2BB3E81-1F3B-44FB-8ADC-1F88E6193597}.Release|Any CPU.Build.0 = Release|Any CPU
+		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{85DB6620-28D2-42B3-82F3-8DC3DBBD3D86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

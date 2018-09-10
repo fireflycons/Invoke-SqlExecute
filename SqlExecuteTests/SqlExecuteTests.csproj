@@ -87,9 +87,9 @@
     <Compile Include="SqlServerIntegration\TestAdventureWorksBase.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Firefly.InvokeSqlExecute\Firefly.InvokeSqlExecute.csproj">
+    <ProjectReference Include="..\Firefly.InvokeSqlExecute.PowerShell\Firefly.InvokeSqlExecute.PowerShell.csproj">
       <Project>{85db6620-28d2-42b3-82f3-8dc3dbbd3d86}</Project>
-      <Name>Firefly.InvokeSqlExecute</Name>
+      <Name>Firefly.InvokeSqlExecute.PowerShell</Name>
     </ProjectReference>
     <ProjectReference Include="..\Firefly.SqlCmdParser.Client\Firefly.SqlCmdParser.Client.csproj">
       <Project>{e2bb3e81-1f3b-44fb-8adc-1f88e6193597}</Project>
