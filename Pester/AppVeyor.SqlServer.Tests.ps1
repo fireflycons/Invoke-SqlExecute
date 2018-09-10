@@ -44,8 +44,9 @@ $instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\
             Write-Host "    $_"
         }
 
-        Write-Host "    Full Text Installed: $($_.IsFullTextInstalled)"
-            
+        Write-Host "    Full Text Installed: $($i.IsFullTextInstalled)"
+        Write-Host
+                    
         $i
     }
     catch
