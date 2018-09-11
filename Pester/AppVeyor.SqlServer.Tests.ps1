@@ -98,7 +98,7 @@ Describe 'AdventureWorks Database Creation' {
             It 'Creates AdventureWorks OLTP Database' {
 
                 {
-                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$adventureWorksOltp\" } -OverrideScriptVariables
+                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables
                 } |
                 Should Not Throw
             }
@@ -106,7 +106,7 @@ Describe 'AdventureWorks Database Creation' {
             It 'Creates AdventureWorks Data Warehouse' {
 
                 {
-                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$adventureWorksDw\" } -OverrideScriptVariables
+                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables
                 } |
                 Should Not Throw
             }
