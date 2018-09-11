@@ -15,9 +15,35 @@ SQL server only knows about the currently executing batch and thus the error det
 within the batch. If you have a huge SQL file with hundreds or thousands of batches in, it is more useful to know
 which line within the *entire* input file is the one with the error. The parser in this implementation tracks the 
 line number of the start of each batch within the input and adds this to the line number reported by SQL server to give you the 
-true location of the erroneous statement as near as possible.
+true location of the erroneous statement as near as possible - for instance:
+
+```
+SqlException caught!
+Client:              APPVYR-WIN
+Server:              (local)\SQL2017
+Batch:               C:\Users\appveyor\AppData\Local\Temp\1\sql-server-samples\samples\databases\adventure-works\data-warehouse-install-script\instawdbdw.sql, beginning at line 738
+Message:             Cannot bulk load because the file "C:\Users\appveyor\AppData\Local\Temp\1\sql-server-samples\samples\databases\adventure-works\data-warehouse-install-script\DimAccount.csv" could not be opened. Operating system error code 5(Access is denied.).
+Source:              .Net SqlClient Data Provider
+Number:              4861
+Class:               16
+State:               1
+Line (within batch): 12
+Line (within file):  749
+Error near:
+BULK INSERT [dbo].[DimAccount] FROM 'C:\Users\appveyor\AppData\Local\Temp\1\sql-server-samples\samples\databases\adventure-works\data-warehouse-install-script\DimAccount.csv'
+WITH (
+    CHECK_CONSTRAINTS,
+   -- CODEPAGE='ACP',
+    DATAFILETYPE = 'widechar',
+    FIELDTERMINATOR= '|',
+    ROWTERMINATOR = '\n',
+    KEEPIDENTITY,
+    TABLOCK
+);
+```
 
 This implementation also includes support for nearly all the non-interactive 'colon directives' that are available in sqlcmd.exe such as `:CONNECT`, `:OUT` etc.
+
 
 ## Supported Environments
 
