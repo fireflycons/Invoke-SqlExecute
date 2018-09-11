@@ -84,6 +84,8 @@ $ManifestFile = "$(Split-path (Split-Path -Parent -Path $MyInvocation.MyCommand.
 # Import the module
 Import-Module -Name $ManifestFile
 
+$awDirs = Get-AdventureWorksClone
+
 Describe 'AdventureWorks Database Creation' {
 
     $instances | 
@@ -96,7 +98,7 @@ Describe 'AdventureWorks Database Creation' {
             It 'Creates AdventureWorks OLTP Database' {
 
                 {
-                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $adventureWorksOltp 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$adventureWorksOltp\" } -OverrideScriptVariables
+                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$adventureWorksOltp\" } -OverrideScriptVariables
                 } |
                 Should Not Throw
             }
@@ -104,7 +106,7 @@ Describe 'AdventureWorks Database Creation' {
             It 'Creates AdventureWorks Data Warehouse' {
 
                 {
-                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $adventureWorksDw 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$adventureWorksDw\" } -OverrideScriptVariables
+                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$adventureWorksDw\" } -OverrideScriptVariables
                 } |
                 Should Not Throw
             }

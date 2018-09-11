@@ -5,15 +5,15 @@ function Get-AdventureWorksClone
     {
         Push-Location $env:TEMP
         Write-Host "git clone -q -n https://github.com/Microsoft/sql-server-samples"
-        git clone -q -n https://github.com/Microsoft/sql-server-samples 2>&1 | ForEach-Object { $_.ToString() }
+        git clone -q -n https://github.com/Microsoft/sql-server-samples 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
         Set-Location sql-server-samples 
         Write-Host "git config core.sparsecheckout true"
-        git config core.sparsecheckout true 2>&1 | ForEach-Object { $_.ToString() }
+        git config core.sparsecheckout true 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
         Write-Host "git config core.autocrlf true"
-        git config core.autocrlf true 2>&1 | ForEach-Object { $_.ToString() }
+        git config core.autocrlf true 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
         'samples/databases/adventure-works/*' | Out-File -Append -Encoding ascii .git/info/sparse-checkout 
         Write-Host "git checkout -q"
-        git checkout -q 2>&1 | ForEach-Object { $_.ToString() }
+        git checkout -q 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
     
         $adventureWorksOltp = Join-Path $env:TEMP 'sql-server-samples\samples\databases\adventure-works\oltp-install-script'
         $adventureWorksDw = Join-Path $env:TEMP 'sql-server-samples\samples\databases\adventure-works\data-warehouse-install-script'
@@ -28,8 +28,8 @@ function Get-AdventureWorksClone
             $everyoneSid = New-Object System.Security.Principal.SecurityIdentifier ([System.Security.Principal.WellKnownSidType]::WorldSid, $null)
             $rule = New-Object  System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "ObjectInherit, ContainerInherit", "NoPropagateInherit", "Allow")
             $acl = Get-Acl -Path (Join-Path $env:TEMP 'sql-server-samples\samples\databases\adventure-works')
-            $acl.AddAccessRule($rule)
-            Set-Acl -Path (Join-Path $env:TEMP 'sql-server-samples\samples\databases\adventure-works') -AclObject $acl
+            $acl.AddAccessRule($rule) | Out-Null
+            Set-Acl -Path (Join-Path $env:TEMP 'sql-server-samples\samples\databases\adventure-works') -AclObject $acl | Out-Null
         }
     }
     catch
@@ -41,6 +41,11 @@ function Get-AdventureWorksClone
     finally
     {
         Pop-Location
+    }
+
+    New-Object PSObject -Property @{
+        OltpDir = $adventureWorksOltp
+        DwDir = $adventureWorksDw 
     }
 }
 
