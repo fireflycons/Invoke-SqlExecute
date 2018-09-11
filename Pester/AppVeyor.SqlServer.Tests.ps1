@@ -29,7 +29,7 @@ $instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\
         $cmd.CommandType = 'Text'
         $cmd.CommandText = "SELECT @@VERSION AS [Version], FULLTEXTSERVICEPROPERTY('IsFullTextInstalled') AS [IsFullTextInstalled]"
         $rdr = $cmd.ExecuteReader()
-        $rdr.Read()
+        $rdr.Read() | Out-Null
 
         $i = New-Object PSObject -Property @{
             Instance            = $instance
@@ -51,7 +51,7 @@ $instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\
     }
     catch
     {
-        Write-Host -ForegroundColor Red "Inactive"
+        Write-Host -ForegroundColor Red $_.Exception.Message
     }
     finally
     {
