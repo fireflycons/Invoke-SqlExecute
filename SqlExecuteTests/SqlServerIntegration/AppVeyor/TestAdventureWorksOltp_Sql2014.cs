@@ -18,7 +18,7 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         /// <summary>
         /// Builds the adventure works OLTP SQL2014.
         /// </summary>
-        [TestMethod]
+        [TestMethod, Ignore]
         public void BuildAdventureWorksOltp_Sql2014()
         {
             this.BuildAdventureWorksOltp(this.TestContext);

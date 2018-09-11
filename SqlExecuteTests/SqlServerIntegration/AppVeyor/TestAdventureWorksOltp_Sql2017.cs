@@ -15,7 +15,7 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         /// </value>
         public TestContext TestContext { get; set; }
 
-        [TestMethod]
+        [TestMethod, Ignore]
         public void BuildAdventureWorksOltp_Sql2017()
         {
             this.BuildAdventureWorksOltp(this.TestContext);

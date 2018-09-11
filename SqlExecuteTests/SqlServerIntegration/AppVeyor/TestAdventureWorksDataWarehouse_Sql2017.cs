@@ -18,7 +18,7 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         /// <summary>
         /// Builds the adventure works data warehouse 2017.
         /// </summary>
-        [TestMethod]
+        [TestMethod, Ignore]
         public void BuildAdventureWorksDataWarehouse_2017()
         {
             this.BuildAdventureWorksDataWarehouse(this.TestContext);
