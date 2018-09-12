@@ -615,6 +615,13 @@
                 using (var sqlcmd = new SqlExecuteImpl(this))
                 {
                     sqlcmd.Execute();
+
+                    if (sqlcmd.ErrorCount > 0)
+                    {
+                        // If -AbortOnError wasn't set, nothing will be thrown from within Execute() method
+                        // so throw something here.
+                        throw new InvalidOperationException($"{sqlcmd.ErrorCount} error(s) were detected. Please see log for details.");
+                    }
                 }
             }
             catch (Exception e)
