@@ -31,8 +31,8 @@ Properties {
 
     $DefaultLocale = 'en-US'
     $DocsRootDir = "$PSScriptRoot\docs"
-    $ModuleName = "PSCloudFormation"
-    $ModuleOutDir = "$PSScriptRoot\PSCloudFormation"
+    $ModuleName = "Firefly.InvokeSqlExecute"
+    $ModuleOutDir = "$PSScriptRoot\Firefly.InvokeSqlExecute"
 
 }
 
@@ -140,7 +140,7 @@ Task Build -Depends Test {
     }
 }
 
-Task Deploy -Depends Build {
+Task Deploy -Depends BuildHelp {
     $lines
 
     # Gate deployment
@@ -166,3 +166,67 @@ Task Deploy -Depends Build {
     }
 }
 
+Task BuildHelp -Depends Build, GenerateMarkdown, GenerateHelpFiles {}
+
+Task GenerateMarkdown -requiredVariables DefaultLocale, DocsRootDir {
+    if (!(Get-Module platyPS -ListAvailable))
+    {
+        "platyPS module is not installed. Skipping $($psake.context.currentTaskName) task."
+        return
+    }
+
+    $moduleInfo = Import-Module $ENV:BHPSModuleManifest -Global -Force -PassThru
+
+    try
+    {
+        if ($moduleInfo.ExportedCommands.Count -eq 0)
+        {
+            "No commands have been exported. Skipping $($psake.context.currentTaskName) task."
+            return
+        }
+
+        if (!(Test-Path -LiteralPath $DocsRootDir))
+        {
+            New-Item $DocsRootDir -ItemType Directory > $null
+        }
+
+        if (Get-ChildItem -LiteralPath $DocsRootDir -Filter *.md -Recurse)
+        {
+            Get-ChildItem -LiteralPath $DocsRootDir -Directory | 
+                ForEach-Object {
+                Update-MarkdownHelp -Path $_.FullName -Verbose:$VerbosePreference > $null
+            }
+        }
+
+        # ErrorAction set to SilentlyContinue so this command will not overwrite an existing MD file.
+        New-MarkdownHelp -Module $ModuleName -Locale $DefaultLocale -OutputFolder $DocsRootDir\$DefaultLocale `
+            -WithModulePage -ErrorAction SilentlyContinue -Verbose:$VerbosePreference > $null
+    }
+    finally
+    {
+        Remove-Module $ModuleName
+    }
+}
+
+Task GenerateHelpFiles -requiredVariables DocsRootDir, ModuleName, ModuleOutDir {
+    if (!(Get-Module platyPS -ListAvailable))
+    {
+        "platyPS module is not installed. Skipping $($psake.context.currentTaskName) task."
+        return
+    }
+
+    if (!(Get-ChildItem -LiteralPath $DocsRootDir -Filter *.md -Recurse -ErrorAction SilentlyContinue))
+    {
+        "No markdown help files to process. Skipping $($psake.context.currentTaskName) task."
+        return
+    }
+
+    $helpLocales = (Get-ChildItem -Path $DocsRootDir -Directory).Name
+
+    # Generate the module's primary MAML help file.
+    foreach ($locale in $helpLocales)
+    {
+        New-ExternalHelp -Path $DocsRootDir\$locale -OutputPath $ModuleOutDir\$locale -Force `
+            -ErrorAction SilentlyContinue -Verbose:$VerbosePreference > $null
+    }
+}
