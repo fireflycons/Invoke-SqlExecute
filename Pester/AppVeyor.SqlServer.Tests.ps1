@@ -14,9 +14,9 @@ if (${ENV:BHBuildSystem} -ne 'AppVeyor')
 # Enumerate available SQL instances
 Write-Host 'Detecting SQL Server instances...'
 
-$instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\' | 
-    Where-Object { 
-    $_.Name -imatch 'MSSQL[_\d]+\.SQL.*' 
+$instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\' |
+    Where-Object {
+    $_.Name -imatch 'MSSQL[_\d]+\.SQL.*'
 } |
     ForEach-Object {
 
@@ -50,7 +50,7 @@ $instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\
 
         Write-Host "    Full Text Installed: $($i.IsFullTextInstalled)"
         Write-Host
-                    
+
         $i
     }
     catch
@@ -88,7 +88,7 @@ $awDirs = Get-AdventureWorksClone
 
 Describe 'AdventureWorks Database Creation' {
 
-    $instances | 
+    $instances |
     Foreach-Object {
 
         $instanceInfo = $_
