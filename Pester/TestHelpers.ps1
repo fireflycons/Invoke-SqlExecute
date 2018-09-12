@@ -60,3 +60,73 @@ function Get-AdventureWorksClone
     }
 }
 
+function Get-SqlServerInstanceData
+{
+    <#
+    .SYNOPSIS
+        Given a connection string, test connection and get server properties
+        required for test runs
+
+    .PARAMETER InstanceName
+        Descriptive instance name#
+
+    .PARAMETER ConnectionString
+        Connection string to try
+
+    .OUTPUTS
+        [object] with the following fields, or nothing if connection fails
+
+        Instance            - Name of instance
+        COnnection          - Connection string passed in
+        IsFullTextInstalled - True if full text is installed on instance; else false
+    #>
+
+    param
+    (
+        [string]$InstanceName,
+        [string]$ConnectionString
+    )
+    try
+    {
+        $conn = New-Object System.Data.SqlClient.SqlConnection $ConnectionString
+        $conn.Open()
+        $cmd = $conn.CreateCommand()
+        $cmd.CommandType = 'Text'
+        $cmd.CommandText = "SELECT @@VERSION AS [Version], FULLTEXTSERVICEPROPERTY('IsFullTextInstalled') AS [IsFullTextInstalled]"
+        $rdr = $cmd.ExecuteReader()
+        $rdr.Read() | Out-Null
+
+        $i = New-Object PSObject -Property @{
+            Instance            = $InstanceName
+            Connection          = $ConnectionString
+            IsFullTextInstalled = $rdr['IsFullTextInstalled'] -ne 0
+        }
+
+        Write-Host
+
+        $rdr['Version'] -split [Environment]::NewLine |
+            ForEach-Object {
+            Write-Host "    $_"
+        }
+
+        Write-Host "    Full Text Installed: $($i.IsFullTextInstalled)"
+        Write-Host
+
+        $i
+    }
+    catch
+    {
+        Write-Host -ForegroundColor Red $_.Exception.Message
+    }
+    finally
+    {
+        ($rdr, $cmd, $conn) |
+            Foreach-Object {
+            if ($_)
+            {
+                $_.Dispose()
+            }
+        }
+    }
+
+}

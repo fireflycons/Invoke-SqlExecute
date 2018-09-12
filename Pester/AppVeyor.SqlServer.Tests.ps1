@@ -21,57 +21,30 @@ $instances = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\
     ForEach-Object {
 
     $instance = (Get-ItemProperty $_.PSPath).'(default)'
-    $connection = "Server=(local)\$instance;User ID=sa;Password=Password12!"
-
     Write-Host -NoNewline "- Found $instance. Getting details... "
+    Get-SqlServerInstanceData -InstanceName $instance -ConnectionString "Server=(local)\$instance;User ID=sa;Password=Password12!"
+}
 
-    try
-    {
-        $conn = New-Object System.Data.SqlClient.SqlConnection $connection
-        $conn.Open()
-        $cmd = $conn.CreateCommand()
-        $cmd.CommandType = 'Text'
-        $cmd.CommandText = "SELECT @@VERSION AS [Version], FULLTEXTSERVICEPROPERTY('IsFullTextInstalled') AS [IsFullTextInstalled]"
-        $rdr = $cmd.ExecuteReader()
-        $rdr.Read() | Out-Null
+# Enumerate localdb instances
+$instances += 'v11.0','MSSQLLocalDB' |
+ForEach-Object {
 
-        $i = New-Object PSObject -Property @{
-            Instance            = $instance
-            Connection          = $connection
-            IsFullTextInstalled = $rdr['IsFullTextInstalled'] -ne 0
-        }
-
-        Write-Host
-
-        $rdr['Version'] -split [Environment]::NewLine |
-            ForEach-Object {
-            Write-Host "    $_"
-        }
-
-        Write-Host "    Full Text Installed: $($i.IsFullTextInstalled)"
-        Write-Host
-
-        $i
-    }
-    catch
-    {
-        Write-Host -ForegroundColor Red $_.Exception.Message
-    }
-    finally
-    {
-        ($rdr, $cmd, $conn) |
-            Foreach-Object {
-            if ($_)
-            {
-                $_.Dispose()
-            }
-        }
-    }
+    $instance = "(localdb)\$_"
+    Write-Host "Checking for $instance ... "
+    Get-SqlServerInstanceData -InstanceName $instance -ConnectionString "Server=$instance;Integrated Security=true";
 }
 
 if (($instances | Measure-Object).Count -eq 0)
 {
     Write-Warning "No SQL Server instances found"
+}
+elseif ($instances | Where-Object { $_.IsFullTextInstalled} )
+{
+    $awDirs = Get-AdventureWorksClone
+}
+else
+{
+    Write-Warning "None of the SQL instances support Full Text. AdventureWorks tests will be inconclusive."
 }
 
 
@@ -84,8 +57,6 @@ $ManifestFile = "$(Split-path (Split-Path -Parent -Path $MyInvocation.MyCommand.
 # Import the module
 Import-Module -Name $ManifestFile
 
-$awDirs = Get-AdventureWorksClone
-
 Describe 'AdventureWorks Database Creation' {
 
     $instances |
@@ -97,18 +68,32 @@ Describe 'AdventureWorks Database Creation' {
 
             It 'Creates AdventureWorks OLTP Database' {
 
+                if ($instanceInfo.IsFullTextInstalled)
                 {
-                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables
-                } |
-                Should Not Throw
+                    {
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables
+                    } |
+                    Should Not Throw
+                }
+                else 
+                {
+                    Set-TestInconclusive -Message "Full Text Indexing not supported on this instance"   
+                }
             }
 
             It 'Creates AdventureWorks Data Warehouse' {
 
+                if ($instanceInfo.IsFullTextInstalled)
                 {
-                    Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables
-                } |
-                Should Not Throw
+                    {
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables
+                    } |
+                    Should Not Throw
+                }
+                else 
+                {
+                    Set-TestInconclusive -Message "Full Text Indexing not supported on this instance"   
+                }
             }
         }
     }
