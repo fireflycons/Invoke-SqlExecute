@@ -7,6 +7,8 @@
 
 *Work In Progress*
 
+TL;DR - Jump to [Invoke-SqlExecute command syntax](./docs/en-US/Firefly.InvokeSqlExecute.md)
+
 A complete replacement for Invoke-Sqlcmd with bugs in the former addressed. The code has no external dependencies and should 
 work with whatever SMO version it finds when running within the PowerShell SQL provider context.
 
