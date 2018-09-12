@@ -35,7 +35,7 @@ before_build:
 skip_commits:
   message: /NO_CI/      # Regex for matching commit message
 
-after_test:             # Now run pester tests and possibly deploy to PSGallery
+test_script:             # Now run pester tests and possibly deploy to PSGallery
   - ps: . .\TestAndDeploy.ps1
 
 #on_finish:
