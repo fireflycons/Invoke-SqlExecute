@@ -33,6 +33,7 @@ Properties {
     $DocsRootDir = "$PSScriptRoot\docs"
     $ModuleName = "Firefly.InvokeSqlExecute"
     $ModuleOutDir = "$PSScriptRoot\Firefly.InvokeSqlExecute"
+    $CompilationOutput = "$PSScriptRoot\Firefly.InvokeSqlExecute.PowerShell\bin"
 
 }
 
@@ -84,7 +85,51 @@ Task Init {
     }
 }
 
-Task Test -Depends Init {
+Task Build -Depends Init {
+
+    # Gather C# compiler output. Place in module staging directory.
+    # Prefer most recent build
+
+    $lines
+    "`n`tSTATUS: Copying module files to staging folder"
+
+    $moduleSrc = Invoke-Command -NoNewScope -ScriptBlock {
+
+        $f = 'Debug', 'Release' |
+        ForEach-Object {
+            
+            $p = Join-Path $CompilationOutput "$_\Firefly.InvokeSqlExecute.PowerShell.dll"
+
+            if (Test-Path -Path $p -PathType Leaf)
+            {
+                Get-Item -Path $p
+            }
+        } |
+        Sort-Object -Descending $_.LastWriteTime |
+        Select-Object -First 1
+
+        if ($f)
+        {
+            $f.DirectoryName
+        }
+        else 
+        {
+            throw "No outputs from C# compilation found"
+        }
+    }
+
+    "`tTaking output from $(Split-Path -Leaf $moduleSrc)"
+    '*.dll', '*.ps*', '*.dll-Help.xml' |
+    ForEach-Object {
+
+        Remove-Item -Path "$ModuleOutDir\$_"
+        Copy-Item (Join-Path $moduleSrc $_) $ModuleOutDir
+    }
+
+    Set-BuildEnvironment -ErrorAction SilentlyContinue
+}
+
+Task Test -Depends Build {
     $lines
     "`n`tSTATUS: Testing with PowerShell $PSVersion"
 
@@ -118,7 +163,7 @@ Task Test -Depends Init {
     "`n"
 }
 
-Task Build -Depends Test {
+Task UpdateModuleVersion -Depends Test {
     $lines
 
     # Load the module, read the exported functions, update the psd1 FunctionsToExport
@@ -166,7 +211,7 @@ Task Deploy -Depends BuildHelp {
     }
 }
 
-Task BuildHelp -Depends Build, GenerateMarkdown, GenerateHelpFiles {}
+Task BuildHelp -Depends UpdateModuleVersion, GenerateMarkdown {}
 
 Task GenerateMarkdown -requiredVariables DefaultLocale, DocsRootDir {
     if (!(Get-Module platyPS -ListAvailable))
@@ -205,28 +250,5 @@ Task GenerateMarkdown -requiredVariables DefaultLocale, DocsRootDir {
     finally
     {
         Remove-Module $ModuleName
-    }
-}
-
-Task GenerateHelpFiles -requiredVariables DocsRootDir, ModuleName, ModuleOutDir {
-    if (!(Get-Module platyPS -ListAvailable))
-    {
-        "platyPS module is not installed. Skipping $($psake.context.currentTaskName) task."
-        return
-    }
-
-    if (!(Get-ChildItem -LiteralPath $DocsRootDir -Filter *.md -Recurse -ErrorAction SilentlyContinue))
-    {
-        "No markdown help files to process. Skipping $($psake.context.currentTaskName) task."
-        return
-    }
-
-    $helpLocales = (Get-ChildItem -Path $DocsRootDir -Directory).Name
-
-    # Generate the module's primary MAML help file.
-    foreach ($locale in $helpLocales)
-    {
-        New-ExternalHelp -Path $DocsRootDir\$locale -OutputPath $ModuleOutDir\$locale -Force `
-            -ErrorAction SilentlyContinue -Verbose:$VerbosePreference > $null
     }
 }
