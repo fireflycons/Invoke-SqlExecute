@@ -18,14 +18,26 @@ function Get-AdventureWorksClone
     try
     {
         Push-Location $env:TEMP
-        Write-Host "git clone -q -n https://github.com/Microsoft/sql-server-samples"
-        git clone -q -n https://github.com/Microsoft/sql-server-samples 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
-        Set-Location sql-server-samples
-        Write-Host "git config core.sparsecheckout true"
-        git config core.sparsecheckout true 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
-        Write-Host "git config core.autocrlf true"
-        git config core.autocrlf true 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
-        'samples/databases/adventure-works/*' | Out-File -Append -Encoding ascii .git/info/sparse-checkout
+
+        if (Test-Path -Path 'sql-server-samples\.git' -PathType Container)
+        {
+            Write-Host 'Repo exists. Checking it is up to date'
+            Set-Location sql-server-samples
+            Write-Host "git pull"
+            git pull -q 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
+        }
+        else
+        {
+            Write-Host "git clone -q -n https://github.com/Microsoft/sql-server-samples"
+            git clone -q -n https://github.com/Microsoft/sql-server-samples 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
+            Set-Location sql-server-samples
+            Write-Host "git config core.sparsecheckout true"
+            git config core.sparsecheckout true 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
+            Write-Host "git config core.autocrlf true"
+            git config core.autocrlf true 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
+            'samples/databases/adventure-works/*' | Out-File -Append -Encoding ascii .git/info/sparse-checkout
+        }
+
         Write-Host "git checkout -q"
         git checkout -q 2>&1 | ForEach-Object { $_.ToString() } | Out-Host
 
@@ -129,4 +141,35 @@ function Get-SqlServerInstanceData
         }
     }
 
+}
+
+
+function Import-SqlServerProvider
+{
+    <#
+        .SYNOPSIS
+            Try to load a SQL Server PS provider by any means :-)
+    #>
+
+    foreach ($module in @('SqlServer', 'SQLPS'))
+    {
+        if (Get-Module -ListAvailable | Where-Object { $_.Name -ieq $module})
+        {
+            Import-Module -Global $module
+            return $true
+        }
+    }
+
+    # Wasn't found locally, try to install from the gallery
+
+    try
+    {
+        Install-Module SqlServer -force -AllowClobber -Scope CurrentUser
+        Import-Module -Global SqlServer
+        return $true
+    }
+    catch
+    {
+        return $false
+    }
 }
