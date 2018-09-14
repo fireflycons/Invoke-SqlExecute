@@ -620,7 +620,7 @@
                     {
                         // If -AbortOnError wasn't set, nothing will be thrown from within Execute() method
                         // so throw something here.
-                        throw new InvalidOperationException($"{sqlcmd.ErrorCount} error(s) were detected. Please see log for details.");
+                        throw new ScriptExecutionException(sqlcmd.ErrorCount);
                     }
                 }
             }
@@ -646,7 +646,7 @@
         /// Gets the command line variables if specified as strings.
         /// </summary>
         /// <param name="variables">The variables.</param>
-        /// <returns>DIctionary of variables</returns>
+        /// <returns>Dictionary of variables</returns>
         /// <exception cref="FormatException">Syntax error in -Variable value</exception>
         private static IDictionary GetCommandLineVariables(string[] variables)
         {

@@ -51,6 +51,7 @@
     <Compile Include="InvokeSqlExecuteCommand.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PSObjectExtensions.cs" />
+    <Compile Include="ScriptExecutionException.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Firefly.SqlCmdParser.Client\Firefly.SqlCmdParser.Client.csproj">
