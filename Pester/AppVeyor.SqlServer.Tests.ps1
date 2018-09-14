@@ -117,6 +117,73 @@ Describe 'AdventureWorks Database Creation' {
     }
 }
 
+Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
+
+    $instances |
+        Foreach-Object {
+
+        $instanceInfo = $_
+        $testDatabase = 'Test-InvokeSqExecute'
+
+        Context $instanceInfo.Instance {
+
+            BeforeEach {
+
+                # Create test database
+                Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile "$PSScriptRoot\TestInitialize.sql"
+            }
+
+            AfterEach {
+
+                # Drop test database
+                Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -Query "DROP DATABASE [$testDatabase]"
+            }
+
+            It 'Raises an error when run against single user database' {
+
+                # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
+                # Issue #1
+                #
+                # Personally I think the real issue is that in the example on the web site,
+                # there's no way to tell Invoke-Sqlcmd to exit on the first error as it doesn't support :on error
+
+                {
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql"
+                } |
+                Should Throw
+            }
+
+            It 'Raises correct message when there is an error executing a stored procedure' {
+
+                # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
+                # Issue #2
+
+                {
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql"
+                } |
+                Should Throw
+            }
+
+            It 'Raises an error on arithmetic overflow' {
+
+                # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
+                # Issue #3
+
+                {
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)'
+                } |
+                Should Throw
+            }
+<#
+            It 'Does not erroneously insert 2 records (Stack Overflow 33271446)'  {
+
+                Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql"
+            }
+#>
+        }
+    }
+}
+
 Describe 'Basic SQL Server Provider Tests' {
     $sqlServerProviderInstalled = Import-SqlServerProvider
 
@@ -139,9 +206,9 @@ Describe 'Basic SQL Server Provider Tests' {
                 {
                     try
                     {
-                        Push-Location "SQLSERVER:\SQL\${env:COMPUTERNAME}\$($instanceInfo.Instance)"
+                        Push-Location "SQLSERVER:\SQL\${env:COMPUTERNAME}\$($instanceInfo.Instance)\Databases\master"
 
-                        Invoke-SqlExecute -Query 'SELECT @@VERSION'
+                        Invoke-SqlExecute -Query 'SELECT @@SERVERNAME AS [Instance], DB_NAME() AS [CurrentDatabase]' | Out-String | Out-Host
                     }
                     finally
                     {
