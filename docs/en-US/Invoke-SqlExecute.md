@@ -55,12 +55,10 @@ Additionally, you can capture this output by providing a script block that will 
 
 ## EXAMPLES
 
-### Example 1
-```powershell
-PS C:\> {{ Add example code here }}
+### EXAMPLE 1
 ```
-
-{{ Add example description here }}
+Invoke-SqlExecute -Query "SELECT GETDATE() AS TimeOfQuery;" -ServerInstance "MyComputer\MyInstance"
+```
 
 ## PARAMETERS
 
@@ -422,7 +420,11 @@ Accept wildcard characters: False
 ```
 
 ### -RetryCount
-{{Fill RetryCount Description}}
+This is an enhancement over standard Invoke-Sqlcmd behaviour.
+
+Sets the number of times to retry a failed statement if the error is deemed retryable, e.g.
+timeout or deadlock victim.
+Errors like key violations are not retryable.
 
 ```yaml
 Type: Int32
@@ -510,7 +512,8 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
