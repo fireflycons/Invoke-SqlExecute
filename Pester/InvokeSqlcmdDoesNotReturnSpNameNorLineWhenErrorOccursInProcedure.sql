@@ -3,11 +3,16 @@
 
     Issue #2
 */
-CREATE OR ALTER PROCEDURE dbo.geterror
-as
-create table #t(n int not null)
 
-insert into #t(n) values(null)
+IF EXISTS (SELECT 1 FROM sys.procedures WHERE [name] = 'geterror' and [schema_id] = 1)
+	DROP PROCEDURE dbo.geterror
+GO
+
+CREATE PROCEDURE dbo.geterror
+as
+    create table #t(n int not null)
+
+    insert into #t(n) values(null)
 go
 
 EXEC dbo.geterror
