@@ -147,10 +147,25 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
                 # Personally I think the real issue is that in the example on the web site,
                 # there's no way to tell Invoke-Sqlcmd to exit on the first error as it doesn't support :on error
 
+                $ex = $null
+
+                try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql"
-                } |
-                Should Throw
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql" -ConsoleMessageHandler {}
+                }
+                catch
+                {
+                    $ex = $_.Exception
+                }
+
+                if ($null -eq $ex)
+                {
+                    throw 'Exception not raised by command'
+                }
+
+                # Now verify we got the correct SQL exception
+                $ex.ErrorCount | Should Be 1
+                $ex.SqlExceptions | Select-Object -First 1 | Select-Object -ExpandProperty Message | Should Be 'First Error.'
             }
 
             It 'Raises correct message when there is an error executing a stored procedure' {
@@ -158,10 +173,28 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
                 # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
                 # Issue #2
 
+                $ex = $null
+
+                try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql"
-                } |
-                Should Throw
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql" -ConsoleMessageHandler {}
+                }
+                catch
+                {
+                    $ex = $_.Exception
+                }
+
+                if ($null -eq $ex)
+                {
+                    throw 'Exception not raised by command'
+                }
+
+                # Now verify we got the correct SQL exception
+                $ex.ErrorCount | Should Be 1
+                $sqlException = $ex.SqlExceptions | Select-Object -First 1
+                $sqlException | Select-Object -ExpandProperty Number | Should Be 515 # Cannot insert the value null ...
+                $sqlException | Select-Object -ExpandProperty Procedure | Should Be 'geterror'
+
             }
 
             It 'Raises an error on arithmetic overflow' {
@@ -169,17 +202,56 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
                 # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
                 # Issue #3
 
-                {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)'
-                } |
-                Should Throw
-            }
-<#
-            It 'Does not erroneously insert 2 records (Stack Overflow 33271446)'  {
+                $ex = $null
 
-                Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql"
+                try
+                {
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)' -ConsoleMessageHandler {}
+                }
+                catch
+                {
+                    $ex = $_.Exception
+                }
+
+                if ($null -eq $ex)
+                {
+                    throw 'Exception not raised by command'
+                }
+
+                # Now verify we got the correct SQL exception
+                $ex.ErrorCount | Should Be 1
+                $ex.SqlExceptions | Select-Object -First 1 | Select-Object -ExpandProperty Number | Should Be 8115 # SQL message number for arithmetic overflow
             }
-#>
+
+            It 'Does not erroneously insert 2 records (Stack Overflow 33271446)' {
+
+                # https://stackoverflow.com/questions/33271446/invoke-sqlcmd-runs-script-twice
+
+                $ex = $null
+
+                try
+                {
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\RunStackOverflow33271446.sql" -ConsoleMessageHandler {}
+                }
+                catch
+                {
+                    $ex = $_.Exception
+                }
+
+                if ($null -eq $ex)
+                {
+                    throw 'Exception not raised by command'
+                }
+
+                # Now verify we got the correct SQL exception
+                $ex.ErrorCount | Should Be 1
+                $sqlException = $ex.SqlExceptions | Select-Object -First 1
+                $sqlException | Select-Object -ExpandProperty Number | Should Be 515 # Cannot insert the value null ...
+
+                # Should be one row inserted
+                Invoke-RawQueryScalar -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'select count(*) from [dbo].[s]' | Should Be 1
+            }
+
         }
     }
 }

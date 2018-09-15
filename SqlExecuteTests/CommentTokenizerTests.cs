@@ -112,7 +112,7 @@
         /// <summary>
         /// Tests the comments correctly parsed in regular text.
         /// </summary>
-        [TestMethod]
+        [TestMethod, TestCategory("Parser")]
         public void TestCommentsCorrectlyParsedInRegularText()
         {
             RunTest(this.commentsCorrectlyParsedInRegularTextLines, this.commentsCorrectlyParsedInRegularTextTokens1);
@@ -121,7 +121,7 @@
         /// <summary>
         /// Tests the comments correctly parsed in regular text and ignored in string literals.
         /// </summary>
-        [TestMethod]
+        [TestMethod, TestCategory("Parser")]
         public void TestCommentsCorrectlyParsedInRegularTextAndIgnoredInStringLiterals()
         {
             RunTest(
@@ -132,7 +132,7 @@
         /// <summary>
         /// Tests the multi line string literal is parsed.
         /// </summary>
-        [TestMethod]
+        [TestMethod, TestCategory("Parser")]
         public void TestMultiLineStringLiteralIsParsed()
         {
             RunTest(this.multiLineStringLiteralIsParsedLines, this.multiLineStringLiteralIsParsedTokens);
@@ -141,7 +141,7 @@
         /// <summary>
         /// Tests the unclosed block comment is error.
         /// </summary>
-        [TestMethod]
+        [TestMethod, TestCategory("Parser")]
         [ExpectedException(typeof(UnclosedBlockCommentException))]
         public void TestUnclosedBlockCommentIsError()
         {
@@ -151,7 +151,7 @@
         /// <summary>
         /// Tests the unclosed double quote string literal is error.
         /// </summary>
-        [TestMethod]
+        [TestMethod, TestCategory("Parser")]
         [ExpectedException(typeof(UnclosedStringLiteralException))]
         public void TestUnclosedDoubleQuoteStringLiteralIsError()
         {
@@ -161,7 +161,7 @@
         /// <summary>
         /// Tests the unclosed single quote string literal is error.
         /// </summary>
-        [TestMethod]
+        [TestMethod, TestCategory("Parser")]
         [ExpectedException(typeof(UnclosedStringLiteralException))]
         public void TestUnclosedSingleQuoteStringLiteralIsError()
         {

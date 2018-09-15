@@ -19,7 +19,7 @@
         /// <summary>
         /// <see href="https://stackoverflow.com/questions/33271446/invoke-sqlcmd-runs-script-twice/"/>
         /// </summary>
-        [TestMethod]
+        [TestMethod, Ignore, TestCategory("Integration")]
 
         // ReSharper disable once InconsistentNaming
         public void Test_InsertDoesNotExecuteTwiceOnNotNullViolation_Sql2014()

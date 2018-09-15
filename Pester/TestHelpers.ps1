@@ -143,7 +143,6 @@ function Get-SqlServerInstanceData
 
 }
 
-
 function Import-SqlServerProvider
 {
     <#
@@ -171,5 +170,49 @@ function Import-SqlServerProvider
     catch
     {
         return $false
+    }
+}
+
+function Invoke-RawQueryScalar
+{
+    <#
+        .SYNOPSIS
+            Execute a query with a scalar result using .NET API, so as not to rely on the cmdlet under test
+
+        .PARAMETER ConnectionString
+            The connection string
+
+        .PARAMETER Query
+            SQL to execute
+
+        .OUTPUTS
+            [object] Scalar result
+    #>
+
+    param
+    (
+        [string]$ConnectionString,
+        [string]$Query
+    )
+
+    $conn = New-Object System.Data.SqlClient.SqlConnection $ConnectionString
+    $cmd = $null
+
+    try
+    {
+        $conn.Open()
+        [System.Data.SqlClient.SqlConnection]::ClearPool($conn)
+        $cmd = $conn.CreateCommand()
+        $cmd.CommandType = 'Text'
+        $cmd.CommandText = $Query
+        $cmd.ExecuteScalar()
+    }
+    finally
+    {
+        ($cmd, $conn) |
+            Where-Object { $null -ne $_ } |
+            ForEach-Object {
+                $_.Dispose()
+            }
     }
 }

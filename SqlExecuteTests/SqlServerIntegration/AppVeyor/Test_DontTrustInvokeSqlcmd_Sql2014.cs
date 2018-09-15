@@ -15,19 +15,19 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         /// </value>
         public TestContext TestContext { get; set; }
 
-        [TestMethod]
+        [TestMethod, TestCategory("Integration")]
         public void Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure_Sql2014()
         {
             this.Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure(this.TestContext);
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("Integration")]
         public void Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode_Sql2014()
         {
             this.Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode(this.TestContext);
         }
 
-        [TestMethod]
+        [TestMethod, TestCategory("Integration")]
         public void Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError_Sql2014()
         {
             this.Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError(this.TestContext);

@@ -1,6 +1,9 @@
 version: 0.1.{build}
 image: Visual Studio 2017
 
+skip_commits:
+  message: /NO_CI/      # Regex for matching commit message
+
 services:
   - mssql2014
   - mssql2016
@@ -23,17 +26,20 @@ environment:
 matrix:
   fast_finish: false
 
-build:
-  parallel: true
-  verbosity: normal
-
 before_build:
   - nuget restore
   # Download AdventureWorks samples
   #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/fireflycons/Invoke-SqlExecute/dev/DownloadAdventureWorks.ps1'))
 
-skip_commits:
-  message: /NO_CI/      # Regex for matching commit message
+build:
+  parallel: true
+  verbosity: normal
+
+# to run tests against only selected assemblies and/or categories
+test:
+  categories:
+    only:
+      - Parser
 
 after_test:             # Now run pester tests and possibly deploy to PSGallery
   - ps: . .\TestAndDeploy.ps1

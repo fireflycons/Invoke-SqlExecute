@@ -16,7 +16,7 @@ namespace Firefly.InvokeSqlExecute
     public class ScriptExecutionException : Exception
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptExecutionException"/> class.
+        /// Initializes a new instance of the <see cref="ScriptExecutionException" /> class.
         /// </summary>
         /// <param name="errorCount">The error count.</param>
         public ScriptExecutionException(int errorCount)
@@ -24,34 +24,44 @@ namespace Firefly.InvokeSqlExecute
             this.SqlExceptions = new List<SqlException>();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScriptExecutionException"/> class.
+        /// </summary>
+        /// <param name="sqlExceptions">The SQL exceptions.</param>
         public ScriptExecutionException(IList<SqlException> sqlExceptions)
         {
             this.SqlExceptions = sqlExceptions;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ScriptExecutionException"/> class.
+        /// </summary>
+        /// <param name="sqlException">The SQL exception.</param>
         public ScriptExecutionException(SqlException sqlException)
         {
             this.SqlExceptions = new List<SqlException> { sqlException };
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptExecutionException"/> class.
+        /// Initializes a new instance of the <see cref="ScriptExecutionException" /> class.
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="inner">The inner.</param>
         public ScriptExecutionException(string message, Exception inner)
             : base(message, inner)
         {
+            this.SqlExceptions = new List<SqlException>();
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptExecutionException"/> class.
+        /// Initializes a new instance of the <see cref="ScriptExecutionException" /> class.
         /// </summary>
         /// <param name="info">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> that holds the serialized object data about the exception being thrown.</param>
         /// <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> that contains contextual information about the source or destination.</param>
         protected ScriptExecutionException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
+            this.SqlExceptions = new List<SqlException>();
         }
 
         /// <summary>
@@ -67,6 +77,12 @@ namespace Firefly.InvokeSqlExecute
         /// </summary>
         public override string Message => $"{this.ErrorCount} error(s) were detected. Please see log for details.";
 
+        /// <summary>
+        /// Gets the SQL exceptions.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
         public IList<SqlException> SqlExceptions { get; }
     }
 }
