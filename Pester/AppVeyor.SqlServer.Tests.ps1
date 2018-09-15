@@ -193,7 +193,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
                 $ex.ErrorCount | Should Be 1
                 $sqlException = $ex.SqlExceptions | Select-Object -First 1
                 $sqlException | Select-Object -ExpandProperty Number | Should Be 515 # Cannot insert the value null ...
-                $sqlException | Select-Object -ExpandProperty Procedure | Should Be 'geterror'
+                $sqlException | Select-Object -ExpandProperty Procedure | Should Match '^(dbo\.)?geterror$' # SQL2017 returns qualified proc name
 
             }
 
