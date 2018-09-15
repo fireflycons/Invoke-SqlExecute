@@ -3,7 +3,6 @@
     using System;
     using System.Collections;
     using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Data;
     using System.Data.Common;
     using System.Data.SqlClient;
@@ -11,7 +10,6 @@
     using System.Linq;
     using System.Management.Automation;
     using System.Reflection;
-    using System.Security.Policy;
     using System.Security.Principal;
 
     using Firefly.SqlCmdParser;
@@ -51,7 +49,12 @@
     /// <para type="description">
     /// You can display SQL Server message output, such as those that result from the SQL PRINT statement by specifying the Verbose parameter.
     /// Additionally, you can capture this output by providing a script block that will receive the message along with its intended destination (StdOut/StdError) and route this data elsewhere.
-    /// </para>    /// </summary>
+    /// </para>
+    /// </summary>
+    /// <example>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute a simple query, similar to specifying sqlcmd with the -Q and -S options:</para>
+    ///   <code>Invoke-SqlExecute -Query "SELECT GETDATE() AS TimeOfQuery;" -ServerInstance "MyComputer\MyInstance"</code>
+    /// </example>
     /// <seealso cref="T:System.Management.Automation.PSCmdlet" />
     /// <seealso cref="T:Firefly.InvokeSqlExecute.IInvokeSqlExecuteArguments" />
     [Cmdlet(VerbsLifecycle.Invoke, "SqlExecute")]
@@ -513,7 +516,10 @@
         /// <inheritdoc />
         /// <summary>
         /// Gets the number of times to retry a retryable error (e.g. timed-out queries).
-        /// <para type="Description">
+        /// <para type="description">
+        /// This is an enhancement over standard Invoke-Sqlcmd behaviour.
+        /// </para>
+        /// <para type="description">
         /// Sets the number of times to retry a failed statement if the error is deemed retryable, e.g. timeout or deadlock victim. Errors like key violations are not retryable. 
         /// </para>
         /// </summary>
@@ -620,17 +626,18 @@
                     {
                         // If -AbortOnError wasn't set, nothing will be thrown from within Execute() method
                         // so throw something here.
-                        throw new ScriptExecutionException(sqlcmd.ErrorCount);
+                        throw new ScriptExecutionException(sqlcmd.SqlExceptions);
                     }
                 }
             }
+            catch (SqlException e)
+            {
+                this.AssignExitCode();
+                throw new ScriptExecutionException(e);
+            }
             catch (Exception e)
             {
-                if (this.ExitCode == 0)
-                {
-                    // Set exit code to 1 if nothing else has already set it.
-                    this.ExitCode = 1;
-                }
+                this.AssignExitCode();
 #if DEBUG
                 Console.WriteLine(e);
 #endif
@@ -661,10 +668,21 @@
                     throw new FormatException("Syntax error in -Variable value");
                 }
 
-                dict.Add(variable.Substring(0, ind), variable.Substring(ind + 1));
+                dict.Add(variable.Substring(0, ind).Trim(), variable.Substring(ind + 1).Trim());
             }
 
             return dict;
+        }
+
+        /// <summary>
+        /// Set exit code to 1 if nothing else has already set it.
+        /// </summary>
+        private void AssignExitCode()
+        {
+            if (this.ExitCode == 0)
+            {
+                this.ExitCode = 1;
+            }
         }
 
         /// <summary>

@@ -1,6 +1,8 @@
 ﻿namespace Firefly.SqlCmdParser.Client
 {
     using System;
+    using System.Collections.Generic;
+    using System.Data.SqlClient;
     using System.Diagnostics;
 
     /// <inheritdoc />
@@ -70,6 +72,20 @@
             if (this.arguments.Connected != null)
             {
                 this.executer.Connected += this.arguments.Connected;
+            }
+        }
+
+        /// <summary>
+        /// Gets the list of SQL exceptions thrown during the batch execution.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
+        public IList<SqlException> SqlExceptions
+        {
+            get
+            {
+                return this.executer == null ? new List<SqlException>() : this.executer.SqlExceptions;
             }
         }
 

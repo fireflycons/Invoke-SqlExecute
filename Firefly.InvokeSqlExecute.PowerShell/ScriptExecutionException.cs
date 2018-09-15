@@ -2,6 +2,9 @@
 namespace Firefly.InvokeSqlExecute
 {
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Data.SqlClient;
     using System.Runtime.Serialization;
 
     /// <summary>
@@ -18,7 +21,17 @@ namespace Firefly.InvokeSqlExecute
         /// <param name="errorCount">The error count.</param>
         public ScriptExecutionException(int errorCount)
         {
-            this.ErrorCount = errorCount;
+            this.SqlExceptions = new List<SqlException>();
+        }
+
+        public ScriptExecutionException(IList<SqlException> sqlExceptions)
+        {
+            this.SqlExceptions = sqlExceptions;
+        }
+
+        public ScriptExecutionException(SqlException sqlException)
+        {
+            this.SqlExceptions = new List<SqlException> { sqlException };
         }
 
         /// <summary>
@@ -47,11 +60,13 @@ namespace Firefly.InvokeSqlExecute
         /// <value>
         /// The error count.
         /// </value>
-        public int ErrorCount { get; }
+        public int ErrorCount => this.SqlExceptions.Count;
 
         /// <summary>
         /// Gets a message that describes the current exception.
         /// </summary>
         public override string Message => $"{this.ErrorCount} error(s) were detected. Please see log for details.";
+
+        public IList<SqlException> SqlExceptions { get; }
     }
 }

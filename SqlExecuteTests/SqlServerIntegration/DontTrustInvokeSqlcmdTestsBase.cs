@@ -90,15 +90,9 @@ namespace SqlExecuteTests.SqlServerIntegration
                 {
                     impl.Execute();
                 }
-                catch (Exception e)
+                catch (SqlException e)
                 {
-                    if (e.InnerException is SqlException sqlException)
-                    {
-                        Assert.AreEqual("First Error.", sqlException.Message);
-                        return;
-                    }
-
-                    throw;
+                    Assert.AreEqual("First Error.", e.Message);
                 }
             }
         }
