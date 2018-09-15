@@ -249,7 +249,7 @@
             }
 
             // Buffer the output written by the external process. 
-            // Attempting to write this to the powershell host UI from within the OutputDataReceived/ErrorDataReceived events crashes powershell.
+            // Attempting to write this to the PowerShell host UI from within the OutputDataReceived/ErrorDataReceived events crashes PowerShell.
             var outputData = new List<ShellExecuteOutput>();
 
             using (var process = new Process())

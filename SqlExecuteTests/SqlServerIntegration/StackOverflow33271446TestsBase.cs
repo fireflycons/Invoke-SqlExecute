@@ -52,16 +52,9 @@ namespace SqlExecuteTests.SqlServerIntegration
                 {
                     impl.Execute();
                 }
-                catch (Exception e)
+                catch (SqlException e)
                 {
-                    if (e.InnerException is SqlException sqlException)
-                    {
-                        Assert.AreEqual(InsertNullInNotNullColumn, sqlException.Number);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    Assert.AreEqual(InsertNullInNotNullColumn, e.Number);
                 }
             }
 
