@@ -19,6 +19,14 @@
         int ErrorCount { get; }
 
         /// <summary>
+        /// Gets the list of SQL exceptions thrown during the batch execution.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
+        IList<SqlException> SqlExceptions { get; }
+
+        /// <summary>
         /// <c>:CONNECT</c> directive.
         /// </summary>
         /// <param name="timeout">The timeout.</param>

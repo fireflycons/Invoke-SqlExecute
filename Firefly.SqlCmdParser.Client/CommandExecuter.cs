@@ -8,7 +8,6 @@
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Security.Principal;
     using System.Text;
 
@@ -18,6 +17,16 @@
     // ReSharper disable once InheritdocConsiderUsage
     public class CommandExecuter : ICommandExecuter, IDisposable
     {
+        /// <summary>
+        /// SQL server or provider error codes that represent failures that can be retried.
+        /// </summary>
+        private static readonly int[] RetryableErrors = new[]
+                                                            {
+                                                                -2, // ADO.NET timeout
+                                                                11, // General network error
+                                                                1205 // Deadlock victim 
+                                                            };
+
         /// <summary>
         /// The arguments
         /// </summary>
@@ -108,7 +117,15 @@
         /// <value>
         /// The error count.
         /// </value>
-        public int ErrorCount { get; protected set; }
+        public int ErrorCount => this.SqlExceptions.Count;
+
+        /// <summary>
+        /// Gets or sets the list of SQL exceptions thrown during the batch execution.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
+        public IList<SqlException> SqlExceptions { get; protected set; } = new List<SqlException>();
 
         /// <inheritdoc />
         /// <summary>
@@ -232,7 +249,7 @@
             }
 
             // Buffer the output written by the external process. 
-            // Attempting to write this to the powershell host UI from within the OutputDataReceived/ErrorDataReceived events crashes powershell.
+            // Attempting to write this to the PowerShell host UI from within the OutputDataReceived/ErrorDataReceived events crashes PowerShell.
             var outputData = new List<ShellExecuteOutput>();
 
             using (var process = new Process())
@@ -310,7 +327,7 @@
                 catch (Exception ex)
                 {
                     // Ignore any error: "When an incorrect query is specified, sqlcmd will exit without a return value."
-                    // Error here may include InvalidCastException if the scalar reult was null or not an integer.
+                    // Error here may include InvalidCastException if the scalar result was null or not an integer.
                     this.WriteStdoutMessage($"Warning: Error in EXIT(query): {ex.Message}");
                 }
             }
@@ -519,7 +536,6 @@
                             {
                                 // Can't retry this command
                                 // Exit both the while loop and the go count as it will always fail.
-                                ++this.ErrorCount;
                                 throw;
                             }
                         }
@@ -528,6 +544,7 @@
             }
             catch (SqlException e)
             {
+                this.SqlExceptions.Add(e);
                 this.WriteStderrMessage(e.Format(batch));
 
                 if (this.ErrorAction == ErrorAction.Exit)
@@ -587,14 +604,7 @@
         /// </remarks>
         private static bool IsRetryableError(SqlException ex)
         {
-            var retryableErrors = new[]
-                                      {
-                                          -2, // ADO.NET timeout
-                                          11, // General network error
-                                          1205 // Deadlock victiom 
-                                      };
-
-            return retryableErrors.Any(e => ex.Number == e);
+            return RetryableErrors.Any(e => ex.Number == e);
         }
 
         /// <summary>
@@ -656,9 +666,17 @@
                     int.Parse(this.variableResolver.ResolveVariable("SQLCMDPACKETSIZE"));
             }
 
-            this.connection = new SqlConnection(connectionStringBuilder.ConnectionString);
-            this.connection.Open();
-            this.connection.InfoMessage += this.OnSqlInfoMessageEvent;
+            try
+            {
+                this.connection = new SqlConnection(connectionStringBuilder.ConnectionString);
+                this.connection.Open();
+                this.connection.InfoMessage += this.OnSqlInfoMessageEvent;
+            }
+            catch (SqlException ex)
+            {
+                this.SqlExceptions.Add(ex);
+                throw;
+            }
 
             // Ensure the connection is properly closed when we do away with it.
             // Unit tests can fail with 'database in use' due to connections hanging around.
