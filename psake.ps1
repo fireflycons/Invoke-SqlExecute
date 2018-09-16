@@ -121,6 +121,12 @@ Task Build -Depends Init {
         }
     }
 
+    if ($ENV:BHBuildSystem -ine 'Unknown')
+    {
+        # Remove placeholder file. Don't want it packaged
+        Remove-Item "$ModuleOutDir\*"
+    }
+
     "`tTaking output from $(Split-Path -Leaf $moduleSrc)"
     '*.dll', '*.ps*', '*.dll-Help.xml' |
     ForEach-Object {
