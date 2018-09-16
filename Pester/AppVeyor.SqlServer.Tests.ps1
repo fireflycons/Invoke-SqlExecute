@@ -127,6 +127,16 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
 
         Context $instanceInfo.Instance {
 
+            $suppressConsole = @{
+                ConsoleMessageHandler = {}
+            }
+
+            if ($env:VerboseTests -eq 1)
+            {
+                # If this env var is set to 1, these tests will output the SQL exception messages to the console
+                $suppressConsole = @{}
+            }
+
             BeforeEach {
 
                 # Create test database
@@ -151,7 +161,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql" -ConsoleMessageHandler {}
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql" @suppressConsole
                 }
                 catch
                 {
@@ -177,7 +187,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql" -ConsoleMessageHandler {}
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql" @suppressConsole
                 }
                 catch
                 {
@@ -206,7 +216,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)' -ConsoleMessageHandler {}
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)' @suppressConsole
                 }
                 catch
                 {
@@ -231,7 +241,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\RunStackOverflow33271446.sql" -ConsoleMessageHandler {}
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\RunStackOverflow33271446.sql" @suppressConsole
                 }
                 catch
                 {

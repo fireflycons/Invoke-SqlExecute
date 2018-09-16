@@ -15,6 +15,8 @@ init:
   - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
 
 environment:
+  # Uncomment the following to see SQLException detail in Pester test output (or set it in a local environment)
+  VerboseTests: 1
   APPVEYOR_RDP_PASSWORD:
     secure: 6RnJH3K6Be0FsXWvj3TxTQ==
   NuGetApiKey:
