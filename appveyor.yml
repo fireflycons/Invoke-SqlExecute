@@ -52,10 +52,7 @@ artifacts:
   - path: Firefly.InvokeSqlExecute # Dir populated with files that make up the module
 
 deploy_script:    # Deploy to PS Gallery
-- ps: >-
-    Invoke-psake -buildFile .\psake.ps1 -taskList Deploy -nologo
-
-    exit ( [int]( -not $psake.build_success ) )
+- ps: . .\DeployModule.ps1
 
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

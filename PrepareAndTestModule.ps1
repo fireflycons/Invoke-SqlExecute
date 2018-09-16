@@ -1,5 +1,3 @@
-param ($Task = 'Default')
-
 $currentLocation = Get-Location
 try
 {
@@ -13,7 +11,7 @@ try
     Import-Module Psake, BuildHelpers, platyPS
     Set-BuildEnvironment -ErrorAction SilentlyContinue
 
-    Invoke-psake -buildFile $ENV:BHProjectPath\psake.ps1 -taskList $Task -nologo
+    Invoke-psake -buildFile $ENV:BHProjectPath\psake.ps1 -taskList 'Default' -nologo
     exit ( [int]( -not $psake.build_success ) )
 }
 catch
