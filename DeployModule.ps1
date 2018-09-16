@@ -1,7 +1,5 @@
 try
 {
-    Set-BuildEnvironment -ErrorAction SilentlyContinue
-
     Invoke-psake -buildFile $ENV:BHProjectPath\psake.ps1 -taskList 'Deploy' -nologo
     exit ( [int]( -not $psake.build_success ) )
 }
