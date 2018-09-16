@@ -48,6 +48,9 @@ test:
 after_test:             # Now layout PS Module and run pester tests.
   - ps: . .\PrepareAndTestModule.ps1
 
+artifacts:
+  - path: Firefly.InvokeSqlExecute # Dir populated with files that make up the module
+
 deploy_script:          # Deploy to PS Gallery
   - ps: Invoke-psake -buildFile .\psake.ps1 -taskList Deploy -nologo
 
