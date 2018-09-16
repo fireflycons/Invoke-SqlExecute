@@ -97,7 +97,7 @@ Task Build -Depends Init {
 
         $f = 'Debug', 'Release' |
         ForEach-Object {
-            
+
             $p = Join-Path $CompilationOutput "$_\Firefly.InvokeSqlExecute.PowerShell.dll"
 
             if (Test-Path -Path $p -PathType Leaf)
@@ -112,7 +112,7 @@ Task Build -Depends Init {
         {
             $f.DirectoryName
         }
-        else 
+        else
         {
             throw "No outputs from C# compilation found"
         }
@@ -237,7 +237,7 @@ Task GenerateMarkdown -requiredVariables DefaultLocale, DocsRootDir {
 
         if (Get-ChildItem -LiteralPath $DocsRootDir -Filter *.md -Recurse)
         {
-            Get-ChildItem -LiteralPath $DocsRootDir -Directory | 
+            Get-ChildItem -LiteralPath $DocsRootDir -Directory |
                 ForEach-Object {
                 Update-MarkdownHelp -Path $_.FullName -Verbose:$VerbosePreference > $null
             }
