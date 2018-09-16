@@ -37,7 +37,7 @@ Properties {
 
 }
 
-Task Default -Depends Deploy
+Task Default -Depends PrepareModule
 
 Task Init {
     $lines
@@ -84,6 +84,9 @@ Task Init {
         }
     }
 }
+
+
+Task PrepareModule -Depends BuildHelp { }
 
 Task Build -Depends Init {
 
@@ -185,7 +188,7 @@ Task UpdateModuleVersion -Depends Test {
     }
 }
 
-Task Deploy -Depends BuildHelp {
+Task Deploy -Depends Init {
     $lines
 
     # Gate deployment

@@ -45,8 +45,11 @@ test:
     only:
       - Parser
 
-after_test:             # Now run pester tests and possibly deploy to PSGallery
-  - ps: . .\TestAndDeploy.ps1
+after_test:             # Now layout PS Module and run pester tests.
+  - ps: . .\PrepareAndTestModule.ps1
+
+deploy_script:          # Deploy to PS Gallery
+  - ps: Invoke-psake -buildFile .\psake.ps1 -taskList Deploy -nologo
 
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
