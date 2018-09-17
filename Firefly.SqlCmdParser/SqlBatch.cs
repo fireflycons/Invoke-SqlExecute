@@ -1,10 +1,12 @@
 ﻿namespace Firefly.SqlCmdParser
 {
+    using System;
     using System.Text;
 
     /// <summary>
     /// Object that compiles a batch of SQL
     /// </summary>
+    [Serializable]
     public class SqlBatch
     {
         /// <summary>

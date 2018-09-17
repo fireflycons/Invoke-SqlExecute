@@ -1,4 +1,4 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿namespace Firefly.SqlCmdParser
 {
     using System;
     using System.Data.SqlClient;
@@ -10,7 +10,7 @@
     public static class SqlExceptionExtensions
     {
         /// <summary>
-        /// Formats deatil of the <see cref="SqlException"/> to a string.
+        /// Formats detail of the <see cref="SqlException"/> to a string.
         /// </summary>
         /// <param name="ex">The exception.</param>
         /// <param name="batch">The batch.</param>
@@ -21,7 +21,7 @@
         }
 
         /// <summary>
-        /// Formats deatil of the <see cref="SqlException"/> to a string.
+        /// Formats detail of the <see cref="SqlException"/> to a string.
         /// </summary>
         /// <param name="ex">The exception.</param>
         /// <param name="batch">The batch.</param>
@@ -29,6 +29,12 @@
         /// <returns>Formatted exception text.</returns>
         public static string Format(this SqlException ex, SqlBatch batch, string server)
         {
+            // If a SQLBatch is included in the exception user data, use it.
+            if (batch == null && ex.Data.Contains("Batch"))
+            {
+                batch = (SqlBatch)ex.Data["Batch"];
+            }
+
             var sb = new StringBuilder();
 
             sb.AppendLine("SqlException caught!")
@@ -90,8 +96,6 @@
                 .AppendLine($"{pad}Number:              {error.Number}")
                 .AppendLine($"{pad}Class:               {error.Class}")
                 .AppendLine($"{pad}State:               {error.State}");
-
-            var isProcedureError = !string.IsNullOrEmpty(error.Procedure);
 
             if (!string.IsNullOrEmpty(error.Procedure))
             {

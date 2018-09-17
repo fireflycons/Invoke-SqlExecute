@@ -75,7 +75,20 @@ namespace Firefly.InvokeSqlExecute
         /// <summary>
         /// Gets a message that describes the current exception.
         /// </summary>
-        public override string Message => $"{this.ErrorCount} error(s) were detected. Please see log for details.";
+        public override string Message
+        {
+            get
+            {
+                if (this.ErrorCount == 1)
+                {
+                    return "1 error was detected.";
+                }
+                else
+                {
+                    return $"{this.ErrorCount} error(s) were detected. Please see output or log for details.";
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the SQL exceptions.

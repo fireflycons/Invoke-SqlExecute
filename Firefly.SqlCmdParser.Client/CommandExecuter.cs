@@ -545,12 +545,15 @@
             catch (SqlException e)
             {
                 this.SqlExceptions.Add(e);
-                this.WriteStderrMessage(e.Format(batch));
 
                 if (this.ErrorAction == ErrorAction.Exit)
                 {
+                    // Add batch data so that outer handler can format it.
+                    e.Data.Add("Batch", batch);
                     throw;
                 }
+
+                this.WriteStderrMessage(e.Format(batch));
 
                 // Indicate that errors have occurred during processing and continue
                 this.arguments.ExitCode = 1;
