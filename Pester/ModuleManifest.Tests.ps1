@@ -37,5 +37,11 @@ Describe "$ModuleName Module - Testing Manifest File (.psd1)" {
         It 'Should contain Tags (For the PSGallery)' {
             $ModuleInformation.Tags.count | Should not BeNullOrEmpty
         }
+        It 'Should have no whitespace in tag values' {
+            $ModuleInformation.Tags |
+            ForEach-Object {
+                $_ | Should Not Match '\s'
+            }
+        }
     }
 }

@@ -47,14 +47,14 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags       = @('SQL', 'MSSQL', 'SQL Server')
+            Tags       = @('SQL', 'MSSQL', 'SQLServer')
 
             # A URL to the license for this module.
             LicenseUri = 'https://github.com/fireflycons/Invoke-SqlExecute/blob/master/LICENSE'
 
             # A URL to the main website for this project.
             ProjectUri = 'https://github.com/fireflycons/Invoke-SqlExecute'
-            
+
         } # End of PSData hashtable
 
     } # End of PrivateData hashtable
