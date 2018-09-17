@@ -305,3 +305,39 @@ Describe 'Basic SQL Server Provider Tests' {
         }
     }
 }
+
+Describe 'SQLCMD Commands' {
+
+    Context ':CONNECT' {
+
+        # Build a test script
+        $connectTest = "$PSScriptRoot\connect.sql"
+
+        if (Test-Path -Path $connectTest -PathType Leaf)
+        {
+            Remove-Item $connectTest
+        }
+
+        $instances |
+        ForEach-Object {
+
+            $cb = New-Object System.Data.SqlClient.SqlConnectionStringBuilder ($_.Connection)
+
+            if ($cb.IntegratedSecurity)
+            {
+                ":CONNECT $($cb.DataSource)" | Out-File $connectTest -Encoding ascii -Append
+            }
+            else 
+            {
+                ":CONNECT $($cb.DataSource) -U $($cb.UserID) -P $($cb.Password)" | Out-File $connectTest -Encoding ascii -Append
+            }
+
+            "SELECT @@SERVERNAME"  | Out-File $connectTest -Encoding ascii -Append
+        }
+
+        It 'Should :CONNECT to all discovered SQL Servers' {
+
+            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest
+        }
+    }
+}

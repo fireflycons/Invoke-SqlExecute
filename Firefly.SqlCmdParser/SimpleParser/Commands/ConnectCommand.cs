@@ -14,7 +14,7 @@
         /// <summary>
         /// The command regex
         /// </summary>
-        private readonly Regex commandRegex = new Regex(@"^\s*:connect(\s*|\s+[^\s].*)$");
+        private readonly Regex commandRegex = new Regex(@"^\s*:connect(\s*|\s+[^\s].*)$", RegexOptions.IgnoreCase);
 
         /// <summary>
         /// The connect line
@@ -112,7 +112,7 @@
 
             if (this.Timeout == int.MinValue)
             {
-                this.Timeout = int.Parse(variableResolver.ResolveVariable("SQLCMDTIMEOUT"));
+                this.Timeout = int.Parse(variableResolver.ResolveVariable("SQLCMDLOGINTIMEOUT"));
             }
 
             if (this.Username == null && this.Password == null)
