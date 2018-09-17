@@ -263,3 +263,6 @@ __pycache__/
 # Firefly.InvokeSqlExecute Module Output
 Firefly.InvokeSqlExecute/*
 !Firefly.InvokeSqlExecute/README.md
+
+#VSCode
+.vscode/
