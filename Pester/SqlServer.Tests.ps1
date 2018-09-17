@@ -117,7 +117,7 @@ Describe 'AdventureWorks Database Creation' {
     }
 }
 
-Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
+Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
     $instances |
         Foreach-Object {
@@ -149,7 +149,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
                 Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -Query "DROP DATABASE [$testDatabase]"
             }
 
-            It 'Raises an error when run against single user database' {
+            It 'Should correctly RAISERROR when database set to single user mode' {
 
                 # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
                 # Issue #1
@@ -178,7 +178,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
                 $ex.SqlExceptions | Select-Object -First 1 | Select-Object -ExpandProperty Message | Should Be 'First Error.'
             }
 
-            It 'Raises correct message when there is an error executing a stored procedure' {
+            It 'Should report stored procedure details in error raised within an executing procedure' {
 
                 # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
                 # Issue #2
@@ -207,7 +207,7 @@ Describe 'Known Invoke-Sqlcmd bags are fixed in this implementation' {
 
             }
 
-            It 'Raises an error on arithmetic overflow' {
+            It 'Should RAISERROR on arithmetic overflow' {
 
                 # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
                 # Issue #3

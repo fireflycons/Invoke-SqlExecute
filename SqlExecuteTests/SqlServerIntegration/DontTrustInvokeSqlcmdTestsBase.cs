@@ -31,7 +31,7 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <summary>
         /// Tests the invoke SQLCMD does not return sp name nor line when error occurs in procedure.
         /// </summary>
-        public void Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure(TestContext testContext)
+        public void Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure(TestContext testContext)
         {
             var initArgs = new TestArguments
                                {
@@ -74,7 +74,7 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <summary>
         /// Tests the invoke SQLCMD does return raised error if query was run in single user mode.
         /// </summary>
-        public void Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode(TestContext testContext)
+        public void Should_correctly_RAISERROR_when_database_set_to_single_user_mode(TestContext testContext)
         {
             var initArgs = new TestArguments
                                {
@@ -100,7 +100,7 @@ namespace SqlExecuteTests.SqlServerIntegration
         /// <summary>
         /// Tests the invoke SQLCMD returns error for arithmetic overflow error.
         /// </summary>
-        public void Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError(TestContext testContext)
+        public void Should_RAISERROR_on_arithmetic_overflow(TestContext testContext)
         {
             var initArgs = new TestArguments
                                {

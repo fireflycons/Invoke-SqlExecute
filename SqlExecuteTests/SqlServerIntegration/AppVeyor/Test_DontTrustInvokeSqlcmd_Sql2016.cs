@@ -16,21 +16,21 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         public TestContext TestContext { get; set; }
 
         [TestMethod, Ignore, TestCategory("Integration")]
-        public void Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure_Sql2016()
+        public void Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure_Sql2016()
         {
-            this.Test_InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure(this.TestContext);
+            this.Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure(this.TestContext);
         }
 
         [TestMethod, Ignore, TestCategory("Integration")]
-        public void Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode_Sql2016()
+        public void Should_correctly_RAISERROR_when_database_set_to_single_user_mode_Sql2016()
         {
-            this.Test_InvokeSqlcmdDoesReturnRaisedErrorIfQueryWasRunInSingleUserMode(this.TestContext);
+            this.Should_correctly_RAISERROR_when_database_set_to_single_user_mode(this.TestContext);
         }
 
         [TestMethod, Ignore, TestCategory("Integration")]
-        public void Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError_Sql2016()
+        public void Should_RAISERROR_on_arithmetic_overflow_Sql2016()
         {
-            this.Test_InvokeSqlcmdReturnsErrorForArithmeticOverflowError(this.TestContext);
+            this.Should_RAISERROR_on_arithmetic_overflow(this.TestContext);
         }
 
         /// <summary>
