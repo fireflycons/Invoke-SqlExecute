@@ -60,7 +60,4 @@ however they aren't present in the AppVeyor CI system.
 
 If you are aware of any other bugs or inconsistencies in Invoke-Sqlcmd where the behaviour does not align with that of SSMS or sqlcmd.exe, please contact me and I will correct it in this implementation or you can fork it and submit a PR.
 
-## Still to do
-
-Create an additional test suite in PowerShell/Pester that runs within the SQL server provider context. 
 
