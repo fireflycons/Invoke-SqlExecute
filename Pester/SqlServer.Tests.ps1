@@ -246,7 +246,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_correctly_RAISERROR_when_database_set_to_single_user_mode.sql" @suppressConsole
                 }
                 catch
                 {
@@ -272,7 +272,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure.sql" @suppressConsole
                 }
                 catch
                 {
