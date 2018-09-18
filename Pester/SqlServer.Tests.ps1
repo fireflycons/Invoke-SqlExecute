@@ -225,7 +225,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
             BeforeEach {
 
                 # Create test database
-                Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile "$PSScriptRoot\TestInitialize.sql"
+                Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile "$PSScriptRoot\TestResources\TestInitialize.sql"
             }
 
             AfterEach {
@@ -246,7 +246,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode.sql" @suppressConsole
                 }
                 catch
                 {
@@ -272,7 +272,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure.sql" @suppressConsole
                 }
                 catch
                 {
@@ -326,7 +326,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\RunStackOverflow33271446.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\RunStackOverflow33271446.sql" @suppressConsole
                 }
                 catch
                 {
