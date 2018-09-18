@@ -360,7 +360,7 @@ Describe 'Basic SQL Server Provider Tests' {
     }
 
     $instances |
-        Where-Object { $_.Instance -inotlike '*(localdb)*' } | # locadb not available through provider
+        Where-Object { $_.Instance -inotlike '*(localdb)*' } | # localdb not available through provider
         ForEach-Object {
 
         $instanceInfo = $_
