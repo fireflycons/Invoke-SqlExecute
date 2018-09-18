@@ -99,6 +99,14 @@
         /// </value>
         public int BatchCount { get; private set; }
 
+        /// <summary>
+        /// Gets any error level set via :SETVAR SQLCMDERRORLEVEL.
+        /// </summary>
+        /// <returns>The error level.</returns>
+        public int GetErrorLevel()
+        {
+            return int.TryParse(this.variableResolver.ResolveVariable("SQLCMDERRORLEVEL"), out var errorLevel) ? errorLevel : 0;
+        }
 
         /// <inheritdoc />
         /// <summary>

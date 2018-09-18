@@ -75,6 +75,91 @@ $ManifestFile = "$(Split-path (Split-Path -Parent -Path $MyInvocation.MyCommand.
 # Import the module
 Import-Module -Name $ManifestFile
 
+Describe 'SQLCMD Commands' {
+
+    Context ':CONNECT' {
+
+        # Build a test script
+        $connectTest = "${env:TEMP}\Invoke-SqlExecute-Connect.sql"
+
+        if (Test-Path -Path $connectTest -PathType Leaf)
+        {
+            Remove-Item $connectTest
+        }
+
+        $instances |
+        ForEach-Object {
+
+            $cb = New-Object System.Data.SqlClient.SqlConnectionStringBuilder ($_.Connection)
+
+            if ($cb.IntegratedSecurity)
+            {
+                ":CONNECT $($cb.DataSource)" | Out-File $connectTest -Encoding ascii -Append
+            }
+            else
+            {
+                ":CONNECT $($cb.DataSource) -U $($cb.UserID) -P $($cb.Password)" | Out-File $connectTest -Encoding ascii -Append
+            }
+
+            "SELECT @@SERVERNAME AS [ServerName]"  | Out-File $connectTest -Encoding ascii -Append
+        }
+
+        It 'Should :CONNECT to all discovered SQL Servers' {
+
+            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest -OutputAs DataRows
+        }
+    }
+
+    Context ':SETVAR' {
+
+        # Sufficient to test on only one instance, as SETVAR is a client-side operation
+
+        $instances |
+        Select-Object -First 1 |
+        ForEach-Object {
+
+            $instance = $_
+
+            It 'Should set a variable with :SETVAR' {
+
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Query ":SETVAR TestVar `"Hello`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
+            }
+
+            It 'Should set a variable from command line with hashtable argument' {
+
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable @{ TestVar = 'Hello' } -Query "SELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
+            }
+
+            It 'Should set a variable from command line with string argument' {
+
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable "MyVar1 = 'String1';MyVar2 = 'String2'" -Query "SELECT '`$(MyVar1)' AS [Result]" -OutputAs Scalar | Should Be 'String1'
+            }
+
+            It 'Should set a variable from command line with array argument' {
+
+                $myArray = "MyVar1 = 'String1'", "MyVar2 = 'String2'"
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable $myArray -Query "SELECT '`$(MyVar1)' AS [Result]" -OutputAs Scalar | Should Be 'String1'
+            }
+
+            It 'Should not override a command line variable if -OverrideScriptVariables is set' {
+
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable @{ TestVar = 'Hello' } -OverrideScriptVariables -Query ":SETVAR TestVar `"Goodbye`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
+            }
+
+            It 'Should override a command line variable if -OverrideScriptVariables is not set' {
+
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable @{ TestVar = 'Hello' } -Query ":SETVAR TestVar `"Goodbye`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Goodbye'
+            }
+
+            It 'Should set $LASTEXITCODE with value of :SETVAR SQLCMDERRORLEVEL' {
+
+                Invoke-SqlExecute -ConnectionString $instance.Connection -Query ':SETVAR SQLCMDERRORLEVEL "6"'
+
+                $LASTEXITCODE | Should Be 6
+            }
+        }
+    }
+}
 Describe 'AdventureWorks Database Creation' {
 
     $instances |
@@ -302,42 +387,6 @@ Describe 'Basic SQL Server Provider Tests' {
                     Set-TestInconclusive -Message 'No SQL Server provider available'
                 }
             }
-        }
-    }
-}
-
-Describe 'SQLCMD Commands' {
-
-    Context ':CONNECT' {
-
-        # Build a test script
-        $connectTest = "${env:TEMP}\Invoke-SqlExecute-Connect.sql"
-
-        if (Test-Path -Path $connectTest -PathType Leaf)
-        {
-            Remove-Item $connectTest
-        }
-
-        $instances |
-        ForEach-Object {
-
-            $cb = New-Object System.Data.SqlClient.SqlConnectionStringBuilder ($_.Connection)
-
-            if ($cb.IntegratedSecurity)
-            {
-                ":CONNECT $($cb.DataSource)" | Out-File $connectTest -Encoding ascii -Append
-            }
-            else
-            {
-                ":CONNECT $($cb.DataSource) -U $($cb.UserID) -P $($cb.Password)" | Out-File $connectTest -Encoding ascii -Append
-            }
-
-            "SELECT @@SERVERNAME AS [ServerName]"  | Out-File $connectTest -Encoding ascii -Append
-        }
-
-        It 'Should :CONNECT to all discovered SQL Servers' {
-
-            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest -OutputAs DataRows
         }
     }
 }

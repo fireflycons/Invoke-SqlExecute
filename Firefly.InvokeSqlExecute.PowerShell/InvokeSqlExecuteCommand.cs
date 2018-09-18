@@ -302,14 +302,12 @@
         {
             get
             {
-                var dict = new Dictionary<string, string>();
-
                 // ReSharper disable StyleCop.SA1126
                 switch (this.Variable)
                 {
                     case null:
 
-                        return dict;
+                        return new Dictionary<string, string>();
 
                     case IDictionary _:
 
@@ -320,6 +318,12 @@
 
                         // Array of variable=value
                         return GetCommandLineVariables((string[])this.Variable);
+
+                    case object[] objArray:
+
+                        // Array of variable=value.
+                        // Cast to string array first.
+                        return GetCommandLineVariables(objArray.Select(CastVariableDeclarationToString).ToArray());
 
                     case string _:
 
@@ -616,9 +620,9 @@
         /// </summary>
         protected override void ProcessRecord()
         {
-            try
+            using (var sqlcmd = new SqlExecuteImpl(this))
             {
-                using (var sqlcmd = new SqlExecuteImpl(this))
+                try
                 {
                     sqlcmd.Execute();
 
@@ -628,27 +632,47 @@
                         // so throw something here.
                         throw new ScriptExecutionException(sqlcmd.SqlExceptions);
                     }
+
+                    // Set ERRORLEVEL from script
+                    this.AssignExitCode(sqlcmd.GetErrorLevel());
+                }
+                catch (SqlException e)
+                {
+                    // -AbortOnError was set, or the initial connect failed
+                    this.OnOutputMessage(this, new OutputMessageEventArgs(e.Format(null), OutputDestination.StdError));
+                    this.AssignExitCode(1);
+                    throw new ScriptExecutionException(e);
+                }
+                catch (Exception e)
+                {
+                    this.AssignExitCode(1);
+#if DEBUG
+                    Console.WriteLine(e);
+#endif
+                    throw;
+                }
+                finally
+                {
+                    this.SessionState.PSVariable.Set("global:LASTEXITCODE", this.ExitCode);
                 }
             }
-            catch (SqlException e)
+        }
+
+        /// <summary>
+        /// Casts a variable declaration to a string.
+        /// </summary>
+        /// <param name="objectValue">The object value.</param>
+        /// <returns>String value of the input.</returns>
+        /// <exception cref="InvalidCastException">The element was not a string.</exception>
+        private static string CastVariableDeclarationToString(object objectValue)
+        {
+            if (objectValue is string s)
             {
-                // -AbortOnError was set, or the initial connect failed
-                this.OnOutputMessage(this, new OutputMessageEventArgs(e.Format(null), OutputDestination.StdError));
-                this.AssignExitCode();
-                throw new ScriptExecutionException(e);
+                return s;
             }
-            catch (Exception e)
-            {
-                this.AssignExitCode();
-#if DEBUG
-                Console.WriteLine(e);
-#endif
-                throw;
-            }
-            finally
-            {
-                this.SessionState.PSVariable.Set("global:LASTEXITCODE", this.ExitCode);
-            }
+
+            throw new InvalidCastException(
+                $"Cannot derive variables from type ${objectValue.GetType().FullName}");
         }
 
         /// <summary>
@@ -670,20 +694,21 @@
                     throw new FormatException("Syntax error in -Variable value");
                 }
 
-                dict.Add(variable.Substring(0, ind).Trim(), variable.Substring(ind + 1).Trim());
+                dict.Add(variable.Substring(0, ind).Trim('\t', ' ', '\'', '"'), variable.Substring(ind + 1).Trim('\t', ' ', '\'', '"'));
             }
 
             return dict;
         }
 
         /// <summary>
-        /// Set exit code to 1 if nothing else has already set it.
+        /// Assign exit code if nothing else has already set it.
         /// </summary>
-        private void AssignExitCode()
+        /// <param name="code">The code to assign.</param>
+        private void AssignExitCode(int code)
         {
             if (this.ExitCode == 0)
             {
-                this.ExitCode = 1;
+                this.ExitCode = code;
             }
         }
 
