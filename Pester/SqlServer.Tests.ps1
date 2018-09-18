@@ -5,6 +5,8 @@
 
 $ModuleName = 'Firefly.InvokeSqlExecute'
 
+$testDatabase = 'Test-InvokeSqExecute'
+
 # Enumerate available SQL instances
 Write-Host 'Detecting SQL Server instances...'
 
@@ -77,6 +79,11 @@ Import-Module -Name $ManifestFile
 
 Describe 'SQLCMD Commands' {
 
+    # Most of these tests can be run on a single instance, as they test client-side operations
+
+    $firstInstance = $instances |
+    Select-Object -First 1
+
     Context ':CONNECT' {
 
         # Build a test script
@@ -112,54 +119,72 @@ Describe 'SQLCMD Commands' {
 
     Context ':SETVAR' {
 
-        # Sufficient to test on only one instance, as SETVAR is a client-side operation
+        It 'Should set a variable with :SETVAR' {
 
-        $instances |
-        Select-Object -First 1 |
-        ForEach-Object {
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Query ":SETVAR TestVar `"Hello`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
+        }
 
-            $instance = $_
+        It 'Should set a variable from command line with hashtable argument' {
 
-            It 'Should set a variable with :SETVAR' {
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable @{ TestVar = 'Hello' } -Query "SELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
+        }
 
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Query ":SETVAR TestVar `"Hello`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
-            }
+        It 'Should set a variable from command line with string argument' {
 
-            It 'Should set a variable from command line with hashtable argument' {
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable "MyVar1 = 'String1';MyVar2 = 'String2'" -Query "SELECT '`$(MyVar1)' AS [Result]" -OutputAs Scalar | Should Be 'String1'
+        }
 
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable @{ TestVar = 'Hello' } -Query "SELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
-            }
+        It 'Should set a variable from command line with array argument' {
 
-            It 'Should set a variable from command line with string argument' {
+            $myArray = "MyVar1 = 'String1'", "MyVar2 = 'String2'"
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $myArray -Query "SELECT '`$(MyVar1)' AS [Result]" -OutputAs Scalar | Should Be 'String1'
+        }
 
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable "MyVar1 = 'String1';MyVar2 = 'String2'" -Query "SELECT '`$(MyVar1)' AS [Result]" -OutputAs Scalar | Should Be 'String1'
-            }
+        It 'Should not override a command line variable if -OverrideScriptVariables is set' {
 
-            It 'Should set a variable from command line with array argument' {
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable @{ TestVar = 'Hello' } -OverrideScriptVariables -Query ":SETVAR TestVar `"Goodbye`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
+        }
 
-                $myArray = "MyVar1 = 'String1'", "MyVar2 = 'String2'"
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable $myArray -Query "SELECT '`$(MyVar1)' AS [Result]" -OutputAs Scalar | Should Be 'String1'
-            }
+        It 'Should override a command line variable if -OverrideScriptVariables is not set' {
 
-            It 'Should not override a command line variable if -OverrideScriptVariables is set' {
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable @{ TestVar = 'Hello' } -Query ":SETVAR TestVar `"Goodbye`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Goodbye'
+        }
 
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable @{ TestVar = 'Hello' } -OverrideScriptVariables -Query ":SETVAR TestVar `"Goodbye`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Hello'
-            }
+        It 'Should set $LASTEXITCODE with value of :SETVAR SQLCMDERRORLEVEL' {
 
-            It 'Should override a command line variable if -OverrideScriptVariables is not set' {
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Query ':SETVAR SQLCMDERRORLEVEL "6"'
 
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Variable @{ TestVar = 'Hello' } -Query ":SETVAR TestVar `"Goodbye`" `nSELECT '`$(TestVar)' AS [Result]" -OutputAs Scalar | Should Be 'Goodbye'
-            }
-
-            It 'Should set $LASTEXITCODE with value of :SETVAR SQLCMDERRORLEVEL' {
-
-                Invoke-SqlExecute -ConnectionString $instance.Connection -Query ':SETVAR SQLCMDERRORLEVEL "6"'
-
-                $LASTEXITCODE | Should Be 6
-            }
+            $LASTEXITCODE | Should Be 6
         }
     }
+
+    Context ':R (included script files)' {
+
+        BeforeEach {
+
+            # Create test database
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -InputFile "$PSScriptRoot\TestResources\TestInitialize.sql"
+        }
+
+        AfterEach {
+
+            # Drop test database
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Query "DROP DATABASE [$testDatabase]"
+        }
+
+        It 'Should process included file successfully' {
+
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_process_included_file_successfully.sql" -OutputAs Scalar | Should Be 1
+        }
+<#
+        It 'Should report exception with detail of included file' {
+
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql"
+        }
+#>
+    }
 }
+
 Describe 'AdventureWorks Database Creation' {
 
     $instances |
@@ -208,7 +233,6 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
         Foreach-Object {
 
         $instanceInfo = $_
-        $testDatabase = 'Test-InvokeSqExecute'
 
         Context $instanceInfo.Instance {
 
