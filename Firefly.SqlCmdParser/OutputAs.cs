@@ -1,4 +1,4 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿namespace Firefly.SqlCmdParser
 {
     using System.Data;
 

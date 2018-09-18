@@ -1,5 +1,6 @@
 ﻿namespace Firefly.SqlCmdParser
 {
+    using System;
     using System.Collections.Generic;
     using System.Data.SqlClient;
 
@@ -7,8 +8,23 @@
     /// Interface that defines methods for handling SQLCMD commands.
     /// Implementation methods should throw if the parse-process mechanism should stop.
     /// </summary>
-    public interface ICommandExecuter
+    public interface ICommandExecuter : IDisposable
     {
+        /// <summary>
+        /// Occurs when a database connection is made
+        /// </summary>
+        event EventHandler<ConnectEventArgs> Connected;
+
+        /// <summary>
+        /// Occurs when a message is ready.
+        /// </summary>
+        event EventHandler<OutputMessageEventArgs> Message;
+
+        /// <summary>
+        /// Occurs when a result or result set is ready.
+        /// </summary>
+        event EventHandler<OutputResultEventArgs> Result;
+
         /// <summary>
         /// Gets the number of <see cref="SqlException"/> errors recorded by <see cref="ProcessBatch"/>.
         /// Retryable errors that retried and then successfully executed are not counted.
@@ -34,6 +50,12 @@
         /// <param name="user">The user.</param>
         /// <param name="password">The password.</param>
         void Connect(int timeout, string server, string user, string password);
+
+        /// <summary>
+        /// Connects the specified connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        void ConnectWithConnectionString(string connectionString);
 
         /// <summary>
         ///   <c>:ED</c> directive

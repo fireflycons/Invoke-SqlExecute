@@ -19,12 +19,12 @@
         /// <summary>
         /// The executer
         /// </summary>
-        private readonly CommandExecuter executer;
+        private readonly ICommandExecuter executer;
 
         /// <summary>
         /// The variable resolver
         /// </summary>
-        private readonly VariableResolver variableResolver;
+        private readonly IVariableResolver variableResolver;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlExecuteImpl"/> class.

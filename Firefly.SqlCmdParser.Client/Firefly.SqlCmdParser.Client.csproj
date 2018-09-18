@@ -41,13 +41,9 @@
     <Compile Include="BatchSourceFile.cs" />
     <Compile Include="BatchSourceString.cs" />
     <Compile Include="CommandExecuter.cs" />
-    <Compile Include="ConnectEventArgs.cs" />
     <Compile Include="ISqlExecuteArguments.cs" />
     <Compile Include="SqlExecuteImpl.cs" />
-    <Compile Include="OutputMessageEventArgs.cs" />
-    <Compile Include="OutputResultEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="OutputAs.cs" />
     <Compile Include="VariableResolver.cs" />
   </ItemGroup>
   <ItemGroup>

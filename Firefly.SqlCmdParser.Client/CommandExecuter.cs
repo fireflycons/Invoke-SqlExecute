@@ -1,4 +1,5 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿// ReSharper disable InheritdocConsiderUsage
+namespace Firefly.SqlCmdParser.Client
 {
     using System;
     using System.Collections.Generic;
@@ -17,7 +18,7 @@
     /// Concrete command executer with virtual methods permitting creation of custom executers with some behaviour redefined
     /// </summary>
     // ReSharper disable once InheritdocConsiderUsage
-    public class CommandExecuter : ICommandExecuter, IDisposable
+    public class CommandExecuter : ICommandExecuter
     {
         /// <summary>
         /// SQL server or provider error codes that represent failures that can be retried.
@@ -42,7 +43,7 @@
         /// <summary>
         /// The variable resolver
         /// </summary>
-        private readonly VariableResolver variableResolver;
+        private readonly IVariableResolver variableResolver;
 
         /// <summary>
         /// The connection
@@ -74,7 +75,7 @@
         /// </summary>
         /// <param name="arguments">The arguments.</param>
         /// <param name="variableResolver">The variable resolver.</param>
-        public CommandExecuter(ISqlExecuteArguments arguments, VariableResolver variableResolver)
+        public CommandExecuter(ISqlExecuteArguments arguments, IVariableResolver variableResolver)
         {
             this.resultsAs = arguments.OutputAs;
             this.arguments = arguments;

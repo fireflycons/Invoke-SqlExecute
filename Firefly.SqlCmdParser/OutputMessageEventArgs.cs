@@ -1,4 +1,4 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿namespace Firefly.SqlCmdParser
 {
     using System;
 
@@ -10,7 +10,7 @@
     public class OutputMessageEventArgs : EventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.Client.OutputMessageEventArgs" /> class.
+        /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.OutputMessageEventArgs" /> class.
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="outputDestination">The output destination.</param>

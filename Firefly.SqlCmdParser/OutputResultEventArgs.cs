@@ -1,4 +1,4 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿namespace Firefly.SqlCmdParser
 {
     using System;
 
@@ -11,7 +11,7 @@
     {
         /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.Client.OutputResultEventArgs" /> class.
+        /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.OutputResultEventArgs" /> class.
         /// </summary>
         /// <param name="result">The result.</param>
         public OutputResultEventArgs(dynamic result)

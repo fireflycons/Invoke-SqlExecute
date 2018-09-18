@@ -196,7 +196,7 @@
         /// <param name="varName">Name of the variable.</param>
         /// <param name="varValue">The variable value.</param>
         /// <exception cref="ArgumentNullException">varName - Attempted to set a system variable with null variable name</exception>
-        internal void SetSystemVariable(string varName, string varValue)
+        public void SetSystemVariable(string varName, string varValue)
         {
             if (varName == null)
             {

@@ -1,4 +1,4 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿namespace Firefly.SqlCmdParser
 {
     using System;
     using System.Data.SqlClient;
@@ -11,7 +11,7 @@
     public class ConnectEventArgs : EventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.Client.ConnectEventArgs" /> class.
+        /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.ConnectEventArgs" /> class.
         /// </summary>
         /// <param name="connection">The connection.</param>
         /// <param name="outputDestination">The output destination.</param>
