@@ -128,7 +128,14 @@ function Get-SqlServerInstanceData
     }
     catch
     {
-        Write-Host -ForegroundColor Red $_.Exception.Message
+        if ($_.Exception.Message -ilike '*Cannot create an automatic instance*')
+        {
+            Write-Host "`tNot found."
+        }
+        else
+        {
+            Write-Host -ForegroundColor Red $_.Exception.Message
+        }
     }
     finally
     {
@@ -154,7 +161,7 @@ function Import-SqlServerProvider
     {
         if (Get-Module -ListAvailable | Where-Object { $_.Name -ieq $module})
         {
-            Import-Module -Global $module
+            Import-Module -Global $module -Verbose:$false
             return $true
         }
     }
@@ -164,7 +171,7 @@ function Import-SqlServerProvider
     try
     {
         Install-Module SqlServer -force -AllowClobber -Scope CurrentUser
-        Import-Module -Global SqlServer
+        Import-Module -Global SqlServer -Verbose:$false
         return $true
     }
     catch
