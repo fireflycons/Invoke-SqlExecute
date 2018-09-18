@@ -311,7 +311,7 @@ Describe 'SQLCMD Commands' {
     Context ':CONNECT' {
 
         # Build a test script
-        $connectTest = "$PSScriptRoot\connect.sql"
+        $connectTest = "${env:TEMP}\Invoke-SqlExecute-Connect.sql"
 
         if (Test-Path -Path $connectTest -PathType Leaf)
         {
@@ -327,17 +327,17 @@ Describe 'SQLCMD Commands' {
             {
                 ":CONNECT $($cb.DataSource)" | Out-File $connectTest -Encoding ascii -Append
             }
-            else 
+            else
             {
                 ":CONNECT $($cb.DataSource) -U $($cb.UserID) -P $($cb.Password)" | Out-File $connectTest -Encoding ascii -Append
             }
 
-            "SELECT @@SERVERNAME"  | Out-File $connectTest -Encoding ascii -Append
+            "SELECT @@SERVERNAME AS [ServerName]"  | Out-File $connectTest -Encoding ascii -Append
         }
 
         It 'Should :CONNECT to all discovered SQL Servers' {
 
-            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest
+            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest -OutputAs DataRows
         }
     }
 }
