@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlExecuteTests.SqlServerIntegration.LocalDb;
 
+// ReSharper disable StyleCop.SA1600
+// ReSharper disable InconsistentNaming
 namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
 {
     [TestClass]
@@ -34,7 +35,7 @@ namespace SqlExecuteTests.SqlServerIntegration.AppVeyor
         }
 
         /// <summary>
-        /// Mies the test initialize.
+        /// Test initialize.
         /// </summary>
         [TestInitialize]
         public void TestInitialize()

@@ -4,6 +4,8 @@
     using System.Linq;
     using System.Text;
 
+    // ReSharper disable once CommentTypo
+
     /// <summary>
     /// Tokenizes line data into 'comment' or 'not comment' tokens
     /// </summary>

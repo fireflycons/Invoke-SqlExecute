@@ -46,19 +46,19 @@
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) 
 
         {
-                { "SQLCMDLOGINTIMEOUT", "8" },
-                { "SQLCMDSTATTIMEOUT", "0" },
-                { "SQLCMDHEADERS", "0" },
-                { "SQLCMDCOLSEP", " " },
-                { "SQLCMDCOLWIDTH", "0" },
-                { "SQLCMDERRORLEVEL", "0" },
-                { "SQLCMDMAXVARTYPEWIDTH", "256" },
-                { "SQLCMDMAXFIXEDTYPEWIDTH", "0" },
-                { "SQLCMDEDITOR", "edit.com" },
-                { "SQLCMDUSEAAD", string.Empty },
+            { "SQLCMDLOGINTIMEOUT", "8" },
+            { "SQLCMDSTATTIMEOUT", "0" },
+            { "SQLCMDHEADERS", "0" },
+            { "SQLCMDCOLSEP", " " },
+            { "SQLCMDCOLWIDTH", "0" },
+            { "SQLCMDERRORLEVEL", "0" },
+            { "SQLCMDMAXVARTYPEWIDTH", "256" },
+            { "SQLCMDMAXFIXEDTYPEWIDTH", "0" },
+            { "SQLCMDEDITOR", "edit.com" },
+            { "SQLCMDUSEAAD", string.Empty },
 
-                // Extensions not defined by SQLCMD standard
-                { "SQLCMDMULTISUBNETFAILOVER", "false" }
+            // Extensions not defined by SQLCMD standard
+            { "SQLCMDMULTISUBNETFAILOVER", "false" }
         };
 
         /// <summary>
@@ -69,6 +69,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="VariableResolver"/> class.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global
         public VariableResolver()
         {
             this.suppressEnvironmentVariables = false;
@@ -77,7 +78,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="VariableResolver" /> class.
         /// </summary>
-        /// <param name="initialVariables">The initial variables passed on command line as an <see cref="IDictionary" />. Permits initialisation from PowerShell hashtable.</param>
+        /// <param name="initialVariables">The initial variables passed on command line as an <see cref="IDictionary" />. Permits initialization from PowerShell hashtable.</param>
         /// <param name="overrideScriptVariables">if set to <c>true</c> then these variables will not be reset by <c>:SETVAR</c> directives within script.</param>
         /// <param name="suppressEnvironmentVariables">if set to <c>true</c> [suppress environment variables].</param>
         public VariableResolver(IDictionary initialVariables, bool overrideScriptVariables, bool suppressEnvironmentVariables = false)
@@ -122,7 +123,7 @@
         }
 
         /// <summary>
-        /// Resolves a variable refrence.
+        /// Resolves a variable reference.
         /// </summary>
         /// <param name="varName">Name of the variable.</param>
         /// <returns>

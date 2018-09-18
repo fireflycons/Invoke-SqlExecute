@@ -280,7 +280,7 @@
         /// The include SQL user errors.
         /// </value>
         /// <remarks>
-        /// In the MS implementation, this parameter forces a datareader with no returned rows to iterate
+        /// In the MS implementation, this parameter forces a DataReader with no returned rows to iterate
         /// all available result sets in the batch. This is the only way an error raised on any statement 
         /// within the batch other than the first one will raise a <see cref="SqlException"/>.
         /// This parameter is provided for command line compatibility with Invoke-Sqlcmd, 
@@ -389,7 +389,7 @@
         public bool IntegratedSecuritySet { get; set; }
 
         /// <summary>
-        /// Gets or sets the multi subnet failover.
+        /// Gets or sets the multi subnet fail over.
         /// <para type="description">
         /// This is an enhancement over standard SQLCMD behaviour.
         /// If set, enable Multi Subnet Fail-over - required for connection to Always On listeners.
@@ -536,7 +536,7 @@
         /// <value>
         /// The exit code.
         /// </value>
-        public int ExitCode { get; set; } = 0;
+        public int ExitCode { get; set; }
 
         /// <summary>
         /// Gets or sets the server.
@@ -949,6 +949,7 @@
             }
             catch
             {
+                // We probably don't care if we can't retrieve this
             }
 
             var authType = integratedSecurity ? "Windows" : "SQL";

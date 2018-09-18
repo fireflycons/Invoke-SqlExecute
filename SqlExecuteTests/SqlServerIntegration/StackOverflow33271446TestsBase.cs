@@ -1,9 +1,7 @@
 ﻿// ReSharper disable InconsistentNaming
 // ReSharper disable InheritdocConsiderUsage
-
 namespace SqlExecuteTests.SqlServerIntegration
 {
-    using System;
     using System.Data.SqlClient;
     using System.Diagnostics;
 
@@ -12,9 +10,9 @@ namespace SqlExecuteTests.SqlServerIntegration
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
     /// <summary>
-    /// 
+    /// Base class for instance specific tests
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">SQL Server instance data</typeparam>
     public class StackOverflow33271446TestsBase<T>
         where T : ISqlServerInstanceInfo, new()
     {

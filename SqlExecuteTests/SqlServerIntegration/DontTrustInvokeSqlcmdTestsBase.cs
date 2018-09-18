@@ -47,6 +47,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                 impl.Execute();
             }
 
+            // ReSharper disable once StringLiteralTypo
             initArgs.Query = "EXEC dbo.geterror";
             initArgs.ConnectionString =
                 $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=2_{testContext.TestName}";
@@ -62,6 +63,7 @@ namespace SqlExecuteTests.SqlServerIntegration
                 {
                     if (e.InnerException is SqlException sqlException)
                     {
+                        // ReSharper disable once StringLiteralTypo
                         Assert.AreEqual("geterror", sqlException.Procedure);
                         return;
                     }

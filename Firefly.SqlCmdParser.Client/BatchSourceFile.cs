@@ -23,6 +23,9 @@
         {
             this.Filename = fileName;
             this.reader = new StreamReader(File.OpenRead(fileName), Encoding.UTF8, true);
+
+            // ReSharper disable once ReturnValueOfPureMethodIsNotUsed
+            // Necessary to peek the stream to work out its encoding
             this.reader.Peek();
             this.Encoding = this.reader.CurrentEncoding;
         }

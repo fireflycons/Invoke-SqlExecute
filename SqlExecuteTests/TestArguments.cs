@@ -183,7 +183,7 @@ namespace SqlExecuteTests
         public int QueryTimeout { get; set; } = 0;
 
         /// <summary>
-        /// Gets or sets the number of times to retry a retiable error (e.g. timed-out queries).
+        /// Gets or sets the number of times to retry a retryable error (e.g. timed-out queries).
         /// </summary>
         /// <value>
         /// The retry count.

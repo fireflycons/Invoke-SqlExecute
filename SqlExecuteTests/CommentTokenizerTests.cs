@@ -1,4 +1,5 @@
-﻿namespace SqlExecuteTests
+﻿// ReSharper disable StringLiteralTypo
+namespace SqlExecuteTests
 {
     using System;
     using System.Collections.Generic;

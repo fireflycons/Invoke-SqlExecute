@@ -2,7 +2,6 @@
 namespace Firefly.InvokeSqlExecute
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Data.SqlClient;
     using System.Runtime.Serialization;
@@ -15,15 +14,6 @@ namespace Firefly.InvokeSqlExecute
     [Serializable]
     public class ScriptExecutionException : Exception
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptExecutionException" /> class.
-        /// </summary>
-        /// <param name="errorCount">The error count.</param>
-        public ScriptExecutionException(int errorCount)
-        {
-            this.SqlExceptions = new List<SqlException>();
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="ScriptExecutionException"/> class.
         /// </summary>
@@ -40,17 +30,6 @@ namespace Firefly.InvokeSqlExecute
         public ScriptExecutionException(SqlException sqlException)
         {
             this.SqlExceptions = new List<SqlException> { sqlException };
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="ScriptExecutionException" /> class.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        /// <param name="inner">The inner.</param>
-        public ScriptExecutionException(string message, Exception inner)
-            : base(message, inner)
-        {
-            this.SqlExceptions = new List<SqlException>();
         }
 
         /// <summary>

@@ -2,7 +2,7 @@
 {
     /// <inheritdoc />
     /// <summary>
-    /// Handles <c>:SERVERLIST</c> commmand
+    /// Handles <c>:SERVERLIST</c> command
     /// </summary>
     /// <seealso cref="T:Firefly.SqlCmdParser.SimpleParser.Commands.ParameterlessCommand" />
     internal class ServerListCommand : ParameterlessCommand

@@ -11,6 +11,8 @@
     using System.Security.Principal;
     using System.Text;
 
+    // ReSharper disable once CommentTypo
+
     /// <summary>
     /// Concrete command executer with virtual methods permitting creation of custom executers with some behaviour redefined
     /// </summary>
@@ -365,7 +367,7 @@
         /// </summary>
         /// <param name="batch">The batch.</param>
         /// <remarks>
-        /// Implementations may do additiional formatting.
+        /// Implementations may do additional formatting.
         /// </remarks>
         /// <inheritdoc />
         public virtual void List(string batch)
@@ -504,7 +506,7 @@
                     // Reset try count
                     var numTries = 0;
 
-                    // Loop till command succeeds, non-retyable error or retry count exceeded
+                    // Loop till command succeeds, non-retryable error or retry count exceeded
                     while (true)
                     {
                         ++numTries;
@@ -637,6 +639,7 @@
         /// <param name="connectionStringBuilder">The connection string builder.</param>
         private void DoConnect(SqlConnectionStringBuilder connectionStringBuilder)
         {
+            // ReSharper disable StringLiteralTypo
             // Use a DbConnectionStringBuilder to test if values in the connection string are actually present. 
             // The SqlConnectionStringBuilder override always returns true on TryGetValue
             var dbc = new DbConnectionStringBuilder { ConnectionString = connectionStringBuilder.ConnectionString };
@@ -695,6 +698,8 @@
             this.variableResolver.SetSystemVariable("SQLCMDDBNAME", this.connection.Database);
 
             this.Connected?.Invoke(this, new ConnectEventArgs(this.connection, this.stdoutDestination));
+
+            // ReSharper restore StringLiteralTypo
         }
 
         /// <summary>
@@ -706,6 +711,8 @@
         {
             this.WriteStdoutMessage(e.Message);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Processes rows/tables/datasets.
@@ -764,6 +771,7 @@
                                         case "xml":
                                         case "nchar":
                                         case "nvarchar":
+                                        // ReSharper disable once StringLiteralTypo
                                         case "ntext":
 
                                             var text = sqlDataReader[i] as string;

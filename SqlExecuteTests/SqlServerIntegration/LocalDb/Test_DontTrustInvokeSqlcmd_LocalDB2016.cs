@@ -1,4 +1,6 @@
-﻿namespace SqlExecuteTests.SqlServerIntegration.LocalDb
+﻿// ReSharper disable StyleCop.SA1600
+// ReSharper disable InconsistentNaming
+namespace SqlExecuteTests.SqlServerIntegration.LocalDb
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -33,7 +35,7 @@
         }
 
         /// <summary>
-        /// Mies the test initialize.
+        /// Test initialize.
         /// </summary>
         [TestInitialize]
         public void TestInitialize()

@@ -81,16 +81,22 @@
         /// <value>
         /// The SQL exceptions.
         /// </value>
-        public IList<SqlException> SqlExceptions
-        {
-            get
-            {
-                return this.executer == null ? new List<SqlException>() : this.executer.SqlExceptions;
-            }
-        }
+        public IList<SqlException> SqlExceptions => this.executer == null ? new List<SqlException>() : this.executer.SqlExceptions;
 
+        /// <summary>
+        /// Gets the error count.
+        /// </summary>
+        /// <value>
+        /// The error count.
+        /// </value>
         public int ErrorCount { get; private set; }
 
+        /// <summary>
+        /// Gets the batch count.
+        /// </summary>
+        /// <value>
+        /// The batch count.
+        /// </value>
         public int BatchCount { get; private set; }
 
 

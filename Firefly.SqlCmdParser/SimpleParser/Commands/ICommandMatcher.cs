@@ -1,7 +1,7 @@
 ﻿namespace Firefly.SqlCmdParser.SimpleParser.Commands
 {
     /// <summary>
-    /// Interface for whole line comman matchers (SQLCMD commands)
+    /// Interface for whole line command matchers (SQLCMD commands)
     /// </summary>
     internal interface ICommandMatcher
     {

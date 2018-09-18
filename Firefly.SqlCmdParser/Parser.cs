@@ -16,9 +16,9 @@
     ///  </summary>
     /// <remarks>
     /// The parser is extremely basic. It does NOT understand SQL itself.
-    /// It only distiguishes the following
+    /// It only distinguishes the following
     /// - Comments. Token is or is not a comment
-    /// - String constants. Tracks single/double quoted strings so that comment characters within a string constant are not interperted as comments.
+    /// - String constants. Tracks single/double quoted strings so that comment characters within a string constant are not interpreted as comments.
     /// </remarks>
     public class Parser
     {
@@ -84,7 +84,7 @@
         private readonly bool disableVariableSubstitution;
 
         /// <summary>
-        /// The currrent batch
+        /// The current batch
         /// </summary>
         private SqlBatch currentBatch;
 
@@ -130,7 +130,7 @@
         /// <value>
         /// The batch count.
         /// </value>
-        public int BatchCount { get; private set; } = 0;
+        public int BatchCount { get; private set; }
 
         /// <summary>
         /// Parses this instance.

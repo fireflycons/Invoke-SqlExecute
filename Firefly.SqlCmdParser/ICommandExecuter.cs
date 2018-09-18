@@ -5,7 +5,7 @@
 
     /// <summary>
     /// Interface that defines methods for handling SQLCMD commands.
-    /// Implementation methods should throw if the parse-process mechinsim should stop.
+    /// Implementation methods should throw if the parse-process mechanism should stop.
     /// </summary>
     public interface ICommandExecuter
     {
@@ -79,7 +79,7 @@
         /// </summary>
         /// <param name="batch">The batch.</param>
         /// <remarks>
-        /// Implementations may do additiional formatting.
+        /// Implementations may do additional formatting.
         /// </remarks>
         void List(string batch);
 
