@@ -547,16 +547,15 @@ namespace Firefly.SqlCmdParser.Client
             }
             catch (SqlException e)
             {
+                e.AddContextData(batch);
                 this.SqlExceptions.Add(e);
 
                 if (this.ErrorAction == ErrorAction.Exit)
                 {
-                    // Add batch data so that outer handler can format it.
-                    e.Data.Add("Batch", batch);
                     throw;
                 }
 
-                this.WriteStderrMessage(e.Format(batch));
+                this.WriteStderrMessage(e.Format());
 
                 // Indicate that errors have occurred during processing and continue
                 this.arguments.ExitCode = 1;

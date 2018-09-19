@@ -639,7 +639,7 @@
                 catch (SqlException e)
                 {
                     // -AbortOnError was set, or the initial connect failed
-                    this.OnOutputMessage(this, new OutputMessageEventArgs(e.Format(null), OutputDestination.StdError));
+                    this.OnOutputMessage(this, new OutputMessageEventArgs(e.Format(), OutputDestination.StdError));
                     this.AssignExitCode(1);
                     throw new ScriptExecutionException(e);
                 }
