@@ -152,7 +152,7 @@
 
                     if (this.currentBatch == null)
                     {
-                        this.currentBatch = new SqlBatch(this.Source);
+                        this.currentBatch = new SqlBatch();
                     }
 
                     var line = this.Source.GetNextLine();
@@ -208,7 +208,7 @@
                                             finally
                                             {
                                                 this.previousBatch = this.currentBatch;
-                                                this.currentBatch = new SqlBatch(this.Source);
+                                                this.currentBatch = new SqlBatch();
                                                 ++this.BatchCount;
                                             }
 
@@ -267,7 +267,7 @@
                                                 finally
                                                 {
                                                     this.previousBatch = this.currentBatch;
-                                                    this.currentBatch = new SqlBatch(this.Source);
+                                                    this.currentBatch = new SqlBatch();
                                                     ++this.BatchCount;
                                                 }
 
@@ -297,7 +297,7 @@
                                                     if (editedBatch != null)
                                                     {
                                                         this.SetInputSource(editedBatch);
-                                                        this.currentBatch = new SqlBatch(editedBatch);
+                                                        this.currentBatch = new SqlBatch();
                                                     }
                                                 }
                                             }
@@ -418,7 +418,7 @@
                         isStartOfLine = false;
                     }
 
-                    this.currentBatch.AppendLine();
+                    //this.currentBatch.AppendLine(this.Source);
                 }
 
                 if (tokenizer.State != TokenizerState.None)
@@ -455,7 +455,8 @@
         private void AppendToken(Token token)
         {
             this.currentBatch.Append(
-                token.TokenType == TokenType.Text ? this.SubstituteVariables(token.TokenValue) : token.TokenValue);
+                token.TokenType == TokenType.Text ? this.SubstituteVariables(token.TokenValue) : token.TokenValue,
+                this.Source);
         }
 
         /// <summary>

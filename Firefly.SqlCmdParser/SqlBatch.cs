@@ -1,7 +1,8 @@
 ﻿namespace Firefly.SqlCmdParser
 {
     using System;
-    using System.Text;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Object that compiles a batch of SQL
@@ -10,19 +11,9 @@
     public class SqlBatch
     {
         /// <summary>
-        /// The batch
+        /// The batch items
         /// </summary>
-        private readonly StringBuilder batch = new StringBuilder();
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlBatch"/> class.
-        /// </summary>
-        /// <param name="source">The source.</param>
-        internal SqlBatch(IBatchSource source)
-        {
-            this.Source = source.Filename;
-            this.BatchBeginLineNumber = source.CurrentLineNumber + 1;
-        }
+        private readonly List<SqlBatchItem> batchItems = new List<SqlBatchItem>();
 
         /// <summary>
         /// Gets the line number within the source that the batch begins at.
@@ -30,7 +21,15 @@
         /// <value>
         /// The batch begin line number.
         /// </value>
-        public int BatchBeginLineNumber { get; }
+        public int BatchBeginLineNumber
+        {
+            get
+            {
+                var begin = this.batchItems.FirstOrDefault();
+
+                return begin?.LineNumber ?? 0;
+            }
+        }
 
         /// <summary>
         /// Gets the batch source, either the path to the input file or SQL String if source is a string.
@@ -38,7 +37,15 @@
         /// <value>
         /// The source.
         /// </value>
-        public string Source { get; }
+        public string Source
+        {
+            get
+            {
+                var begin = this.batchItems.FirstOrDefault();
+
+                return begin?.Source.Filename ?? "<NONE>";
+            }
+        }
 
         /// <summary>
         /// Gets the SQL of the batch.
@@ -46,23 +53,25 @@
         /// <value>
         /// The SQL.
         /// </value>
-        public string Sql => this.batch.ToString();
+        public string Sql => string.Join(Environment.NewLine, this.batchItems.Select(i => i.Text));
 
         /// <summary>
         /// Appends the specified text to the internal buffer.
         /// </summary>
         /// <param name="text">The text.</param>
-        internal void Append(string text)
+        /// <param name="source">The source.</param>
+        internal void Append(string text, IBatchSource source)
         {
-            this.batch.Append(text);
+            this.batchItems.Add(new SqlBatchItem(text.TrimEnd(Environment.NewLine.ToCharArray()), source));
         }
 
         /// <summary>
         /// Appends a new line to the internal buffer.
         /// </summary>
-        internal void AppendLine()
+        /// <param name="source">The source.</param>
+        internal void AppendLine(IBatchSource source)
         {
-            this.batch.AppendLine();
+            this.batchItems.Add(new SqlBatchItem(string.Empty, source));
         }
 
         /// <summary>
@@ -70,7 +79,7 @@
         /// </summary>
         internal void Clear()
         {
-            this.batch.Clear();
+            this.batchItems.Clear();
         }
     }
 }

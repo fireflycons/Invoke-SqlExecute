@@ -82,6 +82,7 @@
     <Compile Include="SimpleParser\Token.cs" />
     <Compile Include="SimpleParser\TokenizerState.cs" />
     <Compile Include="SimpleParser\TokenType.cs" />
+    <Compile Include="SqlBatchItem.cs" />
     <Compile Include="SqlExceptionExtensions.cs" />
     <Compile Include="UnclosedBlockCommentException.cs" />
     <Compile Include="UnclosedStringLiteralException.cs" />
