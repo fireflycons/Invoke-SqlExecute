@@ -160,6 +160,16 @@ Describe 'SQLCMD Commands' {
 
     Context ':R (included script files)' {
 
+        $suppressConsole = @{
+            ConsoleMessageHandler = {}
+        }
+
+        if ($env:VerboseTests -eq 1)
+        {
+            # If this env var is set to 1, these tests will output the SQL exception messages to the console
+            $suppressConsole = @{}
+        }
+
         BeforeEach {
 
             # Create test database
@@ -176,12 +186,34 @@ Describe 'SQLCMD Commands' {
 
             Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_process_included_file_successfully.sql" -OutputAs Scalar | Should Be 1
         }
-<#
+
         It 'Should report exception with detail of included file' {
 
-            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql"
+            $ex = $null
+
+            try
+            {
+                Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql" @suppressConsole
+            }
+            catch
+            {
+                $ex = $_.Exception
+            }
+
+            if ($null -eq $ex)
+            {
+                throw 'Exception not raised by command'
+            }
+
+            # Now verify we got the correct SQL exception
+            $ex.ErrorCount | Should Be 1
+            $sqlException = $ex.SqlExceptions | Select-Object -First 1
+            $sqlException.Number | Should Be 2627       # PK violation
+
+            # Error context detail in the exeception's Data ditionary
+            (Split-Path -Leaf $sqlException.Data['BatchSource']) | Should Be 'Should_report_exception_with_detail_of_included_file.2.sql'
+            $sqlException.Data['SourceErrorLine'] | Should Be 3
         }
-#>
     }
 }
 
