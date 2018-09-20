@@ -24,7 +24,7 @@
     Description       = 'Replacement for Invoke-Sqlcmd'
 
     # Minimum version of the Windows PowerShell engine required by this module
-    PowerShellVersion = '3.0'
+    PowerShellVersion = '4.0'
 
     # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
     NestedModules     = @('Firefly.InvokeSqlExecute.PowerShell.dll')
