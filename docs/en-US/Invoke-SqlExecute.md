@@ -316,7 +316,7 @@ Possible values: None, Scalar, DataRows, DataSet, DataTables
 ```yaml
 Type: OutputAs
 Parameter Sets: (All)
-Aliases: TaskAction
+Aliases: TaskAction, As
 Accepted values: None, Scalar, DataRows, DataSet, DataTables
 
 Required: False
