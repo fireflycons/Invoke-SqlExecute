@@ -77,6 +77,19 @@ $ManifestFile = "$(Split-path (Split-Path -Parent -Path $MyInvocation.MyCommand.
 # Import the module
 Import-Module -Name $ManifestFile
 
+# This actually tests -ConsoleMessageHandler to the extent
+# that the empty scriptblock swallows all conosle ourput.
+$suppressConsole = @{
+    ConsoleMessageHandler = {}
+}
+
+if ($env:VerboseTests -eq 1)
+{
+    # If this env var is set to 1, these tests will output the SQL exception messages to the console
+    $suppressConsole = @{}
+}
+
+
 Describe 'SQLCMD Commands' {
 
     # Most of these tests can be run on a single instance, as they test client-side operations
@@ -114,6 +127,17 @@ Describe 'SQLCMD Commands' {
         It 'Should :CONNECT to all discovered SQL Servers' {
 
             Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest -OutputAs DataRows
+        }
+
+        It 'Should throw if server does not exist' {
+
+            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT LJSDFGPDFK" @suppressConsole } | Should Throw
+        }
+
+        It 'Should throw with invalid credentials' {
+
+            $cb = New-Object System.Data.SqlClient.SqlConnectionStringBuilder ($instances[0].Connection)
+            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT $($cb.DataSource) -U adssad -P dfsgsdfsd" @suppressConsole } | Should Throw
         }
     }
 
@@ -160,16 +184,6 @@ Describe 'SQLCMD Commands' {
 
     Context ':R (included script files)' {
 
-        $suppressConsole = @{
-            ConsoleMessageHandler = {}
-        }
-
-        if ($env:VerboseTests -eq 1)
-        {
-            # If this env var is set to 1, these tests will output the SQL exception messages to the console
-            $suppressConsole = @{}
-        }
-
         BeforeEach {
 
             # Create test database
@@ -212,7 +226,23 @@ Describe 'SQLCMD Commands' {
 
             # Error context detail in the exeception's Data ditionary
             (Split-Path -Leaf $sqlException.Data['BatchSource']) | Should Be 'Should_report_exception_with_detail_of_included_file.2.sql'
-            $sqlException.Data['SourceErrorLine'] | Should Be 3
+            $sqlException.Data['SourceErrorLine'] | Should Be 8
+        }
+    }
+
+    Context ':!! (Shell commands)' {
+
+        It 'Should execute a shell command' {
+
+            $guid = [Guid]::NewGuid().ToString()
+
+            # Create a batch file to run
+            "@echo off`necho $guid > `"$PSScriptRoot\testcmd.txt`"" | Out-File "$PSScriptRoot\testcmd.bat" -Encoding ascii
+
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query ":!! `"$PSScriptRoot\testcmd.bat`""
+
+            # Trim pesky space added by dos echo from the line before testing
+            (Get-Content "$PSScriptRoot\testcmd.txt" | Select-Object -First 1).Trim() | Should Be $guid
         }
     }
 }
@@ -268,16 +298,6 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
         Context $instanceInfo.Instance {
 
-            $suppressConsole = @{
-                ConsoleMessageHandler = {}
-            }
-
-            if ($env:VerboseTests -eq 1)
-            {
-                # If this env var is set to 1, these tests will output the SQL exception messages to the console
-                $suppressConsole = @{}
-            }
-
             BeforeEach {
 
                 # Create test database
@@ -294,9 +314,6 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 # https://sqldevelopmentwizard.blogspot.com/2016/12/invoke-sqlcmd-and-error-results.html
                 # Issue #1
-                #
-                # Personally I think the real issue is that in the example on the web site,
-                # there's no way to tell Invoke-Sqlcmd to exit on the first error as it doesn't support :on error
 
                 $ex = $null
 
