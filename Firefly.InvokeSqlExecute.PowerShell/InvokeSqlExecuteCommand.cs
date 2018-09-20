@@ -414,7 +414,7 @@
         /// The results as.
         /// </value>
         [Parameter]
-        [Alias("TaskAction")]
+        [Alias("TaskAction", "As")]
         public OutputAs OutputAs { get; set; } = OutputAs.DataRows;
 
         /// <inheritdoc />
