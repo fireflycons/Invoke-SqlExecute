@@ -680,6 +680,12 @@ namespace Firefly.SqlCmdParser.Client
             }
             catch (SqlException ex)
             {
+                if (string.IsNullOrEmpty(ex.Server))
+                {
+                    // Save name of server we attempted to connect to.
+                    ex.Data.Add(SqlExceptionExtensions.Server, connectionStringBuilder.DataSource);
+                }
+
                 this.SqlExceptions.Add(ex);
                 throw;
             }
