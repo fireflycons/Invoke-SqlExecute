@@ -261,7 +261,7 @@ Describe 'AdventureWorks Database Creation' {
                 if ($instanceInfo.IsFullTextInstalled)
                 {
                     {
-                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables -OutputAs None
                     } |
                         Should Not Throw
                 }
@@ -276,7 +276,7 @@ Describe 'AdventureWorks Database Creation' {
                 if ($instanceInfo.IsFullTextInstalled)
                 {
                     {
-                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs None
                     } |
                         Should Not Throw
                 }

@@ -117,7 +117,10 @@ This is an enhancement over standard Invoke-Sqlcmd behaviour.
 
 For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages that would otherwise go to the console.
 
-The script block is presented with a variable $OutputMessage which has two fields - OutputDestination: Either 'StdOut' or 'StdError' - Message: The message text.
+The script block is presented with a variable $OutputMessage which has two fields:
+
+- OutputDestination: Either 'StdOut' or 'StdError'
+- Message: The message text.
 
 ```yaml
 Type: ScriptBlock
@@ -135,10 +138,10 @@ Accept wildcard characters: False
 Specifies the name of a database.
 This cmdlet connects to this database in the instance that is specified in the ServerInstance parameter.
 
-If the Database parameter is not specified, the database that is used depends on whether the current path specifies both the SQLSERVER:\SQL folder and a database name.
-If the path specifies both the SQL folder and a database name, this cmdlet connects to the database that is specified in the path.
-If the path is not based on the SQL folder, or the path does not contain a database name, this cmdlet connects to the default database for the current login ID.
-If you specify the IgnoreProviderContext parameter switch, this cmdlet does not consider any database specified in the current path, and connects to the database defined as the default for the current login ID.
+- If the Database parameter is not specified, the database that is used depends on whether the current path specifies both the SQLSERVER:\SQL folder and a database name.
+- If the path specifies both the SQL folder and a database name, this cmdlet connects to the database that is specified in the path.
+- If the path is not based on the SQL folder, or the path does not contain a database name, this cmdlet connects to the default database for the current login ID.
+- If you specify the IgnoreProviderContext parameter switch, this cmdlet does not consider any database specified in the current path, and connects to the database defined as the default for the current login ID.
 
 ```yaml
 Type: String
@@ -327,12 +330,10 @@ Accept wildcard characters: False
 ### -OutputAs
 Specifies the type of the results this cmdlet outputs.
 
-The values DataRows, DataTables and DataSet set the output of the cmdlet to be the corresponding .NET data type.
-
-The value Scalar executes the query and returns the first column of the first row in the result set returned by the query.
-All other columns and rows are ignored.
-
-The value Text outputs query results to the console or output file with nothing returned in the pipeline as per SQLCMD.EXE and None provides no query output of any description.
+- DataRows, DataTables and DataSet set the output of the cmdlet to be the corresponding .NET data type.
+- Scalar executes the query and returns the first column of the first row in the result set returned by the query. All other columns and rows are ignored.
+- Text outputs query results to the console or output file with nothing returned in the pipeline as per SQLCMD.EXE.
+- None provides no query output of any description and can result in slightly better performance as time is not spent processing result sets. Use this for example when running big database creation or modification scripts.
 
 Possible values: None, Scalar, DataRows, DataSet, DataTables, Text
 

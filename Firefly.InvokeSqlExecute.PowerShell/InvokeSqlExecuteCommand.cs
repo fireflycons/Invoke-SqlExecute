@@ -121,11 +121,9 @@
         /// For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages 
         /// that would otherwise go to the console.
         /// </para>
-        /// <para type="description">
-        /// The script block is presented with a variable $OutputMessage which has two fields&#13;
-        /// - OutputDestination: Either 'StdOut' or 'StdError'<br/>
-        /// - Message: The message text.<br/>
-        /// </para>
+        /// <para type="description">The script block is presented with a variable $OutputMessage which has two fields:</para>
+        /// <para type="description">- OutputDestination: Either 'StdOut' or 'StdError'</para>
+        /// <para type="description">- Message: The message text.</para>
         /// </summary>
         /// <value>
         /// The console message handler.
@@ -138,13 +136,10 @@
         /// <para type="description">
         /// Specifies the name of a database. This cmdlet connects to this database in the instance that is specified in the ServerInstance parameter.
         /// </para>
-        /// <para type="description">
-        /// If the Database parameter is not specified, the database that is used depends on whether the current path specifies both the SQLSERVER:\SQL folder and a database name. 
-        /// If the path specifies both the SQL folder and a database name, this cmdlet connects to the database that is specified in the path. 
-        /// If the path is not based on the SQL folder, or the path does not contain a database name, this cmdlet connects to the default database for the current login ID. 
-        /// If you specify the IgnoreProviderContext parameter switch, this cmdlet does not consider any database specified in the current path, 
-        /// and connects to the database defined as the default for the current login ID.
-        /// </para>
+        /// <para type="description">- If the Database parameter is not specified, the database that is used depends on whether the current path specifies both the SQLSERVER:\SQL folder and a database name.</para>
+        /// <para type="description">- If the path specifies both the SQL folder and a database name, this cmdlet connects to the database that is specified in the path.</para>
+        /// <para type="description">- If the path is not based on the SQL folder, or the path does not contain a database name, this cmdlet connects to the default database for the current login ID.</para>
+        /// <para type="description">- If you specify the IgnoreProviderContext parameter switch, this cmdlet does not consider any database specified in the current path,  and connects to the database defined as the default for the current login ID. </para>
         /// </summary>
         /// <value>
         /// The database.
@@ -303,10 +298,10 @@
         /// <summary>
         /// Gets the results as.
         /// <para type="description">Specifies the type of the results this cmdlet outputs.</para>
-        /// <para type="description">The values DataRows, DataTables and DataSet set the output of the cmdlet to be the corresponding .NET data type.</para>
-        /// <para type="description">The value Scalar executes the query and returns the first column of the first row in the result set returned by the query. All other columns and rows are ignored.</para>
-        /// <para type="description">The value Text outputs query results to the console or output file with nothing returned in the pipeline as per SQLCMD.EXE and None provides no query output of any description.
-        /// </para>
+        /// <para type="description">- DataRows, DataTables and DataSet set the output of the cmdlet to be the corresponding .NET data type.</para>
+        /// <para type="description">- Scalar executes the query and returns the first column of the first row in the result set returned by the query. All other columns and rows are ignored.</para>
+        /// <para type="description">- Text outputs query results to the console or output file with nothing returned in the pipeline as per SQLCMD.EXE.</para>
+        /// <para type="description">- None provides no query output of any description and can result in slightly better performance as time is not spent processing result sets. Use this for example when running big database creation or modification scripts.</para>
         /// </summary>
         /// <value>
         /// The results as.
