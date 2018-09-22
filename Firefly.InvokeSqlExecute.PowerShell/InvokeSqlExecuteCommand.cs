@@ -223,17 +223,19 @@
 
         /// <summary>
         /// Gets or sets the include SQL user errors.
+        /// <para type="description">
+        /// In the MS implementation, this parameter forces a DataReader with no returned rows to iterate
+        /// all available result sets in the batch. This is the only way an error raised on any statement 
+        /// within the batch other than the first one will raise a <see cref="SqlException"/>.
+        /// </para>
+        /// <para type="description">
+        /// This parameter is provided for command line compatibility with Invoke-Sqlcmd, 
+        /// but the execution engine behaves as though it is always set.
+        /// </para>
         /// </summary>
         /// <value>
         /// The include SQL user errors.
         /// </value>
-        /// <remarks>
-        /// In the MS implementation, this parameter forces a DataReader with no returned rows to iterate
-        /// all available result sets in the batch. This is the only way an error raised on any statement 
-        /// within the batch other than the first one will raise a <see cref="SqlException"/>.
-        /// This parameter is provided for command line compatibility with Invoke-Sqlcmd, 
-        /// but the execution engine behaves as though it is always set.
-        /// </remarks>
         // ReSharper disable once UnusedMember.Global
         [Parameter]
         public SwitchParameter IncludeSqlUserErrors { get; set; }

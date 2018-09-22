@@ -248,7 +248,10 @@ Accept wildcard characters: False
 ```
 
 ### -IncludeSqlUserErrors
-{{Fill IncludeSqlUserErrors Description}}
+In the MS implementation, this parameter forces a DataReader with no returned rows to iterate all available result sets in the batch.
+This is the only way an error raised on any statement within the batch other than the first one will raise a SqlException.
+
+This parameter is provided for command line compatibility with Invoke-Sqlcmd, but the execution engine behaves as though it is always set.
 
 ```yaml
 Type: SwitchParameter
