@@ -15,20 +15,21 @@ Runs a script containing statements supported by the SQL Server SQLCMD utility.
 ### ConnectionString
 ```
 Invoke-SqlExecute [-AbortOnError] -ConnectionString <String> [-ConsoleMessageHandler <ScriptBlock>]
- [-DisableCommands] [-DryRun] [-DisableVariables] [-MaxBinaryLength <Int32>] [-MaxCharLength <Int32>]
- [-InputFile <String>] [-OutputAs <OutputAs>] [-OutputFile <String>] [-OverrideScriptVariables]
- [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>] [-Variable <Object>] [<CommonParameters>]
+ [-DisableCommands] [-DryRun] [-DisableVariables] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
+ [-MaxCharLength <Int32>] [-InputFile <String>] [-OutputAs <OutputAs>] [-OutputFile <String>]
+ [-OverrideScriptVariables] [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>]
+ [-Variable <Object>] [<CommonParameters>]
 ```
 
 ### ConnectionParameters
 ```
 Invoke-SqlExecute [-AbortOnError] [-ConnectionTimeout <Int32>] [-ConsoleMessageHandler <ScriptBlock>]
  [-Database <String>] [-DedicatedAdministratorConnection] [-DisableCommands] [-DryRun] [-DisableVariables]
- [-EncryptConnection] [-IgnoreProviderContext] [-MaxBinaryLength <Int32>] [-MaxCharLength <Int32>]
- [-InputFile <String>] [-MultiSubnetFailover] [-OutputAs <OutputAs>] [-OutputFile <String>]
- [-OverrideScriptVariables] [-Password <String>] [[-Query] <String>] [-QueryTimeout <Int32>]
- [-RetryCount <Int32>] [-ServerInstance <PSObject>] [-SuppressProviderContextWarning] [-Username <String>]
- [-Variable <Object>] [<CommonParameters>]
+ [-EncryptConnection] [-IgnoreProviderContext] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
+ [-MaxCharLength <Int32>] [-InputFile <String>] [-MultiSubnetFailover] [-OutputAs <OutputAs>]
+ [-OutputFile <String>] [-OverrideScriptVariables] [-Password <String>] [[-Query] <String>]
+ [-QueryTimeout <Int32>] [-RetryCount <Int32>] [-ServerInstance <PSObject>] [-SuppressProviderContextWarning]
+ [-Username <String>] [-Variable <Object>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -243,6 +244,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -IncludeSqlUserErrors
+{{Fill IncludeSqlUserErrors Description}}
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -MaxBinaryLength
 Limits the amount of binary data that can be returned from binary/image columns.
 Default 1024 bytes.
@@ -309,15 +325,22 @@ Accept wildcard characters: False
 ```
 
 ### -OutputAs
-Specifies the type of the results this cmdlet gets.
+Specifies the type of the results this cmdlet outputs.
 
-Possible values: None, Scalar, DataRows, DataSet, DataTables
+The values DataRows, DataTables and DataSet set the output of the cmdlet to be the corresponding .NET data type.
+
+The value Scalar executes the query and returns the first column of the first row in the result set returned by the query.
+All other columns and rows are ignored.
+
+The value Text outputs query results to the console or output file with nothing returned in the pipeline as per SQLCMD.EXE and None provides no query output of any description.
+
+Possible values: None, Scalar, DataRows, DataSet, DataTables, Text
 
 ```yaml
 Type: OutputAs
 Parameter Sets: (All)
 Aliases: TaskAction, As
-Accepted values: None, Scalar, DataRows, DataSet, DataTables
+Accepted values: None, Scalar, DataRows, DataSet, DataTables, Text
 
 Required: False
 Position: Named
@@ -493,11 +516,11 @@ Accept wildcard characters: False
 ### -Variable
 Specifies initial scripting variables for use in the sqlcmd script.
 
-Various options are available for the type of this input: - IDictionary: e.g.
-a PowerShell hashtable - string: e.g.
-"VAR1=value1;VAR2=Value2".
-Note, does not handle semicolons or equals as part of variable's value -use one of the other types - string\[\]: e.g.
-@("VAR1=value1", "VAR2=Value2")
+Various data types may be used for the type of this input:
+
+- IDictionary: e.g. a PowerShell hashtable @{ VAR1 = 'Value1'; VAR2 = 'Value 2'}
+- string: e.g. "VAR1=value1;VAR2='Value 2'". Note, does not handle semicolons or equals as part of variable's value -use one of the other types
+- string\[\]: e.g. @("VAR1=value1", "VAR2=Value 2")
 
 ```yaml
 Type: Object
@@ -512,7 +535,8 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
