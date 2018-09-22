@@ -11,6 +11,7 @@
     using System.Management.Automation;
     using System.Reflection;
     using System.Security.Principal;
+    using System.Text;
 
     using Firefly.SqlCmdParser;
     using Firefly.SqlCmdParser.Client;
@@ -74,6 +75,8 @@
             this.CurrentDirectoryResolver = new PowerShellDirectoryResolver(this);
         }
 
+        #region Cmdlet Parameters
+
         /// <summary>
         /// Gets or sets the abort on error.
         /// <para type="description">Indicates that this cmdlet stops the SQL Server command and returns an error level to the Windows PowerShell ERRORLEVEL variable if this cmdlet encounters an error.</para>
@@ -83,21 +86,6 @@
         /// </value>
         [Parameter]
         public SwitchParameter AbortOnError { get; set; }
-
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets a value indicating whether [abort on error].
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [abort on error]; otherwise, <c>false</c>.
-        /// </value>
-        public bool AbortOnErrorSet => this.AbortOnError;
-
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets or sets the connected event handler.
-        /// </summary>
-        public EventHandler<ConnectEventArgs> Connected { get; set; }
 
         /// <inheritdoc />
         /// <summary>
@@ -145,15 +133,6 @@
         [Parameter]
         public ScriptBlock ConsoleMessageHandler { get; set; }
 
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets the current directory resolver.
-        /// </summary>
-        /// <value>
-        /// The current directory resolver. If <c>null</c> then <see cref="M:System.IO.Directory.GetCurrentDirectory" /> is used.
-        /// </value>
-        public ICurrentDirectoryResolver CurrentDirectoryResolver { get; }
-
         /// <summary>
         /// Gets or sets the database.
         /// <para type="description">
@@ -198,15 +177,6 @@
         [Parameter]
         public SwitchParameter DisableCommands { get; set; }
 
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets a value indicating whether to disable interactive commands, startup script, and environment variables.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [disable commands]; otherwise, <c>false</c>.
-        /// </value>
-        public bool DisableCommandsSet => this.DisableCommands;
-
         /// <summary>
         /// Gets or sets the dry run.
         /// <para type="description">
@@ -220,14 +190,6 @@
         public SwitchParameter DryRun { get; set; }
 
         /// <summary>
-        /// Gets a value indicating whether parse only (no execute) run should be performed.
-        /// </summary>
-        /// <value>
-        /// <c>true</c> if [parse only]; otherwise, <c>false</c>.
-        /// </value>
-        public bool ParseOnly => this.DryRun;
-
-        /// <summary>
         /// Gets or sets the disable variables.
         /// <para type="description">
         /// Indicates that this cmdlet ignores sqlcmd scripting variables.
@@ -239,15 +201,6 @@
         /// </value>
         [Parameter]
         public SwitchParameter DisableVariables { get; set; }
-
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets a value indicating whether [disable variables].
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [disable variables]; otherwise, <c>false</c>.
-        /// </value>
-        public bool DisableVariablesSet => this.DisableVariables;
 
         /// <summary>
         /// Gets or sets the encrypt connection.
@@ -287,59 +240,8 @@
         /// but the execution engine behaves as though it is always set.
         /// </remarks>
         // ReSharper disable once UnusedMember.Global
+        [Parameter]
         public SwitchParameter IncludeSqlUserErrors { get; set; }
-
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets the initial variables.
-        /// </summary>
-        /// <value>
-        /// The initial variables.
-        /// </value>
-        /// <exception cref="T:System.FormatException">Syntax error in -Variable value</exception>
-        /// <exception cref="T:System.InvalidCastException"></exception>
-        public IDictionary InitialVariables
-        {
-            get
-            {
-                // ReSharper disable StyleCop.SA1126
-                switch (this.Variable)
-                {
-                    case null:
-
-                        return new Dictionary<string, string>();
-
-                    case IDictionary _:
-
-                        // e.g. PowerShell hashtable
-                        return (IDictionary)this.Variable;
-
-                    case string[] _:
-
-                        // Array of variable=value
-                        return GetCommandLineVariables((string[])this.Variable);
-
-                    case object[] objArray:
-
-                        // Array of variable=value.
-                        // Cast to string array first.
-                        return GetCommandLineVariables(objArray.Select(CastVariableDeclarationToString).ToArray());
-
-                    case string _:
-
-                        // Split key/value pairs (name=value;name=value ... )
-                        // Note - does NOT handle semicolons in variable values - use a string array or hashtable instead.
-                        return GetCommandLineVariables(
-                            ((string)this.Variable).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
-
-                    default:
-
-                        throw new InvalidCastException(
-                            $"Cannot derive variables from type ${this.Variable.GetType().FullName}");
-                }
-                // ReSharper restore StyleCop.SA1126
-            }
-        }
 
         /// <inheritdoc />
         /// <summary>
@@ -385,14 +287,6 @@
         public string InputFile { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether [integrated security].
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [integrated security]; otherwise, <c>false</c>.
-        /// </value>
-        public bool IntegratedSecuritySet { get; set; }
-
-        /// <summary>
         /// Gets or sets the multi subnet fail over.
         /// <para type="description">
         /// This is an enhancement over standard SQLCMD behaviour.
@@ -408,7 +302,11 @@
         /// <inheritdoc />
         /// <summary>
         /// Gets the results as.
-        /// <para type="description">Specifies the type of the results this cmdlet gets.</para>
+        /// <para type="description">Specifies the type of the results this cmdlet outputs.</para>
+        /// <para type="description">The values DataRows, DataTables and DataSet set the output of the cmdlet to be the corresponding .NET data type.</para>
+        /// <para type="description">The value Scalar executes the query and returns the first column of the first row in the result set returned by the query. All other columns and rows are ignored.</para>
+        /// <para type="description">The value Text outputs query results to the console or output file with nothing returned in the pipeline as per SQLCMD.EXE and None provides no query output of any description.
+        /// </para>
         /// </summary>
         /// <value>
         /// The results as.
@@ -432,22 +330,6 @@
         public string OutputFile { get; set; }
 
         /// <summary>
-        /// Gets or sets the output message.
-        /// </summary>
-        /// <value>
-        /// The output message.
-        /// </value>
-        public EventHandler<OutputMessageEventArgs> OutputMessage { get; set; }
-
-        /// <summary>
-        /// Gets or sets the output result.
-        /// </summary>
-        /// <value>
-        /// The output result.
-        /// </value>
-        public EventHandler<OutputResultEventArgs> OutputResult { get; set; }
-
-        /// <summary>
         /// Gets or sets the override script variables.
         /// <para type="description">
         /// This is an enhancement over standard SQLCMD behaviour.
@@ -459,15 +341,6 @@
         /// </value>
         [Parameter]
         public SwitchParameter OverrideScriptVariables { get; set; }
-
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets a value indicating whether [override script variables].
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if [override script variables]; otherwise, <c>false</c>.
-        /// </value>
-        public bool OverrideScriptVariablesSet => this.OverrideScriptVariables;
 
         /// <summary>
         /// Gets or sets the password.
@@ -533,15 +406,6 @@
         [Parameter, ValidateRange(0, 65535)]
         public int RetryCount { get; set; } = 0;
 
-        /// <inheritdoc />
-        /// <summary>
-        /// Gets or sets the exit code.
-        /// </summary>
-        /// <value>
-        /// The exit code.
-        /// </value>
-        public int ExitCode { get; set; }
-
         /// <summary>
         /// Gets or sets the server.
         /// <para type="description">
@@ -587,11 +451,11 @@
         /// Specifies initial scripting variables for use in the sqlcmd script.
         /// </para>
         /// <para type="description">
-        /// Various options are available for the type of this input:
-        /// - IDictionary: e.g. a PowerShell hashtable
-        /// - string: e.g. "VAR1=value1;VAR2=Value2". Note, does not handle semicolons or equals as part of variable's value -use one of the other types
-        /// - string[]: e.g. @("VAR1=value1", "VAR2=Value2")
+        /// Various data types may be used for the type of this input:
         /// </para>
+        /// <para type="description">- IDictionary: e.g. a PowerShell hashtable @{ VAR1 = 'Value1'; VAR2 = 'Value 2'}</para>
+        /// <para type="description">- string: e.g. "VAR1=value1;VAR2='Value 2'". Note, does not handle semicolons or equals as part of variable's value -use one of the other types</para>
+        /// <para type="description">- string[]: e.g. @("VAR1=value1", "VAR2=Value 2")</para>
         /// </summary>
         /// <value>
         /// The variable.
@@ -599,6 +463,149 @@
         [Parameter]
         [Alias("SqlCmdParameters")]
         public object Variable { get; set; }
+
+        #endregion
+
+        #region Other properties
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets a value indicating whether [abort on error].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [abort on error]; otherwise, <c>false</c>.
+        /// </value>
+        public bool AbortOnErrorSet => this.AbortOnError;
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets or sets the connected event handler.
+        /// </summary>
+        public EventHandler<ConnectEventArgs> Connected { get; set; }
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets the current directory resolver.
+        /// </summary>
+        /// <value>
+        /// The current directory resolver. If <c>null</c> then <see cref="M:System.IO.Directory.GetCurrentDirectory" /> is used.
+        /// </value>
+        public ICurrentDirectoryResolver CurrentDirectoryResolver { get; }
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets a value indicating whether to disable interactive commands, startup script, and environment variables.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [disable commands]; otherwise, <c>false</c>.
+        /// </value>
+        public bool DisableCommandsSet => this.DisableCommands;
+
+        /// <summary>
+        /// Gets a value indicating whether parse only (no execute) run should be performed.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [parse only]; otherwise, <c>false</c>.
+        /// </value>
+        public bool ParseOnly => this.DryRun;
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets a value indicating whether [disable variables].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [disable variables]; otherwise, <c>false</c>.
+        /// </value>
+        public bool DisableVariablesSet => this.DisableVariables;
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets the initial variables.
+        /// </summary>
+        /// <value>
+        /// The initial variables.
+        /// </value>
+        /// <exception cref="T:System.FormatException">Syntax error in -Variable value</exception>
+        /// <exception cref="T:System.InvalidCastException"></exception>
+        public IDictionary InitialVariables
+        {
+            get
+            {
+                // ReSharper disable StyleCop.SA1126
+                switch (this.Variable)
+                {
+                    case null:
+
+                        return new Dictionary<string, string>();
+
+                    case IDictionary _:
+
+                        // e.g. PowerShell hashtable
+                        return (IDictionary)this.Variable;
+
+                    case string[] _:
+
+                        // Array of variable=value
+                        return GetCommandLineVariables((string[])this.Variable);
+
+                    case object[] objArray:
+
+                        // Array of variable=value.
+                        // Cast to string array first.
+                        return GetCommandLineVariables(objArray.Select(CastVariableDeclarationToString).ToArray());
+
+                    case string _:
+
+                        // Split key/value pairs (name=value;name=value ... )
+                        // Note - does NOT handle semicolons in variable values - use a string array or hashtable instead.
+                        return GetCommandLineVariables(
+                            ((string)this.Variable).Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
+
+                    default:
+
+                        throw new InvalidCastException(
+                            $"Cannot derive variables from type ${this.Variable.GetType().FullName}");
+                }
+                // ReSharper restore StyleCop.SA1126
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the output message.
+        /// </summary>
+        /// <value>
+        /// The output message.
+        /// </value>
+        public EventHandler<OutputMessageEventArgs> OutputMessage { get; set; }
+
+        /// <summary>
+        /// Gets or sets the pipeline result event handler.
+        /// </summary>
+        /// <value>
+        /// The output result.
+        /// </value>
+        public EventHandler<OutputResultEventArgs> OutputResult { get; set; }
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets a value indicating whether [override script variables].
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [override script variables]; otherwise, <c>false</c>.
+        /// </value>
+        public bool OverrideScriptVariablesSet => this.OverrideScriptVariables;
+
+        /// <inheritdoc />
+        /// <summary>
+        /// Gets or sets the exit code.
+        /// </summary>
+        /// <value>
+        /// The exit code.
+        /// </value>
+        public int ExitCode { get; set; }
+
+
+        #endregion
 
         /// <summary>
         /// Begins the processing.
@@ -726,16 +733,19 @@
                     @"SQLSERVER:\SQL",
                     StringComparison.OrdinalIgnoreCase))
             {
+                // Get the current SQL server provider location
                 var psobject = this.InvokeCommand.InvokeScript("Get-Item .").FirstOrDefault();
 
                 if (psobject != null)
                 {
+                    // Use reflection to do this to make the code SMO version independent.
                     var smoObject = psobject.Is("Microsoft.SqlServer.Management.Sdk.Sfc.SfcCollectionInfo")
                                         ? ((dynamic)psobject.BaseObject).Collection
                                         : psobject.BaseObject;
 
                     while (true)
                     {
+                        // Walk back up the provider path discovering potentially a database and server context
                         var type = (Type)smoObject.GetType();
                         var interfaces = type.GetInterfaces();
                         var typeName = type.Name;
@@ -753,13 +763,16 @@
 
                         if (interfaces.Any(i => i.Name == "ISfcDomain"))
                         {
+                            // If we get here, we are outside of any server context
                             break;
                         }
 
+                        // Get parent object to walk up the tree.
                         var prop = (PropertyInfo)smoObject.GetType().GetProperty("Parent");
 
                         if (prop == null)
                         {
+                            // We've reached the root of the SMO namespace
                             break;
                         }
 
@@ -885,15 +898,11 @@
                 connectionStringBuilder.Add("MultiSubnetFailover", "yes");
             }
 
-            // if (!string.IsNullOrEmpty(this.HostName))
-            // {
-            // dbConnectionStringBuilder.Add("Application Name", this.HostName);
-            // }
             return connectionStringBuilder.ConnectionString;
         }
 
         /// <summary>
-        /// Called when [output message].
+        /// Called to output a message to the console (e.g. PRINT, RAISERROR, info messages from commands etc.).
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="args">The <see cref="OutputMessageEventArgs"/> instance containing the event data.</param>
@@ -901,6 +910,7 @@
         {
             if (this.ConsoleMessageHandler != null)
             {
+                // User supplied a scriptblock with -ConsoleMessageHandler, then execute it.
                 this.ConsoleMessageHandler.InvokeWithContext(
                     null,
                     new List<PSVariable> { new PSVariable("OutputMessage", args, ScopedItemOptions.Constant) },
@@ -936,13 +946,42 @@
         }
 
         /// <summary>
-        /// Called when [output result].
+        /// Called when the <see cref="OutputResult"/> is raised to send a result set to the pipeline,
+        /// or the console output stream for -As Text
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="args">The <see cref="OutputResultEventArgs"/> instance containing the event data.</param>
         private void OnOutputResult(object sender, OutputResultEventArgs args)
         {
-            this.WriteObject(args.Result);
+            if (this.OutputAs == OutputAs.Text)
+            {
+                // Create a small scriptblock to get PowerShell to format the result DataTable to a text table and harvest that text.
+                var scriptBlock = ScriptBlock.Create("param($dt) $dt | Format-Table | Out-String");
+                var dt = (DataTable)args.Result;
+                var formattedTable = scriptBlock.InvokeReturnAsIs(dt).ToString();
+
+                // Generate a rows affected message.
+                var rows = dt.Rows.Count == 1 ? "row" : "rows";
+                var rowsaffected = $"({dt.Rows.Count} {rows} affected)\n";
+
+                switch (args.OutputDestination)
+                {
+                    case OutputDestination.StdOut:
+
+                        Console.WriteLine(formattedTable + rowsaffected);
+                        break;
+
+                    case OutputDestination.File:
+
+                        var bytes = Encoding.UTF8.GetBytes(formattedTable + rowsaffected);
+                        args.OutputStream.Write(bytes, 0, bytes.Length);
+                        break;
+                }
+            }
+            else
+            {
+                this.WriteObject(args.Result);
+            }
         }
 
         /// <summary>

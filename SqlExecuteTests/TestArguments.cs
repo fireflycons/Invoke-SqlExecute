@@ -151,6 +151,14 @@ namespace SqlExecuteTests
         public EventHandler<OutputResultEventArgs> OutputResult { get; set; } = (sender, args) => { };
 
         /// <summary>
+        /// Gets or sets the console/file result event handler.
+        /// </summary>
+        /// <value>
+        /// The output result.
+        /// </value>
+        public EventHandler<OutputResultEventArgs> OutputTextResult { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether [override script variables].
         /// </summary>
         /// <value>

@@ -754,7 +754,7 @@ namespace Firefly.SqlCmdParser.Client
                     {
                         if (!scalarResultReturned && sqlDataReader.Read() && sqlDataReader.FieldCount > 0)
                         {
-                            this.Result?.Invoke(this, new OutputResultEventArgs(sqlDataReader.GetValue(0)));
+                            this.Result?.Invoke(this, new OutputResultEventArgs(sqlDataReader.GetValue(0), this.stdoutDestination, this.stdoutFile));
                             scalarResultReturned = true;
                         }
                     }
@@ -811,7 +811,7 @@ namespace Firefly.SqlCmdParser.Client
 
                             if (this.resultsAs == OutputAs.DataRows)
                             {
-                                this.Result?.Invoke(this, new OutputResultEventArgs(newRow));
+                                this.Result?.Invoke(this, new OutputResultEventArgs(newRow, this.stdoutDestination, this.stdoutFile));
                             }
                             else
                             {
@@ -823,10 +823,13 @@ namespace Firefly.SqlCmdParser.Client
                     switch (this.resultsAs)
                     {
                         case OutputAs.DataTables:
-                            this.Result?.Invoke(this, new OutputResultEventArgs(dataTable));
+                        case OutputAs.Text:
+                            
+                            this.Result?.Invoke(this, new OutputResultEventArgs(dataTable, this.stdoutDestination, this.stdoutFile));
                             break;
 
                         case OutputAs.DataSet:
+
                             dataSet.Tables.Add(dataTable);
                             break;
                     }
@@ -835,7 +838,7 @@ namespace Firefly.SqlCmdParser.Client
 
                 if (this.resultsAs == OutputAs.DataSet)
                 {
-                    this.Result?.Invoke(this, new OutputResultEventArgs(dataSet));
+                    this.Result?.Invoke(this, new OutputResultEventArgs(dataSet, this.stdoutDestination, this.stdoutFile));
                 }
             }
         }

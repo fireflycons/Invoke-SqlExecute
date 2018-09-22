@@ -30,6 +30,11 @@
         /// <summary>
         /// Return one or more <see cref="DataTable"/>
         /// </summary>
-        DataTables
+        DataTables,
+
+        /// <summary>
+        /// The text
+        /// </summary>
+        Text
     }
 }

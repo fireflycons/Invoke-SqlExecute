@@ -417,8 +417,6 @@
 
                         isStartOfLine = false;
                     }
-
-                    //this.currentBatch.AppendLine(this.Source);
                 }
 
                 if (tokenizer.State != TokenizerState.None)
