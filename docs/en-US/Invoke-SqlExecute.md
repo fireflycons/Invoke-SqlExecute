@@ -58,13 +58,22 @@ Additionally, you can capture this output by providing a script block that will 
 
 ### EXAMPLE 1
 ```
-Invoke-SqlExecute -Query "SELECT GETDATE() AS TimeOfQuery;" -ServerInstance "MyComputer\MyInstance"
+PS C:\> Invoke-SqlExecute -Query "SELECT GETDATE() AS TimeOfQuery" -ServerInstance "MyComputer\MyInstance"
 ```
+
+This is an example of calling Invoke-Sqlcmd to execute a simple query, similar to specifying sqlcmd with the -Q and -S options:
+
+### EXAMPLE 2
+```
+PS SQLSERVER:\SQL\MyComputer\MyInstance> Invoke-SqlExecute -Query "SELECT @@SERVERNAME AS ServerName"
+```
+
+This is an example of calling Invoke-Sqlcmd to execute a simple query, using the provider context for the connection:
 
 ## PARAMETERS
 
 ### -AbortOnError
-Indicates that this cmdlet stops the SQL Server command and returns an error level to the Windows PowerShell ERRORLEVEL variable if this cmdlet encounters an error.
+Indicates that this cmdlet stops the SQL Server command and returns an error level to the Windows PowerShell LASTEXITCODE variable if this cmdlet encounters an error.
 
 ```yaml
 Type: SwitchParameter
@@ -524,7 +533,7 @@ Various data types may be used for the type of this input:
 
 - IDictionary: e.g. a PowerShell hashtable @{ VAR1 = 'Value1'; VAR2 = 'Value 2'}
 - string: e.g. "VAR1=value1;VAR2='Value 2'". Note, does not handle semicolons or equals as part of variable's value -use one of the other types
-- string\[\]: e.g. @("VAR1=value1", "VAR2=Value 2")
+- string array: e.g. @("VAR1=value1", "VAR2=Value 2")
 
 ```yaml
 Type: Object

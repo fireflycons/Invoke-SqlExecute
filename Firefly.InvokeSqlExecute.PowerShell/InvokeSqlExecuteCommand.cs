@@ -54,7 +54,13 @@
     /// </summary>
     /// <example>
     ///   <para>This is an example of calling Invoke-Sqlcmd to execute a simple query, similar to specifying sqlcmd with the -Q and -S options:</para>
-    ///   <code>Invoke-SqlExecute -Query "SELECT GETDATE() AS TimeOfQuery;" -ServerInstance "MyComputer\MyInstance"</code>
+    ///   <code>PS C:\> Invoke-SqlExecute -Query "SELECT GETDATE() AS TimeOfQuery" -ServerInstance "MyComputer\MyInstance"</code>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute a simple query, similar to specifying sqlcmd with the -Q and -S options:</para>
+    /// </example>
+    /// <example>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute a simple query, using the provider context for the connection:</para>
+    ///   <code>PS SQLSERVER:\SQL\MyComputer\MyInstance> Invoke-SqlExecute -Query "SELECT @@SERVERNAME AS ServerName"</code>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute a simple query, using the provider context for the connection:</para>
     /// </example>
     /// <seealso cref="T:System.Management.Automation.PSCmdlet" />
     /// <seealso cref="T:Firefly.InvokeSqlExecute.IInvokeSqlExecuteArguments" />
@@ -79,7 +85,7 @@
 
         /// <summary>
         /// Gets or sets the abort on error.
-        /// <para type="description">Indicates that this cmdlet stops the SQL Server command and returns an error level to the Windows PowerShell ERRORLEVEL variable if this cmdlet encounters an error.</para>
+        /// <para type="description">Indicates that this cmdlet stops the SQL Server command and returns an error level to the Windows PowerShell LASTEXITCODE variable if this cmdlet encounters an error.</para>
         /// </summary>
         /// <value>
         /// The abort on error.
@@ -452,7 +458,7 @@
         /// </para>
         /// <para type="description">- IDictionary: e.g. a PowerShell hashtable @{ VAR1 = 'Value1'; VAR2 = 'Value 2'}</para>
         /// <para type="description">- string: e.g. "VAR1=value1;VAR2='Value 2'". Note, does not handle semicolons or equals as part of variable's value -use one of the other types</para>
-        /// <para type="description">- string[]: e.g. @("VAR1=value1", "VAR2=Value 2")</para>
+        /// <para type="description">- string array: e.g. @("VAR1=value1", "VAR2=Value 2")</para>
         /// </summary>
         /// <value>
         /// The variable.
