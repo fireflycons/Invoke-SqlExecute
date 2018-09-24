@@ -100,12 +100,12 @@
         public int BatchCount { get; private set; }
 
         /// <summary>
-        /// Gets any error level set via :SETVAR SQLCMDERRORLEVEL.
+        /// Gets any error level set via :EXIT(query) or :SETVAR SQLCMDERRORLEVEL.
         /// </summary>
         /// <returns>The error level.</returns>
         public int GetErrorLevel()
         {
-            return int.TryParse(this.variableResolver.ResolveVariable("SQLCMDERRORLEVEL"), out var errorLevel) ? errorLevel : 0;
+            return this.executer.CustomExitCode ?? (int.TryParse(this.variableResolver.ResolveVariable("SQLCMDERRORLEVEL"), out var errorLevel) ? errorLevel : 0);
         }
 
         /// <inheritdoc />
@@ -143,6 +143,7 @@
             finally
             {
                 sw.Stop();
+
                 this.BatchCount = parser.BatchCount;
                 this.ErrorCount = this.executer.ErrorCount;
                 var batch = parser.BatchCount == 1 ? "batch" : "batches";

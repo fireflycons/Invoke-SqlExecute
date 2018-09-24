@@ -26,6 +26,14 @@
         event EventHandler<OutputResultEventArgs> Result;
 
         /// <summary>
+        /// Gets the custom exit code set by :EXIT(query).
+        /// </summary>
+        /// <value>
+        /// The custom exit code. If <c>null</c> then :EXIT was not encountered.
+        /// </value>
+        int? CustomExitCode { get; }
+
+        /// <summary>
         /// Gets the number of <see cref="SqlException"/> errors recorded by <see cref="ProcessBatch"/>.
         /// Retryable errors that retried and then successfully executed are not counted.
         /// </summary>

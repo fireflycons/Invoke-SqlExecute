@@ -45,7 +45,7 @@ $instances = Invoke-Command -NoNewScope -ScriptBlock {
     }
 
     # Enumerate localdb instances
-    'v11.0', 'MSSQLLocalDB' |
+    <#'v11.0',#> 'MSSQLLocalDB' |
         ForEach-Object {
 
         $instance = "(localdb)\$_"
@@ -237,17 +237,67 @@ Describe 'SQLCMD Commands' {
             $guid = [Guid]::NewGuid().ToString()
 
             # Create a batch file to run
-            "@echo off`necho $guid > `"$PSScriptRoot\testcmd.txt`"" | Out-File "$PSScriptRoot\testcmd.bat" -Encoding ascii
+            "@echo off`necho $guid > `"${env:TEMP}\testcmd.txt`"" | Out-File "${env:TEMP}\testcmd.bat" -Encoding ascii
 
-            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query ":!! `"$PSScriptRoot\testcmd.bat`""
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query ":!! `"${env:TEMP}\testcmd.bat`""
 
             # Trim pesky space added by dos echo from the line before testing
-            (Get-Content "$PSScriptRoot\testcmd.txt" | Select-Object -First 1).Trim() | Should Be $guid
+            (Get-Content "${env:TEMP}\testcmd.txt" | Select-Object -First 1).Trim() | Should Be $guid
+        }
+    }
+
+    Context ':OUT, :ERROR' {
+
+        It 'Should redirect stdout to a file' {
+
+            "PRINT 'Not in file'" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii
+            "GO" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
+            ":OUT `"${env:TEMP}\Should_redirect_stdout_to_a_file.txt`"" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
+            "PRINT 'In file'" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
+
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -InputFile "${env:TEMP}\Should_redirect_stdout_to_a_file.sql"
+            (Get-Content "${env:TEMP}\Should_redirect_stdout_to_a_file.txt" | Select-Object -First 1) | Should Match '^In file'
+        }
+
+        It 'Should redirect stderr to a file' {
+
+            "PRINT 'Not in file'" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii
+            "GO" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
+            ":ERROR `"${env:TEMP}\Should_redirect_stderr_to_a_file.txt`"" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
+            "RAISERROR (N'Error in file', 16, 1)" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
+
+            { Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -InputFile "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" } | Should Throw
+            "${env:TEMP}\Should_redirect_stderr_to_a_file.txt" | Should -FileContentMatch 'Error in file'
+        }
+    }
+
+    Context ':EXIT' {
+
+        It 'Should exit immediately for :EXIT' {
+
+            { Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query "RAISERROR (N'Should not see this', 16, 1)`n:EXIT`nGO`nRAISERROR (N'Or this', 16, 1)" } | Should Not Throw
+        }
+
+        It 'Should execute batch then exit for :EXIT()' {
+
+            { Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query "RAISERROR (N'Should see this', 16, 1)`n:EXIT()`nGO`nRAISERROR (N'But not this', 16, 1)" } | Should Throw
+        }
+
+        It 'Should set LASTEXITCODE for :EXIT(query returning int)' {
+
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query ":EXIT(SELECT 10 AS [ExitCode])"
+            $LASTEXITCODE | Should Be 10
+        }
+
+        It 'Should not set LASTEXITCODE for :EXIT(query returning non-int)' {
+
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -Query ":EXIT(SELECT 'a string' AS [ExitCode])"
+            $LASTEXITCODE | Should Be 0
         }
     }
 }
 
-Describe 'AdventureWorks Database Creation' {
+Describe 'Deploy databases from script' {
 
     $instances |
         Foreach-Object {

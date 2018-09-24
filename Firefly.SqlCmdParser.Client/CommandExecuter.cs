@@ -27,7 +27,7 @@ namespace Firefly.SqlCmdParser.Client
                                                             {
                                                                 -2, // ADO.NET timeout
                                                                 11, // General network error
-                                                                1205 // Deadlock victim 
+                                                                1205 // Deadlock victim
                                                             };
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace Firefly.SqlCmdParser.Client
         /// <returns>
         /// <returns>The edited batch as a new <see cref="IBatchSource"/>; or <c>null</c> if no changes were made.</returns>
         /// </returns>
-        /// <inheritdoc /> 
+        /// <inheritdoc />
         public virtual IBatchSource Ed(string batch)
         {
             // Default behaviour, no edit
@@ -251,7 +251,7 @@ namespace Firefly.SqlCmdParser.Client
                 return;
             }
 
-            // Buffer the output written by the external process. 
+            // Buffer the output written by the external process.
             // Attempting to write this to the PowerShell host UI from within the OutputDataReceived/ErrorDataReceived events crashes PowerShell.
             var outputData = new List<ShellExecuteOutput>();
 
@@ -480,7 +480,7 @@ namespace Firefly.SqlCmdParser.Client
         {
             if (this.arguments.ParseOnly)
             {
-                return;    
+                return;
             }
 
             var sql = batch.Sql;
@@ -542,7 +542,7 @@ namespace Firefly.SqlCmdParser.Client
                                 throw;
                             }
                         }
-                    }                
+                    }
                 }
             }
             catch (SqlException e)
@@ -550,12 +550,12 @@ namespace Firefly.SqlCmdParser.Client
                 e.AddContextData(batch);
                 this.SqlExceptions.Add(e);
 
+                this.WriteStderrMessage(e.Format());
+
                 if (this.ErrorAction == ErrorAction.Exit)
                 {
                     throw;
                 }
-
-                this.WriteStderrMessage(e.Format());
 
                 // Indicate that errors have occurred during processing and continue
                 this.arguments.ExitCode = 1;
@@ -640,7 +640,7 @@ namespace Firefly.SqlCmdParser.Client
         private void DoConnect(SqlConnectionStringBuilder connectionStringBuilder)
         {
             // ReSharper disable StringLiteralTypo
-            // Use a DbConnectionStringBuilder to test if values in the connection string are actually present. 
+            // Use a DbConnectionStringBuilder to test if values in the connection string are actually present.
             // The SqlConnectionStringBuilder override always returns true on TryGetValue
             var dbc = new DbConnectionStringBuilder { ConnectionString = connectionStringBuilder.ConnectionString };
 
@@ -824,7 +824,7 @@ namespace Firefly.SqlCmdParser.Client
                     {
                         case OutputAs.DataTables:
                         case OutputAs.Text:
-                            
+
                             this.Result?.Invoke(this, new OutputResultEventArgs(dataTable, this.stdoutDestination, this.stdoutFile));
                             break;
 
@@ -851,6 +851,11 @@ namespace Firefly.SqlCmdParser.Client
         {
             if (this.stderrDestination == OutputDestination.File)
             {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
                 var bytes = Encoding.UTF8.GetBytes(message);
                 this.stderrFile.Write(bytes, 0, bytes.Length);
 
@@ -871,6 +876,11 @@ namespace Firefly.SqlCmdParser.Client
         {
             if (this.stdoutDestination == OutputDestination.File)
             {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
                 var bytes = Encoding.UTF8.GetBytes(message);
                 this.stdoutFile.Write(bytes, 0, bytes.Length);
 
