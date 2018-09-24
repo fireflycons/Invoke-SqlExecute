@@ -11,6 +11,7 @@ namespace Firefly.SqlCmdParser.Client
     using System.Linq;
     using System.Security.Principal;
     using System.Text;
+    using System.Text.RegularExpressions;
 
     // ReSharper disable once CommentTypo
 
@@ -29,6 +30,11 @@ namespace Firefly.SqlCmdParser.Client
                                                                 11, // General network error
                                                                 1205 // Deadlock victim
                                                             };
+
+        /// <summary>
+        /// The database context changed regex
+        /// </summary>
+        private static readonly Regex DatabaseContextChangedRx = new Regex(@"Changed database context to '(?<dbname>.*)'");
 
         /// <summary>
         /// The arguments
@@ -715,6 +721,14 @@ namespace Firefly.SqlCmdParser.Client
         /// <param name="e">The <see cref="SqlInfoMessageEventArgs"/> instance containing the event data.</param>
         private void OnSqlInfoMessageEvent(object sender, SqlInfoMessageEventArgs e)
         {
+            // Check for DB change (USE) and update internal scripting variable if found
+            var m = DatabaseContextChangedRx.Match(e.Message);
+
+            if (m.Success)
+            {
+                this.variableResolver.SetSystemVariable("SQLCMDDBNAME", m.Groups["dbname"].Value);
+            }
+
             this.WriteStdoutMessage(e.Message);
         }
 
