@@ -182,6 +182,20 @@ Describe 'SQLCMD Commands' {
         }
     }
 
+    Context ':LISTVAR' {
+
+        It 'Should list defined scripting variables' {
+
+            $vars = @{
+                VAR1 = 'Value1'
+                VAR2 = 'Value2'
+                VAR3 = 'Value2'
+            }
+
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose
+        }
+    }
+
     Context ':R (included script files)' {
 
         BeforeEach {
