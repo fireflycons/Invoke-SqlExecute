@@ -60,3 +60,4 @@ CI builds are run against the following SQL server versions. This is not to say 
 If you are aware of any other bugs or inconsistencies in Invoke-Sqlcmd where the behaviour does not align with that of SSMS or sqlcmd.exe, please contact me and I will correct it in this implementation or you can fork it and submit a PR.
 
 
+
