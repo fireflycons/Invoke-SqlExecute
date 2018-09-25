@@ -266,3 +266,4 @@ Firefly.InvokeSqlExecute/*
 
 #VSCode
 .vscode/
+/Firefly.InvokeSqlExecute.PowerShell/DebugScript.ps1
