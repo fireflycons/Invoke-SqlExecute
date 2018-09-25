@@ -11,7 +11,7 @@
     internal class OnErrorCommand : ICommandMatcher
     {
         /// <summary>
-        /// The command regex. Quoted values will be returned with the encosing quotes.
+        /// The command regex. Quoted values will be returned with the enclosing quotes.
         /// </summary>
         private readonly Regex commandRegex = new Regex(@"^\s*:on\s+error\s+(?<action>\w+)?", RegexOptions.IgnoreCase);
 

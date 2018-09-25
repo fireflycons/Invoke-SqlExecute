@@ -151,6 +151,14 @@ namespace SqlExecuteTests
         public EventHandler<OutputResultEventArgs> OutputResult { get; set; } = (sender, args) => { };
 
         /// <summary>
+        /// Gets or sets the console/file result event handler.
+        /// </summary>
+        /// <value>
+        /// The output result.
+        /// </value>
+        public EventHandler<OutputResultEventArgs> OutputTextResult { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether [override script variables].
         /// </summary>
         /// <value>
@@ -183,7 +191,7 @@ namespace SqlExecuteTests
         public int QueryTimeout { get; set; } = 0;
 
         /// <summary>
-        /// Gets or sets the number of times to retry a retiable error (e.g. timed-out queries).
+        /// Gets or sets the number of times to retry a retryable error (e.g. timed-out queries).
         /// </summary>
         /// <value>
         /// The retry count.

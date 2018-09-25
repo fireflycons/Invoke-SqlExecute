@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Data.SqlClient;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -15,9 +16,9 @@
     ///  </summary>
     /// <remarks>
     /// The parser is extremely basic. It does NOT understand SQL itself.
-    /// It only distiguishes the following
+    /// It only distinguishes the following
     /// - Comments. Token is or is not a comment
-    /// - String constants. Tracks single/double quoted strings so that comment characters within a string constant are not interperted as comments.
+    /// - String constants. Tracks single/double quoted strings so that comment characters within a string constant are not interpreted as comments.
     /// </remarks>
     public class Parser
     {
@@ -83,7 +84,7 @@
         private readonly bool disableVariableSubstitution;
 
         /// <summary>
-        /// The currrent batch
+        /// The current batch
         /// </summary>
         private SqlBatch currentBatch;
 
@@ -129,7 +130,7 @@
         /// <value>
         /// The batch count.
         /// </value>
-        public int BatchCount { get; private set; } = 0;
+        public int BatchCount { get; private set; }
 
         /// <summary>
         /// Parses this instance.
@@ -151,7 +152,7 @@
 
                     if (this.currentBatch == null)
                     {
-                        this.currentBatch = new SqlBatch(this.Source);
+                        this.currentBatch = new SqlBatch();
                     }
 
                     var line = this.Source.GetNextLine();
@@ -207,7 +208,7 @@
                                             finally
                                             {
                                                 this.previousBatch = this.currentBatch;
-                                                this.currentBatch = new SqlBatch(this.Source);
+                                                this.currentBatch = new SqlBatch();
                                                 ++this.BatchCount;
                                             }
 
@@ -266,7 +267,7 @@
                                                 finally
                                                 {
                                                     this.previousBatch = this.currentBatch;
-                                                    this.currentBatch = new SqlBatch(this.Source);
+                                                    this.currentBatch = new SqlBatch();
                                                     ++this.BatchCount;
                                                 }
 
@@ -296,7 +297,7 @@
                                                     if (editedBatch != null)
                                                     {
                                                         this.SetInputSource(editedBatch);
-                                                        this.currentBatch = new SqlBatch(editedBatch);
+                                                        this.currentBatch = new SqlBatch();
                                                     }
                                                 }
                                             }
@@ -416,8 +417,6 @@
 
                         isStartOfLine = false;
                     }
-
-                    this.currentBatch.AppendLine();
                 }
 
                 if (tokenizer.State != TokenizerState.None)
@@ -437,6 +436,10 @@
             {
                 throw;
             }
+            catch (SqlException)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 throw new ParserException(ex.Message, ex, this.Source);
@@ -450,7 +453,8 @@
         private void AppendToken(Token token)
         {
             this.currentBatch.Append(
-                token.TokenType == TokenType.Text ? this.SubstituteVariables(token.TokenValue) : token.TokenValue);
+                token.TokenType == TokenType.Text ? this.SubstituteVariables(token.TokenValue) : token.TokenValue,
+                this.Source);
         }
 
         /// <summary>

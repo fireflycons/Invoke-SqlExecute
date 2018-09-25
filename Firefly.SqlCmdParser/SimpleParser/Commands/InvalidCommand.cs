@@ -6,13 +6,13 @@
     /// <summary>
     /// Final match for commands
     /// Matches colon at start of line meaning that if this matches
-    /// it's an invalid SQLCMD directive in that it wasn't mathed by anything else
+    /// it's an invalid SQLCMD directive in that it wasn't matched by anything else
     /// </summary>
     /// <seealso cref="T:Firefly.SqlCmdParser.SimpleParser.Commands.ICommandMatcher" />
     internal class InvalidCommand : ICommandMatcher
     {
         /// <summary>
-        /// The command regex. Quoted values will be returned with the encosing quotes.
+        /// The command regex. Quoted values will be returned with the enclosing quotes.
         /// </summary>
         private readonly Regex commandRegex = new Regex(@"^\s*:");
 

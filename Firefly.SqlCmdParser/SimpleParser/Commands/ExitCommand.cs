@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Firefly.SqlCmdParser.SimpleParser.Commands
+﻿namespace Firefly.SqlCmdParser.SimpleParser.Commands
 {
     using System.Text.RegularExpressions;
 
@@ -17,7 +12,9 @@ namespace Firefly.SqlCmdParser.SimpleParser.Commands
         /// <summary>
         /// The command regex
         /// </summary>
-        private readonly Regex commandRegex = new Regex(@"^\s*:?exit\s*(?<expr>\((?<query>.*)\)\s*)?$", RegexOptions.IgnoreCase);
+        private readonly Regex commandRegex = new Regex(
+            @"^\s*:?exit\s*(?<expr>\((?<query>.*)\)\s*)?$",
+            RegexOptions.IgnoreCase);
 
         /// <inheritdoc />
         /// <summary>

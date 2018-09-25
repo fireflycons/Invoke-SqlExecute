@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace Firefly.SqlCmdParser
+﻿namespace Firefly.SqlCmdParser
 {
+    using System;
+
     /// <summary>
-    /// 
+    /// Arguments for event raised when the input source changes.
     /// </summary>
     /// <seealso cref="System.EventArgs" />
     public class InputSourceChangedEventArgs : EventArgs

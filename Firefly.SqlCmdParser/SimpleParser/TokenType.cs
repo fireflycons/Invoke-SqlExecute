@@ -16,7 +16,7 @@
         Comment,
 
         /// <summary>
-        /// Not actually retured by the tokenizer.
+        /// Not actually returned by the tokenizer.
         /// Used to check line breaks in unit tests.
         /// </summary>
         LineBreak

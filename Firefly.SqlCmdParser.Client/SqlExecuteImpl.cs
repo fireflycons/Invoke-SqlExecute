@@ -1,6 +1,8 @@
 ﻿namespace Firefly.SqlCmdParser.Client
 {
     using System;
+    using System.Collections.Generic;
+    using System.Data.SqlClient;
     using System.Diagnostics;
 
     /// <inheritdoc />
@@ -17,12 +19,12 @@
         /// <summary>
         /// The executer
         /// </summary>
-        private readonly CommandExecuter executer;
+        private readonly ICommandExecuter executer;
 
         /// <summary>
         /// The variable resolver
         /// </summary>
-        private readonly VariableResolver variableResolver;
+        private readonly IVariableResolver variableResolver;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlExecuteImpl"/> class.
@@ -73,10 +75,38 @@
             }
         }
 
+        /// <summary>
+        /// Gets the list of SQL exceptions thrown during the batch execution.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
+        public IList<SqlException> SqlExceptions => this.executer == null ? new List<SqlException>() : this.executer.SqlExceptions;
+
+        /// <summary>
+        /// Gets the error count.
+        /// </summary>
+        /// <value>
+        /// The error count.
+        /// </value>
         public int ErrorCount { get; private set; }
 
+        /// <summary>
+        /// Gets the batch count.
+        /// </summary>
+        /// <value>
+        /// The batch count.
+        /// </value>
         public int BatchCount { get; private set; }
 
+        /// <summary>
+        /// Gets any error level set via :EXIT(query) or :SETVAR SQLCMDERRORLEVEL.
+        /// </summary>
+        /// <returns>The error level.</returns>
+        public int GetErrorLevel()
+        {
+            return this.executer.CustomExitCode ?? (int.TryParse(this.variableResolver.ResolveVariable("SQLCMDERRORLEVEL"), out var errorLevel) ? errorLevel : 0);
+        }
 
         /// <inheritdoc />
         /// <summary>
@@ -113,6 +143,7 @@
             finally
             {
                 sw.Stop();
+
                 this.BatchCount = parser.BatchCount;
                 this.ErrorCount = this.executer.ErrorCount;
                 var batch = parser.BatchCount == 1 ? "batch" : "batches";

@@ -1,4 +1,5 @@
-﻿namespace Firefly.SqlCmdParser.SimpleParser.Commands
+﻿// ReSharper disable UnusedMember.Global
+namespace Firefly.SqlCmdParser.SimpleParser.Commands
 {
     using System;
     using System.Runtime.Serialization;
@@ -36,6 +37,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.SimpleParser.Commands.CommandSyntaxException" /> class.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global - prevent default construction
         protected CommandSyntaxException()
         {
         }

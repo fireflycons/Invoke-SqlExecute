@@ -1,4 +1,5 @@
-﻿namespace Firefly.SqlCmdParser.Client
+﻿// ReSharper disable InheritdocConsiderUsage
+namespace Firefly.SqlCmdParser.Client
 {
     using System;
     using System.Collections.Generic;
@@ -8,16 +9,33 @@
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Security.Principal;
     using System.Text;
+    using System.Text.RegularExpressions;
+
+    // ReSharper disable once CommentTypo
 
     /// <summary>
     /// Concrete command executer with virtual methods permitting creation of custom executers with some behaviour redefined
     /// </summary>
     // ReSharper disable once InheritdocConsiderUsage
-    public class CommandExecuter : ICommandExecuter, IDisposable
+    public class CommandExecuter : ICommandExecuter
     {
+        /// <summary>
+        /// SQL server or provider error codes that represent failures that can be retried.
+        /// </summary>
+        private static readonly int[] RetryableErrors = new[]
+                                                            {
+                                                                -2, // ADO.NET timeout
+                                                                11, // General network error
+                                                                1205 // Deadlock victim
+                                                            };
+
+        /// <summary>
+        /// The database context changed regex
+        /// </summary>
+        private static readonly Regex DatabaseContextChangedRx = new Regex(@"Changed database context to '(?<dbname>.*)'");
+
         /// <summary>
         /// The arguments
         /// </summary>
@@ -31,7 +49,7 @@
         /// <summary>
         /// The variable resolver
         /// </summary>
-        private readonly VariableResolver variableResolver;
+        private readonly IVariableResolver variableResolver;
 
         /// <summary>
         /// The connection
@@ -63,7 +81,7 @@
         /// </summary>
         /// <param name="arguments">The arguments.</param>
         /// <param name="variableResolver">The variable resolver.</param>
-        public CommandExecuter(ISqlExecuteArguments arguments, VariableResolver variableResolver)
+        public CommandExecuter(ISqlExecuteArguments arguments, IVariableResolver variableResolver)
         {
             this.resultsAs = arguments.OutputAs;
             this.arguments = arguments;
@@ -108,7 +126,15 @@
         /// <value>
         /// The error count.
         /// </value>
-        public int ErrorCount { get; protected set; }
+        public int ErrorCount => this.SqlExceptions.Count;
+
+        /// <summary>
+        /// Gets or sets the list of SQL exceptions thrown during the batch execution.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
+        public IList<SqlException> SqlExceptions { get; protected set; } = new List<SqlException>();
 
         /// <inheritdoc />
         /// <summary>
@@ -173,7 +199,7 @@
         /// <returns>
         /// <returns>The edited batch as a new <see cref="IBatchSource"/>; or <c>null</c> if no changes were made.</returns>
         /// </returns>
-        /// <inheritdoc /> 
+        /// <inheritdoc />
         public virtual IBatchSource Ed(string batch)
         {
             // Default behaviour, no edit
@@ -231,8 +257,8 @@
                 return;
             }
 
-            // Buffer the output written by the external process. 
-            // Attempting to write this to the powershell host UI from within the OutputDataReceived/ErrorDataReceived events crashes powershell.
+            // Buffer the output written by the external process.
+            // Attempting to write this to the PowerShell host UI from within the OutputDataReceived/ErrorDataReceived events crashes PowerShell.
             var outputData = new List<ShellExecuteOutput>();
 
             using (var process = new Process())
@@ -310,7 +336,7 @@
                 catch (Exception ex)
                 {
                     // Ignore any error: "When an incorrect query is specified, sqlcmd will exit without a return value."
-                    // Error here may include InvalidCastException if the scalar reult was null or not an integer.
+                    // Error here may include InvalidCastException if the scalar result was null or not an integer.
                     this.WriteStdoutMessage($"Warning: Error in EXIT(query): {ex.Message}");
                 }
             }
@@ -348,7 +374,7 @@
         /// </summary>
         /// <param name="batch">The batch.</param>
         /// <remarks>
-        /// Implementations may do additiional formatting.
+        /// Implementations may do additional formatting.
         /// </remarks>
         /// <inheritdoc />
         public virtual void List(string batch)
@@ -460,7 +486,7 @@
         {
             if (this.arguments.ParseOnly)
             {
-                return;    
+                return;
             }
 
             var sql = batch.Sql;
@@ -487,7 +513,7 @@
                     // Reset try count
                     var numTries = 0;
 
-                    // Loop till command succeeds, non-retyable error or retry count exceeded
+                    // Loop till command succeeds, non-retryable error or retry count exceeded
                     while (true)
                     {
                         ++numTries;
@@ -519,16 +545,18 @@
                             {
                                 // Can't retry this command
                                 // Exit both the while loop and the go count as it will always fail.
-                                ++this.ErrorCount;
                                 throw;
                             }
                         }
-                    }                
+                    }
                 }
             }
             catch (SqlException e)
             {
-                this.WriteStderrMessage(e.Format(batch));
+                e.AddContextData(batch);
+                this.SqlExceptions.Add(e);
+
+                this.WriteStderrMessage(e.Format());
 
                 if (this.ErrorAction == ErrorAction.Exit)
                 {
@@ -587,14 +615,7 @@
         /// </remarks>
         private static bool IsRetryableError(SqlException ex)
         {
-            var retryableErrors = new[]
-                                      {
-                                          -2, // ADO.NET timeout
-                                          11, // General network error
-                                          1205 // Deadlock victiom 
-                                      };
-
-            return retryableErrors.Any(e => ex.Number == e);
+            return RetryableErrors.Any(e => ex.Number == e);
         }
 
         /// <summary>
@@ -624,7 +645,8 @@
         /// <param name="connectionStringBuilder">The connection string builder.</param>
         private void DoConnect(SqlConnectionStringBuilder connectionStringBuilder)
         {
-            // Use a DbConnectionStringBuilder to test if values in the connection string are actually present. 
+            // ReSharper disable StringLiteralTypo
+            // Use a DbConnectionStringBuilder to test if values in the connection string are actually present.
             // The SqlConnectionStringBuilder override always returns true on TryGetValue
             var dbc = new DbConnectionStringBuilder { ConnectionString = connectionStringBuilder.ConnectionString };
 
@@ -656,9 +678,23 @@
                     int.Parse(this.variableResolver.ResolveVariable("SQLCMDPACKETSIZE"));
             }
 
-            this.connection = new SqlConnection(connectionStringBuilder.ConnectionString);
-            this.connection.Open();
-            this.connection.InfoMessage += this.OnSqlInfoMessageEvent;
+            try
+            {
+                this.connection = new SqlConnection(connectionStringBuilder.ConnectionString);
+                this.connection.Open();
+                this.connection.InfoMessage += this.OnSqlInfoMessageEvent;
+            }
+            catch (SqlException ex)
+            {
+                if (string.IsNullOrEmpty(ex.Server))
+                {
+                    // Save name of server we attempted to connect to.
+                    ex.Data.Add(SqlExceptionExtensions.Server, connectionStringBuilder.DataSource);
+                }
+
+                this.SqlExceptions.Add(ex);
+                throw;
+            }
 
             // Ensure the connection is properly closed when we do away with it.
             // Unit tests can fail with 'database in use' due to connections hanging around.
@@ -674,6 +710,8 @@
             this.variableResolver.SetSystemVariable("SQLCMDDBNAME", this.connection.Database);
 
             this.Connected?.Invoke(this, new ConnectEventArgs(this.connection, this.stdoutDestination));
+
+            // ReSharper restore StringLiteralTypo
         }
 
         /// <summary>
@@ -683,8 +721,18 @@
         /// <param name="e">The <see cref="SqlInfoMessageEventArgs"/> instance containing the event data.</param>
         private void OnSqlInfoMessageEvent(object sender, SqlInfoMessageEventArgs e)
         {
+            // Check for DB change (USE) and update internal scripting variable if found
+            var m = DatabaseContextChangedRx.Match(e.Message);
+
+            if (m.Success)
+            {
+                this.variableResolver.SetSystemVariable("SQLCMDDBNAME", m.Groups["dbname"].Value);
+            }
+
             this.WriteStdoutMessage(e.Message);
         }
+
+        // ReSharper disable once CommentTypo
 
         /// <summary>
         /// Processes rows/tables/datasets.
@@ -720,7 +768,7 @@
                     {
                         if (!scalarResultReturned && sqlDataReader.Read() && sqlDataReader.FieldCount > 0)
                         {
-                            this.Result?.Invoke(this, new OutputResultEventArgs(sqlDataReader.GetValue(0)));
+                            this.Result?.Invoke(this, new OutputResultEventArgs(sqlDataReader.GetValue(0), this.stdoutDestination, this.stdoutFile));
                             scalarResultReturned = true;
                         }
                     }
@@ -743,6 +791,7 @@
                                         case "xml":
                                         case "nchar":
                                         case "nvarchar":
+                                        // ReSharper disable once StringLiteralTypo
                                         case "ntext":
 
                                             var text = sqlDataReader[i] as string;
@@ -776,7 +825,7 @@
 
                             if (this.resultsAs == OutputAs.DataRows)
                             {
-                                this.Result?.Invoke(this, new OutputResultEventArgs(newRow));
+                                this.Result?.Invoke(this, new OutputResultEventArgs(newRow, this.stdoutDestination, this.stdoutFile));
                             }
                             else
                             {
@@ -788,10 +837,13 @@
                     switch (this.resultsAs)
                     {
                         case OutputAs.DataTables:
-                            this.Result?.Invoke(this, new OutputResultEventArgs(dataTable));
+                        case OutputAs.Text:
+
+                            this.Result?.Invoke(this, new OutputResultEventArgs(dataTable, this.stdoutDestination, this.stdoutFile));
                             break;
 
                         case OutputAs.DataSet:
+
                             dataSet.Tables.Add(dataTable);
                             break;
                     }
@@ -800,7 +852,7 @@
 
                 if (this.resultsAs == OutputAs.DataSet)
                 {
-                    this.Result?.Invoke(this, new OutputResultEventArgs(dataSet));
+                    this.Result?.Invoke(this, new OutputResultEventArgs(dataSet, this.stdoutDestination, this.stdoutFile));
                 }
             }
         }
@@ -813,6 +865,11 @@
         {
             if (this.stderrDestination == OutputDestination.File)
             {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
                 var bytes = Encoding.UTF8.GetBytes(message);
                 this.stderrFile.Write(bytes, 0, bytes.Length);
 
@@ -833,6 +890,11 @@
         {
             if (this.stdoutDestination == OutputDestination.File)
             {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
                 var bytes = Encoding.UTF8.GetBytes(message);
                 this.stdoutFile.Write(bytes, 0, bytes.Length);
 

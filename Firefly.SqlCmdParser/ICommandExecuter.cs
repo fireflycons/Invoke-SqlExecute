@@ -1,14 +1,38 @@
 ﻿namespace Firefly.SqlCmdParser
 {
+    using System;
     using System.Collections.Generic;
     using System.Data.SqlClient;
 
     /// <summary>
     /// Interface that defines methods for handling SQLCMD commands.
-    /// Implementation methods should throw if the parse-process mechinsim should stop.
+    /// Implementation methods should throw if the parse-process mechanism should stop.
     /// </summary>
-    public interface ICommandExecuter
+    public interface ICommandExecuter : IDisposable
     {
+        /// <summary>
+        /// Occurs when a database connection is made
+        /// </summary>
+        event EventHandler<ConnectEventArgs> Connected;
+
+        /// <summary>
+        /// Occurs when a message is ready.
+        /// </summary>
+        event EventHandler<OutputMessageEventArgs> Message;
+
+        /// <summary>
+        /// Occurs when a result or result set is ready.
+        /// </summary>
+        event EventHandler<OutputResultEventArgs> Result;
+
+        /// <summary>
+        /// Gets the custom exit code set by :EXIT(query).
+        /// </summary>
+        /// <value>
+        /// The custom exit code. If <c>null</c> then :EXIT was not encountered.
+        /// </value>
+        int? CustomExitCode { get; }
+
         /// <summary>
         /// Gets the number of <see cref="SqlException"/> errors recorded by <see cref="ProcessBatch"/>.
         /// Retryable errors that retried and then successfully executed are not counted.
@@ -19,6 +43,14 @@
         int ErrorCount { get; }
 
         /// <summary>
+        /// Gets the list of SQL exceptions thrown during the batch execution.
+        /// </summary>
+        /// <value>
+        /// The SQL exceptions.
+        /// </value>
+        IList<SqlException> SqlExceptions { get; }
+
+        /// <summary>
         /// <c>:CONNECT</c> directive.
         /// </summary>
         /// <param name="timeout">The timeout.</param>
@@ -26,6 +58,12 @@
         /// <param name="user">The user.</param>
         /// <param name="password">The password.</param>
         void Connect(int timeout, string server, string user, string password);
+
+        /// <summary>
+        /// Connects the specified connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        void ConnectWithConnectionString(string connectionString);
 
         /// <summary>
         ///   <c>:ED</c> directive
@@ -71,7 +109,7 @@
         /// </summary>
         /// <param name="batch">The batch.</param>
         /// <remarks>
-        /// Implementations may do additiional formatting.
+        /// Implementations may do additional formatting.
         /// </remarks>
         void List(string batch);
 

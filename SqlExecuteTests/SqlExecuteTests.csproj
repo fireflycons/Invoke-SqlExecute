@@ -55,20 +55,33 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="DontTrustInvokeSqlcmdTests.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Sql2017InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Sql2016InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Sql2014InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_DontTrustInvokeSqlcmd_Sql2016.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_DontTrustInvokeSqlcmd_Sql2017.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_StackOverflow33271446_Sql2016.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_StackOverflow33271446_Sql2017.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_StackOverflow33271446_Sql2014.cs" />
+    <Compile Include="SqlServerIntegration\DontTrustInvokeSqlcmdTestsBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Resources\AdventureWorks\_IAdventureWorksLocator.cs" />
+    <Compile Include="SqlServerIntegration\InstanceState.cs" />
+    <Compile Include="SqlServerIntegration\ISqlServerInstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\LocalDb\LocalDb2016InstanceInfo.cs" />
+    <Compile Include="SqlServerIntegration\AppVeyor\Test_DontTrustInvokeSqlcmd_Sql2014.cs" />
+    <Compile Include="SqlServerIntegration\LocalDb\Test_DontTrustInvokeSqlcmd_LocalDB2016.cs" />
+    <Compile Include="SqlServerIntegration\LocalDb\Test_StackOverflow33271446_LocalDB2016.cs" />
+    <Compile Include="SqlServerIntegration\AbstractSqlServerInstanceInfo.cs" />
     <Compile Include="TestArguments.cs" />
     <Compile Include="TestBatchExecuter.cs" />
     <Compile Include="CommentTokenizerTests.cs" />
-    <Compile Include="StackOverflow33271446Tests.cs" />
+    <Compile Include="SqlServerIntegration\StackOverflow33271446TestsBase.cs" />
     <Compile Include="TestUtils.cs" />
-    <Compile Include="TestAdventureWorks.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Firefly.InvokeSqlExecute\Firefly.InvokeSqlExecute.csproj">
+    <ProjectReference Include="..\Firefly.InvokeSqlExecute.PowerShell\Firefly.InvokeSqlExecute.PowerShell.csproj">
       <Project>{85db6620-28d2-42b3-82f3-8dc3dbbd3d86}</Project>
-      <Name>Firefly.InvokeSqlExecute</Name>
+      <Name>Firefly.InvokeSqlExecute.PowerShell</Name>
     </ProjectReference>
     <ProjectReference Include="..\Firefly.SqlCmdParser.Client\Firefly.SqlCmdParser.Client.csproj">
       <Project>{e2bb3e81-1f3b-44fb-8adc-1f88e6193597}</Project>
@@ -91,82 +104,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\RunStackOverflow33271446.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\AdventureWorks\Address.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\AddressType.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\AWBuildVersion.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\BillOfMaterials.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\BusinessEntity.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\BusinessEntityAddress.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\BusinessEntityContact.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ContactType.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\CountryRegion.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\CountryRegionCurrency.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\CreditCard.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Culture.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Currency.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\CurrencyRate.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Customer.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Department.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Document.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\EmailAddress.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Employee.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\EmployeeDepartmentHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\EmployeePayHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Illustration.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\JobCandidate.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\JobCandidate_TOREMOVE.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Location.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Password.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Person.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\PersonCreditCard.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\PersonPhone.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\PhoneNumberType.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Product.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductCategory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductCostHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductDescription.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductDocument.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductInventory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductListPriceHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductModel.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductModelIllustration.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductModelorg.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductModelProductDescriptionCulture.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductPhoto.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductProductPhoto.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductReview.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductSubcategory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ProductVendor.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\PurchaseOrderDetail.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\PurchaseOrderHeader.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesOrderDetail.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesOrderHeader.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesOrderHeaderSalesReason.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesPerson.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesPersonQuotaHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesReason.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesTaxRate.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesTerritory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SalesTerritoryHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ScrapReason.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Shift.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ShipMethod.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\ShoppingCartItem.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SpecialOffer.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\SpecialOfferProduct.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\StateProvince.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Store.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\TransactionHistory.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\TransactionHistoryArchive.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\UnitMeasure.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\Vendor.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\WorkOrder.csv" />
-    <EmbeddedResource Include="Resources\AdventureWorks\WorkOrderRouting.csv" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources\AdventureWorks\instawdb.sql" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

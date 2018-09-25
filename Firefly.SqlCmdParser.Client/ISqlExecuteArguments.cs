@@ -151,7 +151,7 @@
         int QueryTimeout { get; }
 
         /// <summary>
-        /// Gets the number of times to retry a retiable error (e.g. timed-out queries).
+        /// Gets the number of times to retry a retryable error (e.g. timed-out queries).
         /// </summary>
         /// <value>
         /// The retry count.

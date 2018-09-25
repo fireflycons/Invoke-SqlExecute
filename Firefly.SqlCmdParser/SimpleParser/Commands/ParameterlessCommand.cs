@@ -4,7 +4,7 @@
 
     /// <inheritdoc />
     /// <summary>
-    /// Abstract base class for parameterless commands
+    /// Abstract base class for parameter-less commands
     /// </summary>
     /// <seealso cref="T:Firefly.SqlCmdParser.SimpleParser.Commands.ICommandMatcher" />
     internal abstract class ParameterlessCommand : ICommandMatcher

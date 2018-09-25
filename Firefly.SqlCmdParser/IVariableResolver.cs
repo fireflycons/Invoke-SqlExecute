@@ -1,5 +1,6 @@
 ﻿namespace Firefly.SqlCmdParser
 {
+    using System;
     using System.Collections.Generic;
 
     /// <summary>
@@ -35,7 +36,14 @@
         /// </summary>
         /// <param name="varName">Name of the variable.</param>
         /// <param name="varValue">The variable value.</param>
-        /// <returns><c>true</c> if ownership of the variable is assumed by the implementation; else <c>false</c></returns>
         void SetVariable(string varName, string varValue);
+
+        /// <summary>
+        /// Sets a system variable.
+        /// </summary>
+        /// <param name="varName">Name of the variable.</param>
+        /// <param name="varValue">The variable value.</param>
+        /// <exception cref="ArgumentNullException">varName - Attempted to set a system variable with null variable name</exception>
+        void SetSystemVariable(string varName, string varValue);
     }
 }

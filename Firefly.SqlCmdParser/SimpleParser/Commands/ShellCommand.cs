@@ -39,7 +39,7 @@
         /// <returns>
         ///   <c>true</c> if the specified line is match; otherwise, <c>false</c>.
         /// </returns>
-        /// <exception cref="T:Firefly.SqlCmdParser.SimpleParser.Commands.CommandSyntaxException">Missing commmand arguments</exception>
+        /// <exception cref="T:Firefly.SqlCmdParser.SimpleParser.Commands.CommandSyntaxException">Missing command arguments</exception>
         public bool IsMatch(string line)
         {
             var m = this.commandRegex.Match(line);
@@ -53,7 +53,7 @@
 
             if (string.IsNullOrEmpty(cmd))
             {
-                throw new CommandSyntaxException(this.CommandType, "Missing commmand arguments");
+                throw new CommandSyntaxException(this.CommandType, "Missing command arguments");
             }
 
             this.Command = cmd;

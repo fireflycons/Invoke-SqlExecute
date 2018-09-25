@@ -59,6 +59,7 @@
         /// <summary>
         /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.ParserException" /> class.
         /// </summary>
+        // ReSharper disable once UnusedMember.Global - Prevent default construction
         protected ParserException()
         {
         }
@@ -118,7 +119,7 @@
 
                 default:
 
-                    return new ParserException($"Unexepected state {tokenizerState}", batchSource);
+                    return new ParserException($"Unexpected state {tokenizerState}", batchSource);
             }
         }
         /// <summary>

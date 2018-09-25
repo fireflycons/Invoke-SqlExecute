@@ -259,3 +259,11 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+
+# Firefly.InvokeSqlExecute Module Output
+Firefly.InvokeSqlExecute/*
+!Firefly.InvokeSqlExecute/README.md
+
+#VSCode
+.vscode/
+/Firefly.InvokeSqlExecute.PowerShell/DebugScript.ps1

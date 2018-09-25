@@ -1,0 +1,11 @@
+CREATE TABLE test
+(
+    Id INT NOT NULL PRIMARY KEY,
+)
+
+GO
+
+INSERT INTO test
+VALUES
+    (1)
+GO

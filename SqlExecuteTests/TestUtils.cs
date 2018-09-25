@@ -1,81 +1,41 @@
 ﻿namespace SqlExecuteTests
 {
     using System;
-    using System.CodeDom;
     using System.Data;
     using System.Data.SqlClient;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Reflection;
+    using System.Security.AccessControl;
+    using System.Security.Principal;
 
     using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-    using SqlExecuteTests.Resources.AdventureWorks;
-
     /// <summary>
-    /// Helper methods for the tests
+    ///     Helper methods for the tests
     /// </summary>
-    internal class TestUtils
+    [TestClass]
+    public class TestUtils
     {
         /// <summary>
-        /// The database name
+        /// The adventure works base directory - as downloaded by AppVeyor init.
+        /// Cloned by AppVeyor init from <see href="https://github.com/Microsoft/sql-server-samples/tree/master/samples/databases/adventure-works"/>
+        /// </summary>
+        public const string AdventureWorksBaseDir = @"C:\TestData\sql-server-samples\samples\databases\adventure-works";
+
+        /// <summary>
+        ///     The database name
         /// </summary>
         public const string DatabaseName = "Test1";
 
         /// <summary>
-        /// The resource names
+        ///     The resource names
         /// </summary>
         private static readonly string[] ResourceNames = Assembly.GetExecutingAssembly().GetManifestResourceNames();
 
         /// <summary>
-        /// Gets the server connection, which amounts to server name and authentication.
-        /// If AppVeyor is detected, test for all known AppVeyor SQL services and return the first found.
-        /// Otherwise default to (localdb)\mssqllocaldb;Integrated Security=true
-        /// </summary>
-        /// <value>
-        /// The server name and authentication part of a connection string.
-        /// </value>
-        /// <exception cref="InvalidOperationException">Unable to determine AppVeyor SQL server environment</exception>
-        public static string ServerConnection
-        {
-            get
-            {
-                var appveyor = Environment.GetEnvironmentVariable("APPVEYOR");
-
-                if (appveyor == null)
-                {
-                    // ReSharper disable once ConvertToConstant.Local
-                    var serverConnection = @"Server=(localdb)\mssqllocaldb;Integrated Security=true";
-                    var version = ExecuteScalar<string>(serverConnection, "SELECT @@VERSION");
-                    Debug.WriteLine($"localdb:\n{version}");
-                    return serverConnection;
-                }
-
-                // Try to detect what SQL server AppVeyor has provided
-                foreach (var server in new[] { "SQL2008R2SP2", "SQL2012SP1", "SQL2014", "SQL2016", "SQL2017" })
-                {
-                    var serverConnection = $"Server=(local)\\{server};;User ID=sa;Password=Password12!";
-
-                    try
-                    {
-                        var version = ExecuteScalar<string>(serverConnection, "SELECT @@VERSION");
-                        Debug.WriteLine($"AppVeyor:\n{version}");
-                        return serverConnection;
-                    }
-                    catch
-                    {
-                        // Do nothing - next instance type
-                    }
-                }
-
-                // If we get here, no dice
-                throw new InvalidOperationException("Unable to determine AppVeyor SQL server environment");
-            }
-        }
-
-        /// <summary>
-        /// Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection"/>.
+        ///     Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" />.
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="sql">The SQL.</param>
@@ -96,13 +56,13 @@
         }
 
         /// <summary>
-        /// Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" /> and return scalar result.
+        ///     Executes a single batch of SQL directly via a dedicated <see cref="SqlConnection" /> and return scalar result.
         /// </summary>
         /// <typeparam name="T">Type to cast scalar result to.</typeparam>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="sql">The SQL.</param>
         /// <returns>
-        /// Scalar result
+        ///     Scalar result
         /// </returns>
         public static T ExecuteScalar<T>(string connectionString, string sql)
         {
@@ -121,11 +81,30 @@
         }
 
         /// <summary>
-        /// Loads an SQL resource from embedded resources.
+        /// Grants everyone file access to adventure works schema.
+        /// </summary>
+        /// <param name="testContext">The test context.</param>
+        [AssemblyInitialize]
+        public static void GrantAccessToAdventureWorksSchema(TestContext testContext)
+        {
+            if (!Directory.Exists(AdventureWorksBaseDir))
+            {
+                Debug.WriteLine($"Can't find '{AdventureWorksBaseDir}'. AdventureWorks tests are going to fail.");
+                return;
+            }
+
+            foreach (var d in Directory.EnumerateDirectories(AdventureWorksBaseDir, "*", SearchOption.TopDirectoryOnly))
+            {
+                GrantAccess(d);
+            }
+        }
+
+        /// <summary>
+        ///     Loads an SQL resource from embedded resources.
         /// </summary>
         /// <param name="resourceName">Name of the resource.</param>
         /// <returns>SQL text.</returns>
-        /// <exception cref="FileNotFoundException">Cannot locate embedded resource <paramref name="resourceName"/>.</exception>
+        /// <exception cref="FileNotFoundException">Cannot locate embedded resource <paramref name="resourceName" />.</exception>
         public static string LoadSqlResource(string resourceName)
         {
             if (!resourceName.EndsWith(".sql", StringComparison.OrdinalIgnoreCase))
@@ -150,38 +129,21 @@
         }
 
         /// <summary>
-        /// Unpacks the adventure works schema.
+        /// Grants everyone access to the given directory.
         /// </summary>
-        /// <returns>Folder where the resource files were unpacked to.</returns>
-        public static string UnpackAdventureWorksSchema()
+        /// <param name="fullPath">The full path.</param>
+        private static void GrantAccess(string fullPath)
         {
-            var resourceNamespace = typeof(IAdventureWorksLocator).Namespace;
-
-            Assert.IsNotNull(resourceNamespace, "Unable to retrieve resource namespace");
-
-            var outputFolder = Path.Combine(Path.GetTempPath(), "AdventureWorks");
-
-            if (!Directory.Exists(outputFolder))
-            {
-                Directory.CreateDirectory(outputFolder);
-            }
-
-            foreach (var resource in ResourceNames.Where(r => r.StartsWith(resourceNamespace)))
-            {
-                var f = resource.Substring(resourceNamespace.Length + 1);
-                var filename = Path.Combine(outputFolder, f);
-
-                using (var fs = new FileStream(filename, FileMode.Create))
-                {
-                    using (var rs = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
-                    {
-                        Assert.IsNotNull(rs, $"Unable to retrieve resource: {resource}");
-                        rs.CopyTo(fs);
-                    }
-                }
-            }
-
-            return outputFolder;
+            var directoryInfo = new DirectoryInfo(fullPath);
+            var directorySecurity = directoryInfo.GetAccessControl();
+            directorySecurity.AddAccessRule(
+                new FileSystemAccessRule(
+                    new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                    FileSystemRights.FullControl,
+                    InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit,
+                    PropagationFlags.NoPropagateInherit,
+                    AccessControlType.Allow));
+            directoryInfo.SetAccessControl(directorySecurity);
         }
     }
 }

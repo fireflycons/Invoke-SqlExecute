@@ -1,17 +1,58 @@
 version: 0.1.{build}
 image: Visual Studio 2017
+
+skip_commits:
+  message: /NO_CI/      # Regex for matching commit message
+
+services:
+  - mssql2014
+  - mssql2016
+  - mssql2017
+
+init:
+  # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+  # Enumerate installed SQL servers and set them to dynamic ports
+  - ps: "[Net.ServicePointManager]::SecurityProtocol = 'tls12, tls11, tls, ssl3'; iex ((New-Object Net.WebClient).DownloadString('https://gist.github.com/fireflycons/58dfde9c2fab7de2f4e97668938baebe/raw'))"
+
 environment:
+  # Uncomment the following to see SQLException detail in Pester test output (or set it in a local environment)
+  # VerboseTests: 1
+  APPVEYOR_RDP_PASSWORD:
+    secure: 6RnJH3K6Be0FsXWvj3TxTQ==
+  NuGetApiKey:
+    secure: ZwF65Rl156oMAenHhi8BAY0LySWhhjDvNNt91dpU7D5N88E8ToZyZHCziktv7sz3
   matrix:
-    - platform: Any CPU
-      configuration: Debug
 #    - platform: Any CPU
-#      configuration: Release
+#      configuration: Debug
+    - platform: Any CPU
+      configuration: Release
+
 matrix:
   fast_finish: false
+
+before_build:
+  - nuget restore
+  # Download AdventureWorks samples
+  #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/fireflycons/Invoke-SqlExecute/dev/DownloadAdventureWorks.ps1'))
+
 build:
   parallel: true
   verbosity: normal
-services:
-  - mssql2014
-before_build:
-  - nuget restore
+
+# to run tests against only selected assemblies and/or categories
+test:
+  categories:
+    only:
+      - Parser
+
+after_test:             # Now layout PS Module and run pester tests.
+  - ps: . .\PrepareAndTestModule.ps1
+
+artifacts:
+  - path: Firefly.InvokeSqlExecute # Dir populated with files that make up the module
+
+deploy_script:    # Deploy to PS Gallery
+- ps: . .\DeployModule.ps1
+
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
