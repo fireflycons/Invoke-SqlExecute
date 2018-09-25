@@ -16,8 +16,8 @@ Runs a script containing statements supported by the SQL Server SQLCMD utility.
 ```
 Invoke-SqlExecute [-AbortOnError] -ConnectionString <String> [-ConsoleMessageHandler <ScriptBlock>]
  [-DisableCommands] [-DryRun] [-DisableVariables] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
- [-MaxCharLength <Int32>] [-InputFile <String>] [-OutputAs <OutputAs>] [-OutputFile <String>]
- [-OverrideScriptVariables] [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>]
+ [-MaxCharLength <Int32>] [-InputFile <String[]>] [-OutputAs <OutputAs>] [-OutputFile <String>]
+ [-OverrideScriptVariables] [-Parallel] [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>]
  [-Variable <Object>] [<CommonParameters>]
 ```
 
@@ -26,8 +26,8 @@ Invoke-SqlExecute [-AbortOnError] -ConnectionString <String> [-ConsoleMessageHan
 Invoke-SqlExecute [-AbortOnError] [-ConnectionTimeout <Int32>] [-ConsoleMessageHandler <ScriptBlock>]
  [-Database <String>] [-DedicatedAdministratorConnection] [-DisableCommands] [-DryRun] [-DisableVariables]
  [-EncryptConnection] [-IgnoreProviderContext] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
- [-MaxCharLength <Int32>] [-InputFile <String>] [-MultiSubnetFailover] [-OutputAs <OutputAs>]
- [-OutputFile <String>] [-OverrideScriptVariables] [-Password <String>] [[-Query] <String>]
+ [-MaxCharLength <Int32>] [-InputFile <String[]>] [-MultiSubnetFailover] [-OutputAs <OutputAs>]
+ [-OutputFile <String>] [-OverrideScriptVariables] [-Parallel] [-Password <String>] [[-Query] <String>]
  [-QueryTimeout <Int32>] [-RetryCount <Int32>] [-ServerInstance <PSObject>] [-SuppressProviderContextWarning]
  [-Username <String>] [-Variable <Object>] [<CommonParameters>]
 ```
@@ -312,7 +312,7 @@ The file can contain Transact-SQL statements, sqlcmd commands and scripting vari
 Specify the full path to the file.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: (All)
 Aliases: Path
 
@@ -380,8 +380,34 @@ Accept wildcard characters: False
 ```
 
 ### -OverrideScriptVariables
-This is an enhancement over standard SQLCMD behaviour.
+This is an enhancement over standard Invoke-sqlcmd behaviour.
+
 If set, this switch prevents any SETVAR commands within the executed script from overriding the values of scripting variables supplied on the command line.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parallel
+This is an enhancement over standard Invoke-sqlcmd behaviour.
+
+If set, and multiple input files or connection strings are specified, then run on multiple threads.
+Useful to push the same script to multiple instances simultaneously.
+
+- One connection string, multiple input files: Run all files on this connection. Use :CONNECT in the input files to redirect to other instances.
+- Multiple connection strings, one input file or -Query: Run the input against all connections.
+- Equal number of connection strings and input files: Run each input against corresponding connection.
+
+It is not possible to send query results to the pipeline in parallel execution mode.
+An exception will be thrown if -OutputAs is not None or Text
 
 ```yaml
 Type: SwitchParameter
@@ -548,7 +574,8 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

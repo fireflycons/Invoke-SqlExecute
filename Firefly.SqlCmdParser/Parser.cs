@@ -94,15 +94,28 @@
         private SqlBatch previousBatch;
 
         /// <summary>
+        /// The invocation number for multi-threaded operation.
+        /// </summary>
+        private int invocationNumber;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="Parser" /> class.
         /// </summary>
+        /// <param name="invocationNumber">The invocation number for multi-threaded operation.</param>
         /// <param name="disableInteractiveCommands">if set to <c>true</c> [disable interactive commands].</param>
         /// <param name="disableVariableSubstitution">If set to <c>true</c> disable variable substitution.</param>
         /// <param name="commandExecuter">The command executer implementation.</param>
         /// <param name="variableResolver">The variable resolver implementation.</param>
         /// <param name="currentDirectoryResolver">The current directory resolver.</param>
-        public Parser(bool disableInteractiveCommands, bool disableVariableSubstitution, ICommandExecuter commandExecuter, IVariableResolver variableResolver, ICurrentDirectoryResolver currentDirectoryResolver = null)
+        public Parser(
+            int invocationNumber,
+            bool disableInteractiveCommands,
+            bool disableVariableSubstitution,
+            ICommandExecuter commandExecuter,
+            IVariableResolver variableResolver,
+            ICurrentDirectoryResolver currentDirectoryResolver = null)
         {
+            this.invocationNumber = invocationNumber;
             this.disableInteractiveCommands = disableInteractiveCommands;
             this.disableVariableSubstitution = disableVariableSubstitution;
             this.commandExecuter = commandExecuter;

@@ -287,7 +287,7 @@
         /// </value>
         [Parameter]
         [Alias("Path")]
-        public string InputFile { get; set; }
+        public string[] InputFile { get; set; }
 
         /// <summary>
         /// Gets or sets the multi subnet fail over.
@@ -335,7 +335,9 @@
         /// <summary>
         /// Gets or sets the override script variables.
         /// <para type="description">
-        /// This is an enhancement over standard SQLCMD behaviour.
+        /// This is an enhancement over standard Invoke-sqlcmd behaviour.
+        /// </para>
+        /// <para type="description">
         /// If set, this switch prevents any SETVAR commands within the executed script from overriding the values of scripting variables supplied on the command line.
         /// </para>
         /// </summary>
@@ -344,6 +346,29 @@
         /// </value>
         [Parameter]
         public SwitchParameter OverrideScriptVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the parallel.
+        /// <para type="description">
+        /// This is an enhancement over standard Invoke-sqlcmd behaviour.
+        /// </para>
+        /// <para type="description">
+        /// If set, and multiple input files or connection strings are specified, then run on multiple threads.
+        /// Useful to push the same script to multiple instances simultaneously.
+        /// </para>
+        /// <para type="description">- One connection string, multiple input files: Run all files on this connection. Use :CONNECT in the input files to redirect to other instances.</para>
+        /// <para type="description">- Multiple connection strings, one input file or -Query: Run the input against all connections.</para>
+        /// <para type="description">- Equal number of connection strings and input files: Run each input against corresponding connection.</para>
+        /// <para type="description">
+        /// It is not possible to send query results to the pipeline in parallel execution mode.
+        /// An exception will be thrown if -OutputAs is not None or Text
+        /// </para>
+        /// </summary>
+        /// <value>
+        /// The parallel.
+        /// </value>
+        [Parameter] 
+        public SwitchParameter Parallel { get; set; }
 
         /// <summary>
         /// Gets or sets the password.
@@ -598,6 +623,14 @@
         /// </value>
         public bool OverrideScriptVariablesSet => this.OverrideScriptVariables;
 
+        /// <summary>
+        /// Gets a value indicating whether to run multiple connections/input files in parallel.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [run parallel]; otherwise, <c>false</c>.
+        /// </value>
+        public bool RunParallel => this.Parallel;
+
         /// <inheritdoc />
         /// <summary>
         /// Gets or sets the exit code.
@@ -607,7 +640,6 @@
         /// </value>
         public int ExitCode { get; set; }
 
-
         #endregion
 
         /// <summary>
@@ -615,6 +647,17 @@
         /// </summary>
         protected override void BeginProcessing()
         {
+            // Do some argument checks
+            if (!(ArgumentHelpers.IsEmptyArgument(this.InputFile) ^ ArgumentHelpers.IsEmptyArgument(this.Query)))
+            {
+                throw new ArgumentException("Must specify either -Query or -InputFile, bur not both or neither.");
+            }
+
+            if (this.RunParallel && !(this.OutputAs == OutputAs.None || this.OutputAs == OutputAs.Text))
+            {
+                throw new ArgumentException("Cannot send results to pipeline in parallel execution mode. Please use Text or None for -OutputAs");
+            }
+
             this.OutputMessage = this.OnOutputMessage;
             this.OutputResult = this.OnOutputResult;
             this.Connected = this.OnConnect;

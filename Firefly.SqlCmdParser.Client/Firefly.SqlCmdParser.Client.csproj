@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentHelpers.cs" />
     <Compile Include="BatchSourceFile.cs" />
     <Compile Include="BatchSourceString.cs" />
     <Compile Include="CommandExecuter.cs" />
