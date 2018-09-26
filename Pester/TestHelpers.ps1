@@ -223,3 +223,22 @@ function Invoke-RawQueryScalar
             }
     }
 }
+
+function Get-TestName
+{
+    <#
+        .SYNOPSIS
+            Get name of enclosing It block
+    #>
+    
+    $test = Get-PSCallStack | Where-Object { $_.Command -ieq 'It' }
+
+    if (-not $test)
+    {
+        throw 'Get-TestName must be called from within It {} block.'
+    }
+
+    $context = Get-PSCallStack | Where-Object { $_.Command -ieq 'Context' }
+
+    ($context.InvocationInfo.BoundParameters['name'] + '-' +  $test.InvocationInfo.BoundParameters['name']).Replace(':', '_')
+}

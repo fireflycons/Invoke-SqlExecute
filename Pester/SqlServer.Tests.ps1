@@ -6,6 +6,12 @@
 $ModuleName = 'Firefly.InvokeSqlExecute'
 
 $testDatabase = 'Test-InvokeSqExecute'
+$testOutput = "$PSScriptRoot\TestOutputs"
+
+if (-not (Test-Path -Path $testOutput -PathType Container))
+{
+    [IO.Directory]::CreateDirectory($testOutput) | Out-Null
+}
 
 # Enumerate available SQL instances
 Write-Host 'Detecting SQL Server instances...'
@@ -186,13 +192,15 @@ Describe 'SQLCMD Commands' {
 
         It 'Should list defined scripting variables' {
 
+            $outFile = Join-Path $testOutput "$(Get-TestName).output.txt"
+
             $vars = @{
                 VAR1 = 'Value1'
                 VAR2 = 'Value2'
                 VAR3 = 'Value2'
             }
 
-            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose -OutputFile $outFile
         }
     }
 
@@ -534,8 +542,10 @@ Describe 'Parallel Execution' {
 
         It 'Should connect to all databases and run simple query in parallel' {
 
+            $outFile = Join-Path $testOutput "$(Get-TestName).output.txt"
+
             { 
-                Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose 
+                Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose -OutputFile $outFile
             } | 
                 Should Not Throw
         }
@@ -547,10 +557,19 @@ Describe 'Parallel Execution' {
 
             $connections = $instances | Where-Object { $_.IsFullTextInstalled } | Select-Object -ExpandProperty Connection
 
+            if (($connections | Measure-Object).Count -eq 0)
             {
-                Invoke-SqlExecute -Parallel -ConnectionString $connections -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs Text -Verbose
-            } |
-                Should Not Throw
+                Set-TestInconclusive -Message "No instances on this machine support full text indexing"
+            }
+            else
+            {
+                $outFile = Join-Path $testOutput "$(Get-TestName).output.txt"
+
+                {
+                    Invoke-SqlExecute -Parallel -ConnectionString $connections -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs Text -Verbose -OutputFile $outFile
+                } |
+                    Should Not Throw
+            }
         }
     }
 }
