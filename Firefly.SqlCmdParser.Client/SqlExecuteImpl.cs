@@ -304,7 +304,7 @@
                 this,
                 new OutputMessageEventArgs(
                     inputSourceChangedEventArgs.NodeNumber,
-                    $"Input Source: '{inputSourceChangedEventArgs.Source.Filename}', Encoding: {inputSourceChangedEventArgs.Source.Encoding}",
+                    $"Input Source: '{inputSourceChangedEventArgs.Source.Filename}', Encoding: {inputSourceChangedEventArgs.Source.Encoding.EncodingName}",
                     OutputDestination.StdOut));
         }
     }
