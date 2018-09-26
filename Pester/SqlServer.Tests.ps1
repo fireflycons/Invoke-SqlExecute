@@ -530,18 +530,27 @@ Describe 'Basic SQL Server Provider Tests' {
 
 Describe 'Parallel Execution' {
 
-    Context 'Should connect to all databases and run simple query in parallel' {
+    Context 'Multiple connections with -Query' {
 
-        { Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose } | Should Not Throw
+        It 'Should connect to all databases and run simple query in parallel' {
+
+            { 
+                Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose 
+            } | 
+                Should Not Throw
+        }
     }
 
-    Context 'Should run database creation script on multiple instances in parallel' {
+    Context 'Multiple connections with -InputFile' {
 
-        $connections = $instances | Where-Object { $_.IsFullTextInstalled } | Select-Object -ExpandProperty Connection
+        It 'Should run database creation script on multiple instances in parallel' {
 
-        {
-            Invoke-SqlExecute -Parallel -ConnectionString $connections -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs Text -Verbose
-        } |
-            Should Not Throw
+            $connections = $instances | Where-Object { $_.IsFullTextInstalled } | Select-Object -ExpandProperty Connection
+
+            {
+                Invoke-SqlExecute -Parallel -ConnectionString $connections -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs Text -Verbose
+            } |
+                Should Not Throw
+        }
     }
 }

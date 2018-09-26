@@ -40,7 +40,9 @@
 
             this.runList = new List<RunConfiguration>();
 
-            for (var i = 0; i < Math.Max(arguments.ConnectionString.Length, arguments.InputFile?.Length ?? 0); ++i)
+            var inputFileCount = arguments.InputFile?.Length ?? 0;
+
+            for (var i = 0; i < Math.Max(arguments.ConnectionString.Length, inputFileCount); ++i)
             {
                 var r = CreateVariableResolver(arguments);
                 var e = CreateCommandExecuter(i + 1, arguments, r);
@@ -54,7 +56,7 @@
                                 arguments.ConnectionString.Length == 1
                                     ? arguments.ConnectionString[0]
                                     : arguments.ConnectionString[i],
-                            InitialBatchSource = this.GetInitialBatchSource(i),
+                            InitialBatchSource = this.GetInitialBatchSource(Math.Min(i, inputFileCount - 1)),
                             VariableResolver = r
                         });
             }
