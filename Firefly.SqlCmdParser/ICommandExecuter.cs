@@ -35,12 +35,20 @@
 
         /// <summary>
         /// Gets the number of <see cref="SqlException"/> errors recorded by <see cref="ProcessBatch"/>.
-        /// Retryable errors that retried and then successfully executed are not counted.
+        /// Retriable errors that retried and then successfully executed are not counted.
         /// </summary>
         /// <value>
         /// The error count.
         /// </value>
         int ErrorCount { get; }
+
+        /// <summary>
+        /// Gets the execution node number.
+        /// </summary>
+        /// <value>
+        /// The node number, needed for raising message events.
+        /// </value>
+        int NodeNumber { get; }
 
         /// <summary>
         /// Gets the list of SQL exceptions thrown during the batch execution.

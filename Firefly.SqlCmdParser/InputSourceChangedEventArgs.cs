@@ -1,19 +1,19 @@
 ﻿namespace Firefly.SqlCmdParser
 {
-    using System;
-
     /// <summary>
     /// Arguments for event raised when the input source changes.
     /// </summary>
     /// <seealso cref="System.EventArgs" />
-    public class InputSourceChangedEventArgs : EventArgs
+    public class InputSourceChangedEventArgs : ParallelNodeEventArgs
     {
-        /// <inheritdoc />
         /// <summary>
         /// Initializes a new instance of the <see cref="T:Firefly.SqlCmdParser.InputSourceChangedEventArgs" /> class.
         /// </summary>
+        /// <param name="nodeNumber">The execution node number.</param>
         /// <param name="newSource">The new source.</param>
-        internal InputSourceChangedEventArgs(IBatchSource newSource)
+        /// <inheritdoc />
+        internal InputSourceChangedEventArgs(int nodeNumber, IBatchSource newSource)
+            : base(nodeNumber)
         {
             this.Source = newSource;
         }

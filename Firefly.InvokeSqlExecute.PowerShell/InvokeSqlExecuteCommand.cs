@@ -9,6 +9,7 @@
     using System.IO;
     using System.Linq;
     using System.Management.Automation;
+    using System.Management.Automation.Runspaces;
     using System.Reflection;
     using System.Security.Principal;
     using System.Text;
@@ -102,7 +103,7 @@
         /// The connection string.
         /// </value>
         [Parameter(ParameterSetName = "ConnectionString", Mandatory = true), ValidateNotNullOrEmpty]
-        public string ConnectionString { get; set; }
+        public string[] ConnectionString { get; set; }
 
         /// <summary>
         /// Gets or sets the login timeout.
@@ -496,6 +497,16 @@
 
         #region Other properties
 
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="InvokeSqlExecuteCommand"/> is verbose.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if verbose; otherwise, <c>false</c>.
+        /// </value>
+        private bool Verbose =>
+            this.MyInvocation.BoundParameters.ContainsKey("Verbose")
+            && ((SwitchParameter)this.MyInvocation.BoundParameters["Verbose"]).ToBool();
+
         /// <inheritdoc />
         /// <summary>
         /// Gets a value indicating whether [abort on error].
@@ -653,6 +664,14 @@
                 throw new ArgumentException("Must specify either -Query or -InputFile, bur not both or neither.");
             }
 
+            if (!(ArgumentHelpers.IsEmptyArgument(this.ConnectionString)
+                  || ArgumentHelpers.IsEmptyArgument(this.InputFile))
+                && this.ConnectionString.Length != this.InputFile.Length)
+            {
+                // Must be 1 connection, many inputs or 1 input, many connections
+                throw new ArgumentException("Number of connection strings does not match number of input files. Must be 1 connection many files, or 1 file many connections, or an equal number of both.");
+            }
+
             if (this.RunParallel && !(this.OutputAs == OutputAs.None || this.OutputAs == OutputAs.Text))
             {
                 throw new ArgumentException("Cannot send results to pipeline in parallel execution mode. Please use Text or None for -OutputAs");
@@ -692,7 +711,7 @@
                 catch (SqlException e)
                 {
                     // -AbortOnError was set, or the initial connect failed
-                    this.OnOutputMessage(this, new OutputMessageEventArgs(e.Format(), OutputDestination.StdError));
+                    this.OnOutputMessage(this, new OutputMessageEventArgs(0, e.Format(), OutputDestination.StdError));
                     this.AssignExitCode(1);
                     throw new ScriptExecutionException(e);
                 }
@@ -769,7 +788,7 @@
         /// Builds a connection string out of whatever parameter combination was supplied.
         /// </summary>
         /// <returns>The connection string.</returns>
-        private string BuildConnectionString()
+        private string[] BuildConnectionString()
         {
             var providerPath = this.SessionState.Path.CurrentLocation.ProviderPath;
             dynamic serverConnection = null;
@@ -944,7 +963,7 @@
                 connectionStringBuilder.Add("MultiSubnetFailover", "yes");
             }
 
-            return connectionStringBuilder.ConnectionString;
+            return new[] { connectionStringBuilder.ConnectionString };
         }
 
         /// <summary>
@@ -964,11 +983,51 @@
             }
             else
             {
+                string message;
+
+                if (this.Parallel)
+                {
+                    // Reformat the message to indicate execution node number
+                    var lines = new List<string>();
+                    var sb = new StringBuilder();
+                    var firstLine = true;
+
+                    foreach (var line in args.Message.TrimEnd(Environment.NewLine.ToCharArray()).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+                    {
+                        if (firstLine)
+                        {
+                            lines.Add($"{args.NodeNumber:D2}> {line}");
+                            firstLine = false;
+                        }
+                        else
+                        {
+                            lines.Add($"    {line}");
+                        }
+                    }
+
+                    message = string.Join(Environment.NewLine, lines);
+                }
+                else
+                {
+                    message = args.Message;
+                }
+
                 switch (args.OutputDestination)
                 {
                     case OutputDestination.StdOut:
 
-                        this.WriteVerbose(args.Message);
+                        if (this.Verbose)
+                        {
+                            if (this.Host.Name == "ConsoleHost")
+                            {
+                                Console.WriteLine(message);
+                            }
+                            else
+                            {
+                                this.Host.UI.WriteLine(message);
+                            }
+                        }
+
                         break;
 
                     case OutputDestination.StdError:
@@ -978,12 +1037,12 @@
                             var c = Console.ForegroundColor;
 
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Error.WriteLine(args.Message);
+                            Console.Error.WriteLine(message);
                             Console.ForegroundColor = c;
                         }
                         else
                         {
-                            this.Host.UI.WriteErrorLine(args.Message);
+                            this.Host.UI.WriteErrorLine(message);
                         }
 
                         break;
@@ -1001,10 +1060,23 @@
         {
             if (this.OutputAs == OutputAs.Text)
             {
-                // Create a small scriptblock to get PowerShell to format the result DataTable to a text table and harvest that text.
-                var scriptBlock = ScriptBlock.Create("param($dt) $dt | Format-Table | Out-String");
+                string formattedTable;
                 var dt = (DataTable)args.Result;
-                var formattedTable = scriptBlock.InvokeReturnAsIs(dt).ToString();
+
+                // Get PowerShell to format the result DataTable to a text table and harvest that text.
+                // Need to create a runspace in case we are executing in parallel.
+                using (var runspace = RunspaceFactory.CreateRunspace())
+                {
+                    runspace.Open();
+
+                    using (var ps = PowerShell.Create().AddScript("param($dt) $dt | Format-Table | Out-String"))
+                    {
+                        ps.Runspace = runspace;
+                        ps.AddArgument(dt);
+
+                        formattedTable = string.Join(Environment.NewLine, ps.Invoke<string>());
+                    }
+                }
 
                 // Generate a rows affected message.
                 var rows = dt.Rows.Count == 1 ? "row" : "rows";
@@ -1014,7 +1086,7 @@
                 {
                     case OutputDestination.StdOut:
 
-                        Console.WriteLine(formattedTable + rowsaffected);
+                        this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, formattedTable + rowsaffected, OutputDestination.StdOut));
                         break;
 
                     case OutputDestination.File:
@@ -1067,11 +1139,11 @@
                            ? WindowsIdentity.GetCurrent().Name
                            : connectionStringBuilder.UserID;
 
-            this.OnOutputMessage(sender, new OutputMessageEventArgs($"Connected to: [{args.Connection.DataSource}] as [{user}] ({authType})", OutputDestination.StdOut));
-            this.OnOutputMessage(sender, new OutputMessageEventArgs($"Version:      {args.Connection.ServerVersion} {edition}", OutputDestination.StdOut));
+            this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, $"Connected to: [{args.Connection.DataSource}] as [{user}] ({authType})", OutputDestination.StdOut));
+            this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, $"Version:      {args.Connection.ServerVersion} {edition}", OutputDestination.StdOut));
             this.OnOutputMessage(
                 sender,
-                new OutputMessageEventArgs($"Database:     [{args.Connection.Database}]", OutputDestination.StdOut));
+                new OutputMessageEventArgs(args.NodeNumber, $"Database:     [{args.Connection.Database}]", OutputDestination.StdOut));
         }
 
         /// <inheritdoc />

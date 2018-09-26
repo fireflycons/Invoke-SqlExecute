@@ -14,7 +14,7 @@ Runs a script containing statements supported by the SQL Server SQLCMD utility.
 
 ### ConnectionString
 ```
-Invoke-SqlExecute [-AbortOnError] -ConnectionString <String> [-ConsoleMessageHandler <ScriptBlock>]
+Invoke-SqlExecute [-AbortOnError] -ConnectionString <String[]> [-ConsoleMessageHandler <ScriptBlock>]
  [-DisableCommands] [-DryRun] [-DisableVariables] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
  [-MaxCharLength <Int32>] [-InputFile <String[]>] [-OutputAs <OutputAs>] [-OutputFile <String>]
  [-OverrideScriptVariables] [-Parallel] [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>]
@@ -91,7 +91,7 @@ Accept wildcard characters: False
 Specifies a connection string to connect to the server.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: ConnectionString
 Aliases:
 
@@ -574,8 +574,7 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
-For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

@@ -28,11 +28,6 @@
         internal static readonly Regex VariableRegex = new Regex(@"\$\((?<varname>[^\s\(\)]+)\)");
 
         /// <summary>
-        /// Interface to command executer implementation.
-        /// </summary>
-        private readonly ICommandExecuter commandExecuter;
-
-        /// <summary>
         /// List of matchers for SQLCMD commands
         /// </summary>
         private readonly List<ICommandMatcher> commandMatchers = new List<ICommandMatcher>
@@ -58,17 +53,6 @@
                                                                      };
 
         /// <summary>
-        /// The input source stack.
-        /// As <c>:R</c> directives are processed, new input source for the included file is pushed onto this stack.
-        /// </summary>
-        private readonly Stack<IBatchSource> sourceStack = new Stack<IBatchSource>();
-
-        /// <summary>
-        /// Interface to variable resolver implementation.
-        /// </summary>
-        private readonly IVariableResolver variableResolver;
-
-        /// <summary>
         /// The current directory resolver
         /// </summary>
         private readonly ICurrentDirectoryResolver currentDirectoryResolver;
@@ -84,6 +68,22 @@
         private readonly bool disableVariableSubstitution;
 
         /// <summary>
+        /// The invocation number for multi-threaded operation.
+        /// </summary>
+        private readonly int nodeNumber;
+
+        /// <summary>
+        /// The run configuration
+        /// </summary>
+        private readonly RunConfiguration runConfiguration;
+
+        /// <summary>
+        /// The input source stack.
+        /// As <c>:R</c> directives are processed, new input source for the included file is pushed onto this stack.
+        /// </summary>
+        private readonly Stack<IBatchSource> sourceStack = new Stack<IBatchSource>();
+
+        /// <summary>
         /// The current batch
         /// </summary>
         private SqlBatch currentBatch;
@@ -94,32 +94,24 @@
         private SqlBatch previousBatch;
 
         /// <summary>
-        /// The invocation number for multi-threaded operation.
-        /// </summary>
-        private int invocationNumber;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="Parser" /> class.
         /// </summary>
-        /// <param name="invocationNumber">The invocation number for multi-threaded operation.</param>
+        /// <param name="nodeNumber">The execution number for multi-threaded operation.</param>
+        /// <param name="runConfiguration">Run configuration for this parser.</param>
         /// <param name="disableInteractiveCommands">if set to <c>true</c> [disable interactive commands].</param>
         /// <param name="disableVariableSubstitution">If set to <c>true</c> disable variable substitution.</param>
-        /// <param name="commandExecuter">The command executer implementation.</param>
-        /// <param name="variableResolver">The variable resolver implementation.</param>
         /// <param name="currentDirectoryResolver">The current directory resolver.</param>
         public Parser(
-            int invocationNumber,
+            int nodeNumber,
+            RunConfiguration runConfiguration,
             bool disableInteractiveCommands,
             bool disableVariableSubstitution,
-            ICommandExecuter commandExecuter,
-            IVariableResolver variableResolver,
             ICurrentDirectoryResolver currentDirectoryResolver = null)
         {
-            this.invocationNumber = invocationNumber;
+            this.nodeNumber = nodeNumber;
+            this.runConfiguration = runConfiguration;
             this.disableInteractiveCommands = disableInteractiveCommands;
             this.disableVariableSubstitution = disableVariableSubstitution;
-            this.commandExecuter = commandExecuter;
-            this.variableResolver = variableResolver;
             this.currentDirectoryResolver =
                 currentDirectoryResolver == null ? new NetRuntimeCurrentDirectoryResolver() : null;
         }
@@ -130,14 +122,6 @@
         public event EventHandler<InputSourceChangedEventArgs> InputSourceChanged;
 
         /// <summary>
-        /// Gets current batch source. When handling exceptions use this to determine where in the input the exception occurred..
-        /// </summary>
-        /// <value>
-        /// The source.
-        /// </value>
-        public IBatchSource Source { get; private set; }
-
-        /// <summary>
         /// Gets the batch count.
         /// </summary>
         /// <value>
@@ -146,15 +130,38 @@
         public int BatchCount { get; private set; }
 
         /// <summary>
+        /// Gets the command executer.
+        /// </summary>
+        /// <value>
+        /// The command executer.
+        /// </value>
+        public ICommandExecuter CommandExecuter => this.runConfiguration.CommandExecuter;
+
+        /// <summary>
+        /// Gets current batch source. When handling exceptions use this to determine where in the input the exception occurred..
+        /// </summary>
+        /// <value>
+        /// The source.
+        /// </value>
+        public IBatchSource Source { get; private set; }
+
+        /// <summary>
+        /// Gets the variable resolver.
+        /// </summary>
+        /// <value>
+        /// The variable resolver.
+        /// </value>
+        private IVariableResolver VariableResolver => this.runConfiguration.VariableResolver;
+
+        /// <summary>
         /// Parses this instance.
         /// </summary>
-        /// <param name="initialBatchSource">The initial batch source.</param>
         /// <exception cref="ParserException">Syntax error or unrecognized command directive
         /// or
         /// or</exception>
-        public void Parse(IBatchSource initialBatchSource)
+        public void Parse()
         {
-            this.SetInputSource(initialBatchSource);
+            this.SetInputSource(this.runConfiguration.InitialBatchSource);
             var tokenizer = new Tokenizer();
 
             try
@@ -216,7 +223,7 @@
 
                                             try
                                             {
-                                                this.commandExecuter.ProcessBatch(this.currentBatch, go.ExecutionCount);
+                                                this.CommandExecuter.ProcessBatch(this.currentBatch, go.ExecutionCount);
                                             }
                                             finally
                                             {
@@ -231,11 +238,11 @@
 
                                             if (setvar.VarValue == null)
                                             {
-                                                this.variableResolver.DeleteVariable(setvar.VarValue);
+                                                this.VariableResolver.DeleteVariable(setvar.VarValue);
                                             }
                                             else
                                             {
-                                                this.variableResolver.SetVariable(setvar.VarName, setvar.VarValue);
+                                                this.VariableResolver.SetVariable(setvar.VarName, setvar.VarValue);
                                             }
 
                                             break;
@@ -262,20 +269,20 @@
                                                 resolvedPath = include.Filename;
                                             }
 
-                                            this.SetInputSource(this.commandExecuter.IncludeFileName(resolvedPath));
+                                            this.SetInputSource(this.CommandExecuter.IncludeFileName(resolvedPath));
 
                                             break;
 
                                         case ConnectCommand connect:
 
-                                            connect.ResolveConnectionParameters(this.variableResolver);
+                                            connect.ResolveConnectionParameters(this.VariableResolver);
 
                                             if (connect.Server != null)
                                             {
                                                 // Execute whatever we have so far on the current connection before reconnecting
                                                 try
                                                 {
-                                                    this.commandExecuter.ProcessBatch(this.currentBatch, 1);
+                                                    this.CommandExecuter.ProcessBatch(this.currentBatch, 1);
                                                 }
                                                 finally
                                                 {
@@ -284,7 +291,7 @@
                                                     ++this.BatchCount;
                                                 }
 
-                                                this.commandExecuter.Connect(
+                                                this.CommandExecuter.Connect(
                                                     connect.Timeout,
                                                     connect.Server,
                                                     connect.Username,
@@ -305,7 +312,7 @@
 
                                                 if (!string.IsNullOrWhiteSpace(batchToEdit))
                                                 {
-                                                    var editedBatch = this.commandExecuter.Ed(batchToEdit);
+                                                    var editedBatch = this.CommandExecuter.Ed(batchToEdit);
 
                                                     if (editedBatch != null)
                                                     {
@@ -324,17 +331,17 @@
                                                 return;
                                             }
 
-                                            this.commandExecuter.Exit(this.currentBatch, exit.ExitBatch);
+                                            this.CommandExecuter.Exit(this.currentBatch, exit.ExitBatch);
                                             return;
 
                                         case ErrorCommand error:
 
-                                            this.commandExecuter.Error(error.OutputDestination, error.Filename);
+                                            this.CommandExecuter.Error(error.OutputDestination, error.Filename);
                                             break;
 
                                         case OutCommand @out:
 
-                                            this.commandExecuter.Out(@out.OutputDestination, @out.Filename);
+                                            this.CommandExecuter.Out(@out.OutputDestination, @out.Filename);
                                             break;
 
                                         // ReSharper disable once UnusedVariable
@@ -342,7 +349,7 @@
 
                                             if (!this.disableInteractiveCommands)
                                             {
-                                                this.commandExecuter.ServerList();
+                                                this.CommandExecuter.ServerList();
                                             }
 
                                             break;
@@ -352,7 +359,7 @@
 
                                             if (!this.disableInteractiveCommands)
                                             {
-                                                this.commandExecuter.Help();
+                                                this.CommandExecuter.Help();
                                             }
 
                                             break;
@@ -361,7 +368,7 @@
 
                                             if (!this.disableInteractiveCommands)
                                             {
-                                                this.commandExecuter.Reset();
+                                                this.CommandExecuter.Reset();
                                                 this.currentBatch.Clear();
                                             }
 
@@ -371,7 +378,7 @@
 
                                             if (!this.disableInteractiveCommands)
                                             {
-                                                this.commandExecuter.List(this.currentBatch.Sql);
+                                                this.CommandExecuter.List(this.currentBatch.Sql);
                                             }
 
                                             break;
@@ -380,26 +387,26 @@
 
                                             if (!this.disableInteractiveCommands)
                                             {
-                                                this.commandExecuter.ListVar(this.variableResolver.Variables);
+                                                this.CommandExecuter.ListVar(this.VariableResolver.Variables);
                                             }
 
                                             break;
 
                                         case ShellCommand shell:
 
-                                            this.commandExecuter.ExecuteShellCommand(shell.Command);
+                                            this.CommandExecuter.ExecuteShellCommand(shell.Command);
                                             break;
 
                                         case QuitCommand _:
 
-                                            this.commandExecuter.Quit();
+                                            this.CommandExecuter.Quit();
 
                                             // Stop parsing
                                             return;
 
                                         case OnErrorCommand onError:
 
-                                            this.commandExecuter.OnError(onError.ErrorAction);
+                                            this.CommandExecuter.OnError(onError.ErrorAction);
                                             break;
 
                                         case InvalidCommand _:
@@ -441,7 +448,7 @@
                 // If we have anything left, it's the last batch
                 if (!string.IsNullOrWhiteSpace(this.currentBatch.Sql))
                 {
-                    this.commandExecuter.ProcessBatch(this.currentBatch, 1);
+                    this.CommandExecuter.ProcessBatch(this.currentBatch, 1);
                     ++this.BatchCount;
                 }
             }
@@ -471,6 +478,16 @@
         }
 
         /// <summary>
+        /// Sets the input source.
+        /// </summary>
+        /// <param name="newSource">The new source.</param>
+        private void SetInputSource(IBatchSource newSource)
+        {
+            this.sourceStack.Push(newSource);
+            this.InputSourceChanged?.Invoke(this, new InputSourceChangedEventArgs(this.nodeNumber, newSource));
+        }
+
+        /// <summary>
         /// Substitutes any SQLCMD variables.
         /// </summary>
         /// <param name="str">The current SQL fragment.</param>
@@ -489,18 +506,8 @@
                            str,
                            (current, m) => current.Replace(
                                m.Value,
-                               this.variableResolver.ResolveVariable(m.Groups["varname"].Value)))
+                               this.VariableResolver.ResolveVariable(m.Groups["varname"].Value)))
                        : str;
-        }
-
-        /// <summary>
-        /// Sets the input source.
-        /// </summary>
-        /// <param name="newSource">The new source.</param>
-        private void SetInputSource(IBatchSource newSource)
-        {
-            this.sourceStack.Push(newSource);
-            this.InputSourceChanged?.Invoke(this, new InputSourceChangedEventArgs(newSource));
         }
     }
 }

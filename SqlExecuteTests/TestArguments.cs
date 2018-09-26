@@ -38,7 +38,7 @@ namespace SqlExecuteTests
         /// <value>
         /// The connection string.
         /// </value>
-        public string ConnectionString { get; set; }
+        public string[] ConnectionString { get; set; }
 
         /// <summary>
         /// Gets the current directory resolver.

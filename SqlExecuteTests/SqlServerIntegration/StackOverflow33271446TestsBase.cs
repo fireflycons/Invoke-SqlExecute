@@ -39,7 +39,10 @@ namespace SqlExecuteTests.SqlServerIntegration
                                {
                                    Query = TestUtils.LoadSqlResource("RunStackOverflow33271446"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name={testContext.TestName}",
+                                       new[]
+                                           {
+                                               $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name={testContext.TestName}"
+                                           },
                                    QueryTimeout = 1,
                                    AbortOnErrorSet = true
                                };

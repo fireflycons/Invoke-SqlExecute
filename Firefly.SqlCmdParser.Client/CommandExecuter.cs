@@ -79,10 +79,12 @@ namespace Firefly.SqlCmdParser.Client
         /// <summary>
         /// Initializes a new instance of the <see cref="CommandExecuter" /> class.
         /// </summary>
+        /// <param name="nodeNumber">The execution node number.</param>
         /// <param name="arguments">The arguments.</param>
         /// <param name="variableResolver">The variable resolver.</param>
-        public CommandExecuter(ISqlExecuteArguments arguments, IVariableResolver variableResolver)
+        public CommandExecuter(int nodeNumber, ISqlExecuteArguments arguments, IVariableResolver variableResolver)
         {
+            this.NodeNumber = nodeNumber;
             this.resultsAs = arguments.OutputAs;
             this.arguments = arguments;
             this.variableResolver = variableResolver;
@@ -127,6 +129,8 @@ namespace Firefly.SqlCmdParser.Client
         /// The error count.
         /// </value>
         public int ErrorCount => this.SqlExceptions.Count;
+
+        public int NodeNumber { get; }
 
         /// <summary>
         /// Gets or sets the list of SQL exceptions thrown during the batch execution.
@@ -709,7 +713,7 @@ namespace Firefly.SqlCmdParser.Client
                 connectionStringBuilder.IntegratedSecurity ? string.Empty : connectionStringBuilder.Password);
             this.variableResolver.SetSystemVariable("SQLCMDDBNAME", this.connection.Database);
 
-            this.Connected?.Invoke(this, new ConnectEventArgs(this.connection, this.stdoutDestination));
+            this.Connected?.Invoke(this, new ConnectEventArgs(this.NodeNumber, this.connection, this.stdoutDestination));
 
             // ReSharper restore StringLiteralTypo
         }
@@ -768,7 +772,7 @@ namespace Firefly.SqlCmdParser.Client
                     {
                         if (!scalarResultReturned && sqlDataReader.Read() && sqlDataReader.FieldCount > 0)
                         {
-                            this.Result?.Invoke(this, new OutputResultEventArgs(sqlDataReader.GetValue(0), this.stdoutDestination, this.stdoutFile));
+                            this.Result?.Invoke(this, new OutputResultEventArgs(this.NodeNumber, sqlDataReader.GetValue(0), this.stdoutDestination, this.stdoutFile));
                             scalarResultReturned = true;
                         }
                     }
@@ -825,7 +829,7 @@ namespace Firefly.SqlCmdParser.Client
 
                             if (this.resultsAs == OutputAs.DataRows)
                             {
-                                this.Result?.Invoke(this, new OutputResultEventArgs(newRow, this.stdoutDestination, this.stdoutFile));
+                                this.Result?.Invoke(this, new OutputResultEventArgs(this.NodeNumber, newRow, this.stdoutDestination, this.stdoutFile));
                             }
                             else
                             {
@@ -839,7 +843,7 @@ namespace Firefly.SqlCmdParser.Client
                         case OutputAs.DataTables:
                         case OutputAs.Text:
 
-                            this.Result?.Invoke(this, new OutputResultEventArgs(dataTable, this.stdoutDestination, this.stdoutFile));
+                            this.Result?.Invoke(this, new OutputResultEventArgs(this.NodeNumber, dataTable, this.stdoutDestination, this.stdoutFile));
                             break;
 
                         case OutputAs.DataSet:
@@ -852,7 +856,7 @@ namespace Firefly.SqlCmdParser.Client
 
                 if (this.resultsAs == OutputAs.DataSet)
                 {
-                    this.Result?.Invoke(this, new OutputResultEventArgs(dataSet, this.stdoutDestination, this.stdoutFile));
+                    this.Result?.Invoke(this, new OutputResultEventArgs(this.NodeNumber, dataSet, this.stdoutDestination, this.stdoutFile));
                 }
             }
         }
@@ -878,7 +882,7 @@ namespace Firefly.SqlCmdParser.Client
             }
             else
             {
-                this.Message?.Invoke(this, new OutputMessageEventArgs(message, this.stderrDestination));
+                this.Message?.Invoke(this, new OutputMessageEventArgs(this.NodeNumber, message, this.stderrDestination));
             }
         }
 
@@ -903,7 +907,7 @@ namespace Firefly.SqlCmdParser.Client
             }
             else
             {
-                this.Message?.Invoke(this, new OutputMessageEventArgs(message, this.stdoutDestination));
+                this.Message?.Invoke(this, new OutputMessageEventArgs(this.NodeNumber, message, this.stdoutDestination));
             }
         }
 

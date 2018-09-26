@@ -4,7 +4,8 @@
     using System.Collections.Generic;
     using System.Data.SqlClient;
     using System.Diagnostics;
-    using System.Threading;
+    using System.Linq;
+    using System.Threading.Tasks;
 
     /// <inheritdoc />
     /// <summary>
@@ -13,24 +14,14 @@
     public class SqlExecuteImpl : IDisposable
     {
         /// <summary>
-        /// Id of the thread we wre invoked from.
-        /// </summary>
-        private static readonly int MainThreadId = Thread.CurrentThread.ManagedThreadId;
-
-        /// <summary>
         /// The args
         /// </summary>
         private readonly ISqlExecuteArguments arguments;
 
         /// <summary>
-        /// The executer
+        /// The run list
         /// </summary>
-        private readonly ICommandExecuter executer;
-
-        /// <summary>
-        /// The variable resolver
-        /// </summary>
-        private readonly IVariableResolver variableResolver;
+        private readonly List<RunConfiguration> runList;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlExecuteImpl"/> class.
@@ -44,16 +35,29 @@
             {
                 this.arguments.OutputMessage?.Invoke(
                     this,
-                    new OutputMessageEventArgs("DRY RUN mode - No SQL will be executed.", OutputDestination.StdOut));
+                    new OutputMessageEventArgs(0, "DRY RUN mode - No SQL will be executed.", OutputDestination.StdOut));
             }
 
-            // TODO: Create an ordered run configuration list
+            this.runList = new List<RunConfiguration>();
 
-            var resolver = CreateVariableResolver(arguments);
-            var exec = CreateCommandExecuter(arguments, resolver);
+            for (var i = 0; i < Math.Max(arguments.ConnectionString.Length, arguments.InputFile?.Length ?? 0); ++i)
+            {
+                var r = CreateVariableResolver(arguments);
+                var e = CreateCommandExecuter(i + 1, arguments, r);
 
-            this.variableResolver = resolver;
-            this.executer = exec;
+                this.runList.Add(
+                    new RunConfiguration
+                        {
+                            NodeNumber = i + 1,
+                            CommandExecuter = e,
+                            ConnectionString =
+                                arguments.ConnectionString.Length == 1
+                                    ? arguments.ConnectionString[0]
+                                    : arguments.ConnectionString[i],
+                            InitialBatchSource = this.GetInitialBatchSource(i),
+                            VariableResolver = r
+                        });
+            }
         }
 
         /// <summary>
@@ -78,8 +82,23 @@
         /// <value>
         /// The SQL exceptions.
         /// </value>
-        public IList<SqlException> SqlExceptions =>
-            this.executer == null ? new List<SqlException>() : this.executer.SqlExceptions;
+        public IList<SqlException> SqlExceptions
+        {
+            get
+            {
+                var e = new List<SqlException>();
+
+                foreach (var r in this.runList)
+                {
+                    if (r.CommandExecuter != null)
+                    {
+                        e.AddRange(r.CommandExecuter.SqlExceptions);
+                    }
+                }
+
+                return e;
+            }
+        }
 
         /// <inheritdoc />
         /// <summary>
@@ -87,7 +106,10 @@
         /// </summary>
         public void Dispose()
         {
-            this.executer?.Dispose();
+            foreach (var r in this.runList)
+            {
+                r.CommandExecuter?.Dispose();
+            }
         }
 
         /// <summary>
@@ -95,44 +117,64 @@
         /// </summary>
         public void Execute()
         {
-            this.executer.ConnectWithConnectionString(this.arguments.ConnectionString);
-
             if (this.arguments.RunParallel)
             {
-                throw new NotImplementedException();
+                var tasks = this.runList.Select(
+                    r =>
+                        {
+                            return Task.Factory.StartNew(
+                                () =>
+                                    {
+                                        r.CommandExecuter.ConnectWithConnectionString(r.ConnectionString);
+                                        this.InvokeParser(r.NodeNumber, r);
+                                    });
+                        });
+
+                Task.WaitAll(tasks.ToArray());
             }
             else
             {
-                // TODO: Step through connections/input files
-                this.InvokeParser(0);
+                foreach (var r in this.runList)
+                {
+                    r.CommandExecuter.ConnectWithConnectionString(r.ConnectionString);
+
+                    // Invoke with invocationNumber = 0, meaning not parallel
+                    this.InvokeParser(0, r);
+                }
             }
         }
 
         /// <summary>
-        /// Gets any error level set via :EXIT(query) or :SETVAR SQLCMDERRORLEVEL.
+        /// Gets the highest error level set via :EXIT(query) or :SETVAR SQLCMDERRORLEVEL across all run configurations.
         /// </summary>
         /// <returns>The error level.</returns>
         public int GetErrorLevel()
         {
-            // ReSharper disable once StyleCop.SA1117
-            return this.executer.CustomExitCode ?? (int.TryParse(
-                                                        this.variableResolver.ResolveVariable("SQLCMDERRORLEVEL"),
-                                                        out var errorLevel)
-                                                        ? errorLevel
-                                                        : 0);
+            return this.runList.Max(
+                r => r.CommandExecuter.CustomExitCode ?? (int.TryParse(
+                                                              r.VariableResolver.ResolveVariable("SQLCMDERRORLEVEL"),
+                                                              out var errorLevel)
+                                                              ? errorLevel
+                                                              : 0));
         }
 
         /// <summary>
         /// Creates a command executer.
         /// </summary>
+        /// <param name="nodeNumber">The node number.</param>
         /// <param name="args">The command invocation arguments.</param>
         /// <param name="resolver">The resolver.</param>
-        /// <returns>A new <see cref="ICommandExecuter"/></returns>
-        private static ICommandExecuter CreateCommandExecuter(ISqlExecuteArguments args, IVariableResolver resolver)
+        /// <returns>
+        /// A new <see cref="ICommandExecuter" />
+        /// </returns>
+        private static ICommandExecuter CreateCommandExecuter(int nodeNumber, ISqlExecuteArguments args, IVariableResolver resolver)
         {
-            var exec = new CommandExecuter(args, resolver)
+            var exec = new CommandExecuter(nodeNumber, args, resolver)
                            {
-                               ErrorAction = args.AbortOnErrorSet ? ErrorAction.Exit : ErrorAction.Ignore
+                               ErrorAction =
+                                   args.AbortOnErrorSet
+                                       ? ErrorAction.Exit
+                                       : ErrorAction.Ignore
                            };
 
             if (!string.IsNullOrEmpty(args.OutputFile))
@@ -197,15 +239,15 @@
         /// <summary>
         /// Invokes the parser.
         /// </summary>
-        /// <param name="thisInvocationNumber">The invocation number - zero if running sequentially</param>
-        private void InvokeParser(int thisInvocationNumber)
+        /// <param name="nodeNumber">The execution node number - zero if running sequentially</param>
+        /// <param name="runConfiguration">The run configuration.</param>
+        private void InvokeParser(int nodeNumber, RunConfiguration runConfiguration)
         {
             var parser = new Parser(
-                thisInvocationNumber,
+                nodeNumber,
+                runConfiguration,
                 this.arguments.DisableCommandsSet,
-                false,
-                this.executer,
-                this.variableResolver,
+                this.arguments.DisableVariablesSet,
                 this.arguments.CurrentDirectoryResolver);
 
             parser.InputSourceChanged += this.ParserOnInputSourceChanged;
@@ -215,29 +257,27 @@
 
             try
             {
-                parser.Parse(
-                    this.GetInitialBatchSource(
-                        this.arguments.InputFile == null || this.arguments.InputFile.Length <= 1
-                            ? 0
-                            : thisInvocationNumber));
+                parser.Parse();
             }
             finally
             {
                 sw.Stop();
 
-                this.BatchCount = parser.BatchCount;
-                this.ErrorCount = this.executer.ErrorCount;
+                this.BatchCount += parser.BatchCount;
+                this.ErrorCount += runConfiguration.CommandExecuter.ErrorCount;
                 var batch = parser.BatchCount == 1 ? "batch" : "batches";
-                var error = this.executer.ErrorCount == 1 ? "error" : "errors";
+                var error = runConfiguration.CommandExecuter.ErrorCount == 1 ? "error" : "errors";
                 this.arguments.OutputMessage?.Invoke(
                     this,
                     new OutputMessageEventArgs(
+                        nodeNumber,
                         $"{parser.BatchCount} {batch} processed in {sw.Elapsed.Minutes} min, {sw.Elapsed.Seconds}.{sw.Elapsed.Milliseconds:D3} sec.",
                         OutputDestination.StdOut));
                 this.arguments.OutputMessage?.Invoke(
                     this,
                     new OutputMessageEventArgs(
-                        $"{this.executer.ErrorCount} SQL {error} in execution.",
+                        nodeNumber,
+                        $"{runConfiguration.CommandExecuter.ErrorCount} SQL {error} in execution.",
                         OutputDestination.StdOut));
             }
         }
@@ -261,46 +301,9 @@
             this.arguments.OutputMessage?.Invoke(
                 this,
                 new OutputMessageEventArgs(
+                    inputSourceChangedEventArgs.NodeNumber,
                     $"Input Source: '{inputSourceChangedEventArgs.Source.Filename}', Encoding: {inputSourceChangedEventArgs.Source.Encoding}",
                     OutputDestination.StdOut));
-        }
-
-        /// <summary>
-        /// Run configuration
-        /// </summary>
-        private class RunConfiguration
-        {
-            /// <summary>
-            /// Gets or sets the command executer.
-            /// </summary>
-            /// <value>
-            /// The command executer.
-            /// </value>
-            public ICommandExecuter CommandExecuter { get; set; }
-
-            /// <summary>
-            /// Gets or sets the connection string.
-            /// </summary>
-            /// <value>
-            /// The connection string.
-            /// </value>
-            public string ConnectionString { get; set; }
-
-            /// <summary>
-            /// Gets or sets the initial batch source.
-            /// </summary>
-            /// <value>
-            /// The initial batch source.
-            /// </value>
-            public IBatchSource InitialBatchSource { get; set; }
-
-            /// <summary>
-            /// Gets or sets the variable resolver.
-            /// </summary>
-            /// <value>
-            /// The variable resolver.
-            /// </value>
-            public IVariableResolver VariableResolver { get; set; }
         }
     }
 }
