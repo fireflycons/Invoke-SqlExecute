@@ -532,7 +532,7 @@ Describe 'Parallel Execution' {
 
     Context 'Should connect to all databases and run simple query in parallel' {
 
-        { Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME" -OutputAs Text -Verbose } | Should Not Throw
+        { Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose } | Should Not Throw
     }
 
     Context 'Should run database creation script on multiple instances in parallel' {

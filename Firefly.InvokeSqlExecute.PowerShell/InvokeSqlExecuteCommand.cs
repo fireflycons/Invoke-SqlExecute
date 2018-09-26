@@ -666,7 +666,9 @@
 
             if (!(ArgumentHelpers.IsEmptyArgument(this.ConnectionString)
                   || ArgumentHelpers.IsEmptyArgument(this.InputFile))
-                && this.ConnectionString.Length != this.InputFile.Length)
+                && this.ConnectionString.Length != this.InputFile.Length
+                && this.ConnectionString.Length > 1 
+                && this.InputFile.Length > 1)
             {
                 // Must be 1 connection, many inputs or 1 input, many connections
                 throw new ArgumentException("Number of connection strings does not match number of input files. Must be 1 connection many files, or 1 file many connections, or an equal number of both.");
@@ -1139,11 +1141,16 @@
                            ? WindowsIdentity.GetCurrent().Name
                            : connectionStringBuilder.UserID;
 
-            this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, $"Connected to: [{args.Connection.DataSource}] as [{user}] ({authType})", OutputDestination.StdOut));
-            this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, $"Version:      {args.Connection.ServerVersion} {edition}", OutputDestination.StdOut));
-            this.OnOutputMessage(
-                sender,
-                new OutputMessageEventArgs(args.NodeNumber, $"Database:     [{args.Connection.Database}]", OutputDestination.StdOut));
+            var msg = string.Join(
+                Environment.NewLine,
+                new List<string>()
+                    {
+                        $"Connected to: [{args.Connection.DataSource}] as [{user}] ({authType})",
+                        $"Version:      {args.Connection.ServerVersion} {edition}",
+                        $"Database:     [{args.Connection.Database}]"
+                    });
+
+            this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, msg, OutputDestination.StdOut));
         }
 
         /// <inheritdoc />
