@@ -17,7 +17,7 @@
         /// <param name="args">The arguments.</param>
         /// <param name="variableResolver">The variable resolver.</param>
         public TestBatchExecuter(ISqlExecuteArguments args, VariableResolver variableResolver)
-            : base(args, variableResolver)
+            : base(0, args, variableResolver)
         {
         }
 
