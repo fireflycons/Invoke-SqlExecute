@@ -16,6 +16,7 @@
         protected ParallelNodeEventArgs(int nodeNumber, OutputDestination outputDestination)
         {
             this.NodeNumber = nodeNumber;
+            this.OutputDestination = outputDestination;
         }
 
         /// <summary>

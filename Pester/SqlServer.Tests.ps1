@@ -141,13 +141,13 @@ Describe 'SQLCMD Commands' {
 
         It 'Should throw if server does not exist' {
 
-            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT LJSDFGPDFK"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) } | Should Throw
+            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT LJSDFGPDFK"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole } | Should Throw
         }
 
         It 'Should throw with invalid credentials' {
 
             $cb = New-Object System.Data.SqlClient.SqlConnectionStringBuilder ($instances[0].Connection)
-            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT $($cb.DataSource) -U adssad -P dfsgsdfsd"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)} | Should Throw
+            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT $($cb.DataSource) -U adssad -P dfsgsdfsd"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole } | Should Throw
         }
     }
 
@@ -233,7 +233,7 @@ Describe 'SQLCMD Commands' {
 
             try
             {
-                Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql"  -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
+                Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql"  -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole
             }
             catch
             {
@@ -401,7 +401,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_correctly_RAISERROR_when_database_set_to_single_user_mode.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_correctly_RAISERROR_when_database_set_to_single_user_mode.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole
                 }
                 catch
                 {
@@ -427,7 +427,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole
                 }
                 catch
                 {
@@ -456,7 +456,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)'  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)'  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole
                 }
                 catch
                 {
@@ -481,7 +481,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\RunStackOverflow33271446.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\RunStackOverflow33271446.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) @suppressConsole
                 }
                 catch
                 {
@@ -606,6 +606,27 @@ Describe 'Parallel Execution' {
                 } |
                     Should Not Throw
             }
+        }
+    }
+
+    Context 'Console Message Handler' {
+
+        It 'Should capture output and redirect to scriptblock' {
+
+            # Output file that the script block will send output to
+            $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
+
+            if (Test-Path -Path $outFile -PathType Leaf)
+            {
+                Remove-Item $outfile
+            }
+
+            {
+                Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose -ConsoleMessageHandler { $OutputMessage.Message | Out-File -Append $outFile }
+            } |
+                Should Not Throw
+
+            $outFile | Should Exist
         }
     }
 }

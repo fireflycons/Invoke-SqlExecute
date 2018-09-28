@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Data;
     using System.Data.Common;
@@ -11,8 +12,8 @@
     using System.Management.Automation;
     using System.Management.Automation.Runspaces;
     using System.Reflection;
-    using System.Security.Principal;
     using System.Text;
+    using System.Threading;
 
     using Firefly.SqlCmdParser;
     using Firefly.SqlCmdParser.Client;
@@ -75,6 +76,15 @@
     // ReSharper disable once StyleCop.SA1650
     public class InvokeSqlExecuteCommand : PSCmdlet, ISqlExecuteArguments
     {
+        #region Fields
+
+        /// <summary>
+        /// Queue of actions to perform on the main thread (interacting with the PowerShell host) when running in parallel mode.
+        /// </summary>
+        private ConcurrentQueue<MainThreadAction> mainThreadActions = new ConcurrentQueue<MainThreadAction>();
+
+        #endregion
+
         /// <summary>
         /// Initializes a new instance of the <see cref="InvokeSqlExecuteCommand"/> class.
         /// </summary>
@@ -129,9 +139,10 @@
         /// For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages 
         /// that would otherwise go to the console.
         /// </para>
-        /// <para type="description">The script block is presented with a variable $OutputMessage which has two fields:</para>
+        /// <para type="description">The script block is presented with a variable $OutputMessage which has these fields:</para>
         /// <para type="description">- OutputDestination: Either 'StdOut' or 'StdError'</para>
         /// <para type="description">- Message: The message text.</para>
+        /// <para type="description">- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.</para>
         /// </summary>
         /// <value>
         /// The console message handler.
@@ -726,7 +737,26 @@
             {
                 try
                 {
-                    sqlcmd.Execute();
+                    var task = sqlcmd.Execute();
+
+                    if (task != null)
+                    {
+                        // Parallel execution. Loop until tasks complete whilst looking for stuff that needs to be processed on this thread.
+                        while (!task.Wait(100) || this.mainThreadActions.Count > 0)
+                        {
+                            if (this.mainThreadActions.TryDequeue(out var action))
+                            {
+                                try
+                                {
+                                    action.Action();
+                                }
+                                finally
+                                {
+                                    action.CompletionToken.Set();
+                                }
+                            }
+                        }
+                    }
 
                     if (sqlcmd.ErrorCount > 0)
                     {
@@ -1008,10 +1038,33 @@
             if (this.ConsoleMessageHandler != null)
             {
                 // User supplied a scriptblock with -ConsoleMessageHandler, then execute it.
-                this.ConsoleMessageHandler.InvokeWithContext(
-                    null,
-                    new List<PSVariable> { new PSVariable("OutputMessage", args, ScopedItemOptions.Constant) },
-                    null);
+                var action = new Action(
+                    () =>
+                        {
+                            this.ConsoleMessageHandler.InvokeWithContext(
+                                null,
+                                new List<PSVariable>
+                                    {
+                                        new PSVariable(
+                                            "OutputMessage",
+                                            args,
+                                            ScopedItemOptions.Constant)
+                                    },
+                                null);
+                        });
+
+                if (this.RunParallel)
+                {
+                    // Must be run on main thread.
+                    var completionToken = new ManualResetEvent(false);
+                    var qa = new MainThreadAction { Action = action };
+                    this.mainThreadActions.Enqueue(new MainThreadAction { Action = action, CompletionToken = completionToken});
+                    completionToken.WaitOne();
+                }
+                else
+                {
+                    action();
+                }
             }
             else
             {
@@ -1122,8 +1175,18 @@
 
                     case OutputDestination.File:
 
-                        var bytes = Encoding.UTF8.GetBytes(formattedTable + rowsaffected);
-                        args.OutputStream.Write(bytes, 0, bytes.Length);
+                        if (args.OutputStream == null)
+                        {
+#if DEBUG
+                            Console.WriteLine("Attempt to write output to file, but stream is null");
+#endif
+                        }
+                        else
+                        {
+                            var bytes = Encoding.UTF8.GetBytes(formattedTable + rowsaffected);
+                            args.OutputStream.Write(bytes, 0, bytes.Length);
+                        }
+
                         break;
                 }
             }
@@ -1193,6 +1256,28 @@
             {
                 return this.cmdlet.SessionState.Path.CurrentFileSystemLocation.Path;
             }
+        }
+
+        /// <summary>
+        /// Wrapper for an action to be performed on the main thread.
+        /// </summary>
+        private class MainThreadAction
+        {
+            /// <summary>
+            /// Gets or sets the action.
+            /// </summary>
+            /// <value>
+            /// The action.
+            /// </value>
+            public Action Action { get; set; }
+
+            /// <summary>
+            /// Gets or sets the completion token.
+            /// </summary>
+            /// <value>
+            /// The completion token.
+            /// </value>
+            public ManualResetEvent CompletionToken { get; set; }
         }
     }
 }

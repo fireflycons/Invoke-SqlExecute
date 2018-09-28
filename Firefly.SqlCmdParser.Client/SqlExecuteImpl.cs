@@ -130,22 +130,27 @@
         /// <summary>
         /// Executes this instance.
         /// </summary>
-        public void Execute()
+        /// <returns>A <see cref="Task"/> if parallel execution, else <c>null</c> when the execution completes.</returns>
+        public Task Execute()
         {
             if (this.arguments.RunParallel)
             {
-                var tasks = this.runList.Select(
-                    r =>
+                return Task.Factory.StartNew(
+                    () =>
                         {
-                            return Task.Factory.StartNew(
-                                () =>
+                            var tasks = this.runList.Select(
+                                r =>
                                     {
-                                        Thread.CurrentThread.Name = $"Execution Node {r.NodeNumber}";
-                                        this.InvokeParser(r.NodeNumber, r);
+                                        return Task.Factory.StartNew(
+                                            () =>
+                                                {
+                                                    Thread.CurrentThread.Name = $"Execution Node {r.NodeNumber}";
+                                                    this.InvokeParser(r.NodeNumber, r);
+                                                });
                                     });
-                        });
 
-                Task.WaitAll(tasks.ToArray());
+                            Task.WaitAll(tasks.ToArray());
+                        });
             }
             else
             {
@@ -154,6 +159,8 @@
                     // Invoke with invocationNumber = 0, meaning not parallel
                     this.InvokeParser(0, r);
                 }
+
+                return null;
             }
         }
 
