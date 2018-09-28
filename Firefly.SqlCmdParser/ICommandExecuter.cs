@@ -59,6 +59,22 @@
         IList<SqlException> SqlExceptions { get; }
 
         /// <summary>
+        /// Gets the current destination for STDERR messages.
+        /// </summary>
+        /// <value>
+        /// The destination.
+        /// </value>
+        OutputDestination StderrDestination { get; }
+
+        /// <summary>
+        /// Gets the current destination for STDOUT messages.
+        /// </summary>
+        /// <value>
+        /// The destination.
+        /// </value>
+        OutputDestination StdoutDestination { get; }
+
+        /// <summary>
         /// <c>:CONNECT</c> directive.
         /// </summary>
         /// <param name="timeout">The timeout.</param>
@@ -133,15 +149,22 @@
         /// <summary>
         /// <c>:ON ERROR</c> directive.
         /// </summary>
-        /// <param name="ea">The ea.</param>
+        /// <param name="ea">The error action.</param>
         void OnError(ErrorAction ea);
 
         /// <summary>
         /// <c>:OUT</c> directive.
         /// </summary>
-        /// <param name="od">The od.</param>
+        /// <param name="outputDestination">The od.</param>
         /// <param name="fileName">Name of the file.</param>
-        void Out(OutputDestination od, string fileName);
+        void Out(OutputDestination outputDestination, string fileName);
+
+        /// <summary>
+        ///   <c>:OUT</c> directive.
+        /// </summary>
+        /// <param name="outputDestination">The od.</param>
+        /// <param name="outputFileProperties">The output file properties.</param>
+        void Out(OutputDestination outputDestination, IOutputFileProperties outputFileProperties);
 
         /// <summary>
         /// <c>:PERFTRACE</c> directive
@@ -152,7 +175,7 @@
 
         /// <summary>
         /// Called when the parser has a complete batch to process.
-        /// Implementations should check for sql being empty or whitespace and not send to the server if this is so (performance).
+        /// Implementations should check for SQL being empty or whitespace and not send to the server if this is so (performance).
         /// </summary>
         /// <param name="batch">The batch to process.</param>
         /// <param name="numberOfExecutions">The number of times to execute the batch (e.g. <c>GO 2</c> to execute the batch twice.</param>
@@ -182,5 +205,12 @@
         /// </summary>
         /// <param name="xs">The xs.</param>
         void Xml(XmlStatus xs);
+
+        /// <summary>
+        /// Called when [input source changed].
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="args">The <see cref="InputSourceChangedEventArgs"/> instance containing the event data.</param>
+        void OnInputSourceChanged(object sender, InputSourceChangedEventArgs args);
     }
 }

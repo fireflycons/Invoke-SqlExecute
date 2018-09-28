@@ -229,8 +229,16 @@ function Get-TestName
     <#
         .SYNOPSIS
             Get name of enclosing It block
+
+        .PARAMETER Sanitize
+            Sanitize test name by replacing invalid filename characters with underscores
     #>
-    
+
+    param
+    (
+        [switch]$Sanitize
+    )
+
     $test = Get-PSCallStack | Where-Object { $_.Command -ieq 'It' }
 
     if (-not $test)
@@ -239,6 +247,55 @@ function Get-TestName
     }
 
     $context = Get-PSCallStack | Where-Object { $_.Command -ieq 'Context' }
+    $describe = Get-PSCallStack | Where-Object { $_.Command -ieq 'Describe' }
 
-    ($context.InvocationInfo.BoundParameters['name'] + '-' +  $test.InvocationInfo.BoundParameters['name']).Replace(':', '_')
+    $contextName = $context.InvocationInfo.BoundParameters['name']
+    $testName = $test.InvocationInfo.BoundParameters['name']
+    $describeName = $describe.InvocationInfo.BoundParameters['name']
+
+    if ($Sanitize)
+    {
+        $invalidChars = [IO.Path]::GetInvalidFileNameChars()
+
+        (
+            $describeName, $contextName, $testName |
+            ForEach-Object {
+
+                foreach ($c in $invalidChars)
+                {
+                    $_ = $_.Replace($c, '_')
+                }
+
+                $_
+            }
+        ) -join '\'
+    }
+    else {
+        $describeName + '\' + $contextName + '\' + $testName
+    }
+}
+
+function Get-TestOutputPath
+{
+    <#
+        .SYNOPSIS
+            Create path to test output file, creating directories as needed
+
+        .PARAMETER TestOutputDirectory
+            Root path for test outputs
+    #>
+    param
+    (
+        [string]$TestOutputDirectory
+    )
+
+    $testOutputFile = Join-Path $TestOutputDirectory (Get-TestName -Sanitize)
+    $dir = Split-Path -Parent $testOutputFile
+
+    if (-not (Test-Path -Path $dir -PathType Container))
+    {
+        New-Item -Path $dir -ItemType Container | Out-Null
+    }
+
+    $testOutputFile + '.txt'
 }

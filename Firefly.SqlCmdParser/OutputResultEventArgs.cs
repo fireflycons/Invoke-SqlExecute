@@ -19,20 +19,11 @@
         /// <param name="outputStream">The output stream to write to if the destination is file.</param>
         /// <inheritdoc />
         public OutputResultEventArgs(int nodeNumber, dynamic result, OutputDestination outputDestination, Stream outputStream)
-        : base(nodeNumber)
+        : base(nodeNumber, outputDestination)
         {
             this.Result = result;
-            this.OutputDestination = outputDestination;
             this.OutputStream = outputStream;
         }
-
-        /// <summary>
-        /// Gets the output destination.
-        /// </summary>
-        /// <value>
-        /// The output destination.
-        /// </value>
-        public OutputDestination OutputDestination { get; }
 
         /// <summary>
         /// Gets the output stream.

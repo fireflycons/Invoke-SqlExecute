@@ -9,10 +9,11 @@
     public class ParallelNodeEventArgs : EventArgs
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ParallelNodeEventArgs"/> class.
+        /// Initializes a new instance of the <see cref="ParallelNodeEventArgs" /> class.
         /// </summary>
         /// <param name="nodeNumber">The node number.</param>
-        protected ParallelNodeEventArgs(int nodeNumber)
+        /// <param name="outputDestination">The output destination.</param>
+        protected ParallelNodeEventArgs(int nodeNumber, OutputDestination outputDestination)
         {
             this.NodeNumber = nodeNumber;
         }
@@ -24,5 +25,13 @@
         /// The invocation number.
         /// </value>
         public int NodeNumber { get; }
+
+        /// <summary>
+        /// Gets the output destination.
+        /// </summary>
+        /// <value>
+        /// The output destination.
+        /// </value>
+        public OutputDestination OutputDestination { get; }
     }
 }

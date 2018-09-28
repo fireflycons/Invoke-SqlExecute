@@ -17,10 +17,9 @@
         /// <param name="outputDestination">The output destination.</param>
         /// <inheritdoc />
         public ConnectEventArgs(int nodeNumber, SqlConnection connection, OutputDestination outputDestination)
-        : base(nodeNumber)
+        : base(nodeNumber, outputDestination)
         {
             this.Connection = connection;
-            this.OutputDestination = outputDestination;
         }
 
         /// <summary>
@@ -30,13 +29,5 @@
         /// The connection.
         /// </value>
         public SqlConnection Connection { get; }
-
-        /// <summary>
-        /// Gets the current output destination for <c>stdout</c>.
-        /// </summary>
-        /// <value>
-        /// The output destination.
-        /// </value>
-        public OutputDestination OutputDestination { get; }
     }
 }

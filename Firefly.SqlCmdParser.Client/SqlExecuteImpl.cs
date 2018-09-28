@@ -4,8 +4,12 @@
     using System.Collections.Generic;
     using System.Data.SqlClient;
     using System.Diagnostics;
+    using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
+
+    using Firefly.SqlCmdParser.SimpleParser.Commands;
 
     /// <inheritdoc />
     /// <summary>
@@ -45,19 +49,27 @@
             for (var i = 0; i < Math.Max(arguments.ConnectionString.Length, inputFileCount); ++i)
             {
                 var r = CreateVariableResolver(arguments);
-                var e = CreateCommandExecuter(i + 1, arguments, r);
 
                 this.runList.Add(
                     new RunConfiguration
                         {
                             NodeNumber = i + 1,
-                            CommandExecuter = e,
+                            CommandExecuter = CreateCommandExecuter(i + 1, arguments, r),
                             ConnectionString =
                                 arguments.ConnectionString.Length == 1
                                     ? arguments.ConnectionString[0]
                                     : arguments.ConnectionString[i],
-                            InitialBatchSource = this.GetInitialBatchSource(Math.Min(i, inputFileCount - 1)),
-                            VariableResolver = r
+                            InitialBatchSource =
+                                this.GetInitialBatchSource(Math.Min(i, inputFileCount - 1)),
+                            VariableResolver = r,
+                            OutputFile =
+                                string.IsNullOrEmpty(arguments.OutputFile)
+                                    ? null
+                                    : new OutputFileProperties(
+                                        FileParameterCommand.GetNodeFilepath(
+                                            arguments.RunParallel ? i + 1 : 0,
+                                            arguments.OutputFile),
+                                        i == 0 || arguments.RunParallel ? FileMode.Create : FileMode.Append)
                         });
             }
         }
@@ -111,6 +123,7 @@
             foreach (var r in this.runList)
             {
                 r.CommandExecuter?.Dispose();
+                r.CommandExecuter = null;
             }
         }
 
@@ -127,7 +140,7 @@
                             return Task.Factory.StartNew(
                                 () =>
                                     {
-                                        r.CommandExecuter.ConnectWithConnectionString(r.ConnectionString);
+                                        Thread.CurrentThread.Name = $"Execution Node {r.NodeNumber}";
                                         this.InvokeParser(r.NodeNumber, r);
                                     });
                         });
@@ -138,8 +151,6 @@
             {
                 foreach (var r in this.runList)
                 {
-                    r.CommandExecuter.ConnectWithConnectionString(r.ConnectionString);
-
                     // Invoke with invocationNumber = 0, meaning not parallel
                     this.InvokeParser(0, r);
                 }
@@ -152,6 +163,7 @@
         /// <returns>The error level.</returns>
         public int GetErrorLevel()
         {
+            // ReSharper disable once StyleCop.SA1117
             return this.runList.Max(
                 r => r.CommandExecuter.CustomExitCode ?? (int.TryParse(
                                                               r.VariableResolver.ResolveVariable("SQLCMDERRORLEVEL"),
@@ -169,6 +181,7 @@
         /// <returns>
         /// A new <see cref="ICommandExecuter" />
         /// </returns>
+        // ReSharper disable once StyleCop.SA1113
         private static ICommandExecuter CreateCommandExecuter(int nodeNumber, ISqlExecuteArguments args, IVariableResolver resolver)
         {
             var exec = new CommandExecuter(nodeNumber, args, resolver)
@@ -178,11 +191,6 @@
                                        ? ErrorAction.Exit
                                        : ErrorAction.Ignore
                            };
-
-            if (!string.IsNullOrEmpty(args.OutputFile))
-            {
-                exec.Out(OutputDestination.File, args.OutputFile);
-            }
 
             if (args.OutputMessage != null)
             {
@@ -252,8 +260,6 @@
                 this.arguments.DisableVariablesSet,
                 this.arguments.CurrentDirectoryResolver);
 
-            parser.InputSourceChanged += this.ParserOnInputSourceChanged;
-
             var sw = new Stopwatch();
             sw.Start();
 
@@ -274,38 +280,14 @@
                     new OutputMessageEventArgs(
                         nodeNumber,
                         $"{parser.BatchCount} {batch} processed in {sw.Elapsed.Minutes} min, {sw.Elapsed.Seconds}.{sw.Elapsed.Milliseconds:D3} sec.",
-                        OutputDestination.StdOut));
+                        runConfiguration.CommandExecuter.StdoutDestination));
                 this.arguments.OutputMessage?.Invoke(
                     this,
                     new OutputMessageEventArgs(
                         nodeNumber,
                         $"{runConfiguration.CommandExecuter.ErrorCount} SQL {error} in execution.",
-                        OutputDestination.StdOut));
+                        runConfiguration.CommandExecuter.StdoutDestination));
             }
-        }
-
-        /// <summary>
-        /// Called when [connect].
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="args">The <see cref="ConnectEventArgs"/> instance containing the event data.</param>
-        private void OnConnect(object sender, ConnectEventArgs args)
-        {
-        }
-
-        /// <summary>
-        /// Handles <see cref="Parser.InputSourceChanged"/> event
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="inputSourceChangedEventArgs">The <see cref="InputSourceChangedEventArgs"/> instance containing the event data.</param>
-        private void ParserOnInputSourceChanged(object sender, InputSourceChangedEventArgs inputSourceChangedEventArgs)
-        {
-            this.arguments.OutputMessage?.Invoke(
-                this,
-                new OutputMessageEventArgs(
-                    inputSourceChangedEventArgs.NodeNumber,
-                    $"Input Source: '{inputSourceChangedEventArgs.Source.Filename}', Encoding: {inputSourceChangedEventArgs.Source.Encoding.EncodingName}",
-                    OutputDestination.StdOut));
         }
     }
 }

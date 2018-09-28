@@ -5,12 +5,16 @@
 
 $ModuleName = 'Firefly.InvokeSqlExecute'
 
+# Name of test DB to create
 $testDatabase = 'Test-InvokeSqExecute'
-$testOutput = "$PSScriptRoot\TestOutputs"
 
-if (-not (Test-Path -Path $testOutput -PathType Container))
+# Directory where outputs with -OutFile or output redirections go
+$testOutputRoot = "$PSScriptRoot\TestOutputs"
+
+# Clear any previous test output
+if (Test-Path -Path $testOutputRoot -PathType Container)
 {
-    [IO.Directory]::CreateDirectory($testOutput) | Out-Null
+    Remove-Item -Path $testOutputRoot -Recurse -Force
 }
 
 # Enumerate available SQL instances
@@ -192,7 +196,7 @@ Describe 'SQLCMD Commands' {
 
         It 'Should list defined scripting variables' {
 
-            $outFile = Join-Path $testOutput "$(Get-TestName).output.txt"
+            $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
 
             $vars = @{
                 VAR1 = 'Value1'
@@ -200,7 +204,7 @@ Describe 'SQLCMD Commands' {
                 VAR3 = 'Value2'
             }
 
-            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose -OutputFile $outFile
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose -OutputFile $outFile -Debug
         }
     }
 
@@ -272,24 +276,26 @@ Describe 'SQLCMD Commands' {
 
         It 'Should redirect stdout to a file' {
 
+            $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
             "PRINT 'Not in file'" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii
             "GO" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
-            ":OUT `"${env:TEMP}\Should_redirect_stdout_to_a_file.txt`"" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
+            ":OUT `"$outFile`"" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
             "PRINT 'In file'" | Out-File "${env:TEMP}\Should_redirect_stdout_to_a_file.sql" -Encoding ascii -Append
 
             Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -InputFile "${env:TEMP}\Should_redirect_stdout_to_a_file.sql"
-            (Get-Content "${env:TEMP}\Should_redirect_stdout_to_a_file.txt" | Select-Object -First 1) | Should Match '^In file'
+            (Get-Content $outFile | Select-Object -First 1) | Should Match '^In file'
         }
 
         It 'Should redirect stderr to a file' {
 
+            $errFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
             "PRINT 'Not in file'" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii
             "GO" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
-            ":ERROR `"${env:TEMP}\Should_redirect_stderr_to_a_file.txt`"" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
+            ":ERROR `"$errFile`"" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
             "RAISERROR (N'Error in file', 16, 1)" | Out-File "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" -Encoding ascii -Append
 
             { Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection)" -InputFile "${env:TEMP}\Should_redirect_stderr_to_a_file.sql" } | Should Throw
-            "${env:TEMP}\Should_redirect_stderr_to_a_file.txt" | Should -FileContentMatch 'Error in file'
+            $errFile | Should -FileContentMatch 'Error in file'
         }
     }
 
@@ -332,8 +338,10 @@ Describe 'Deploy databases from script' {
 
                 if ($instanceInfo.IsFullTextInstalled)
                 {
+                    $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
+
                     {
-                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables -OutputAs None
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables -OutputAs None -OutputFile $outFile -Debug
                     } |
                         Should Not Throw
                 }
@@ -347,8 +355,10 @@ Describe 'Deploy databases from script' {
 
                 if ($instanceInfo.IsFullTextInstalled)
                 {
+                    $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
+
                     {
-                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs None
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs None -OutputFile $outFile -Debug
                     } |
                         Should Not Throw
                 }
@@ -542,11 +552,11 @@ Describe 'Parallel Execution' {
 
         It 'Should connect to all databases and run simple query in parallel' {
 
-            $outFile = Join-Path $testOutput "$(Get-TestName).output.txt"
+            $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
 
-            { 
+            {
                 Invoke-SqlExecute -ConnectionString $instances.Connection  -Parallel -Query "SELECT @@SERVERNAME AS [InstanceName]" -OutputAs Text -Verbose -OutputFile $outFile
-            } | 
+            } |
                 Should Not Throw
         }
     }
@@ -563,7 +573,7 @@ Describe 'Parallel Execution' {
             }
             else
             {
-                $outFile = Join-Path $testOutput "$(Get-TestName).output.txt"
+                $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
 
                 {
                     Invoke-SqlExecute -Parallel -ConnectionString $connections -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs Text -Verbose -OutputFile $outFile

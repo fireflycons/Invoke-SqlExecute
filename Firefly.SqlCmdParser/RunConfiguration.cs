@@ -44,5 +44,7 @@
         /// The variable resolver.
         /// </value>
         public IVariableResolver VariableResolver { get; set; }
+
+        public IOutputFileProperties OutputFile { get; set; }
     }
 }

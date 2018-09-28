@@ -17,10 +17,9 @@
         /// <param name="outputDestination">The output destination.</param>
         /// <inheritdoc />
         public OutputMessageEventArgs(int nodeNumber, string message, OutputDestination outputDestination)
-        : base(nodeNumber)
+        : base(nodeNumber, outputDestination)
         {
             this.Message = message;
-            this.OutputDestination = outputDestination;
         }
 
         /// <summary>
@@ -30,13 +29,5 @@
         /// The message.
         /// </value>
         public string Message { get; }
-
-        /// <summary>
-        /// Gets the output destination.
-        /// </summary>
-        /// <value>
-        /// The output destination.
-        /// </value>
-        public OutputDestination OutputDestination { get; }
     }
 }

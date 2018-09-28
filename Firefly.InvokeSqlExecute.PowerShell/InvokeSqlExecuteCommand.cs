@@ -72,6 +72,7 @@
     [OutputType(typeof(DataSet))]
 
     // ReSharper disable once InheritdocConsiderUsage
+    // ReSharper disable once StyleCop.SA1650
     public class InvokeSqlExecuteCommand : PSCmdlet, ISqlExecuteArguments
     {
         /// <summary>
@@ -136,6 +137,7 @@
         /// The console message handler.
         /// </value>
         [Parameter]
+        // ReSharper disable once StyleCop.SA1650
         public ScriptBlock ConsoleMessageHandler { get; set; }
 
         /// <summary>
@@ -170,7 +172,7 @@
         /// <summary>
         /// Gets or sets the disable commands.
         /// <para type="description">
-        /// Indicates that this cmdlet turns off some sqlcmd features that might compromise security when run in batch files.
+        /// Indicates that this cmdlet turns off some SQLCMD features that might compromise security when run in batch files.
         /// </para>
         /// </summary>
         /// <value>
@@ -194,7 +196,7 @@
         /// <summary>
         /// Gets or sets the disable variables.
         /// <para type="description">
-        /// Indicates that this cmdlet ignores sqlcmd scripting variables.
+        /// Indicates that this cmdlet ignores SQLCMD scripting variables.
         /// This is useful when a script contains many INSERT statements that may contain strings that have the same format as variables, such as $(variable_name).
         /// </para>
         /// </summary>
@@ -245,6 +247,7 @@
         /// </value>
         // ReSharper disable once UnusedMember.Global
         [Parameter]
+        // ReSharper disable once StyleCop.SA1650
         public SwitchParameter IncludeSqlUserErrors { get; set; }
 
         /// <inheritdoc />
@@ -293,7 +296,7 @@
         /// <summary>
         /// Gets or sets the multi subnet fail over.
         /// <para type="description">
-        /// This is an enhancement over standard SQLCMD behaviour.
+        /// This is an enhancement over standard SQLCMD behavior.
         /// If set, enable Multi Subnet Fail-over - required for connection to Always On listeners.
         /// </para>
         /// </summary>
@@ -336,7 +339,7 @@
         /// <summary>
         /// Gets or sets the override script variables.
         /// <para type="description">
-        /// This is an enhancement over standard Invoke-sqlcmd behaviour.
+        /// This is an enhancement over standard Invoke-sqlcmd behavior.
         /// </para>
         /// <para type="description">
         /// If set, this switch prevents any SETVAR commands within the executed script from overriding the values of scripting variables supplied on the command line.
@@ -346,12 +349,13 @@
         /// The override script variables.
         /// </value>
         [Parameter]
+        // ReSharper disable once StyleCop.SA1650
         public SwitchParameter OverrideScriptVariables { get; set; }
 
         /// <summary>
         /// Gets or sets the parallel.
         /// <para type="description">
-        /// This is an enhancement over standard Invoke-sqlcmd behaviour.
+        /// This is an enhancement over standard Invoke-sqlcmd behavior.
         /// </para>
         /// <para type="description">
         /// If set, and multiple input files or connection strings are specified, then run on multiple threads.
@@ -369,6 +373,7 @@
         /// The parallel.
         /// </value>
         [Parameter] 
+        // ReSharper disable once StyleCop.SA1650
         public SwitchParameter Parallel { get; set; }
 
         /// <summary>
@@ -477,7 +482,7 @@
         /// <summary>
         /// Gets or sets the variable.
         /// <para type="description">
-        /// Specifies initial scripting variables for use in the sqlcmd script.
+        /// Specifies initial scripting variables for use in the SQLCMD script.
         /// </para>
         /// <para type="description">
         /// Various data types may be used for the type of this input:
@@ -491,21 +496,12 @@
         /// </value>
         [Parameter]
         [Alias("SqlCmdParameters")]
+        // ReSharper disable once StyleCop.SA1650
         public object Variable { get; set; }
 
         #endregion
 
         #region Other properties
-
-        /// <summary>
-        /// Gets a value indicating whether this <see cref="InvokeSqlExecuteCommand"/> is verbose.
-        /// </summary>
-        /// <value>
-        ///   <c>true</c> if verbose; otherwise, <c>false</c>.
-        /// </value>
-        private bool Verbose =>
-            this.MyInvocation.BoundParameters.ContainsKey("Verbose")
-            && ((SwitchParameter)this.MyInvocation.BoundParameters["Verbose"]).ToBool();
 
         /// <inheritdoc />
         /// <summary>
@@ -651,6 +647,25 @@
         /// </value>
         public int ExitCode { get; set; }
 
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="InvokeSqlExecuteCommand"/> is verbose.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if verbose; otherwise, <c>false</c>.
+        /// </value>
+        private bool Verbose =>
+            this.MyInvocation.BoundParameters.ContainsKey("Verbose")
+            && ((SwitchParameter)this.MyInvocation.BoundParameters["Verbose"]).ToBool();
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="InvokeSqlExecuteCommand"/> is debug.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if debug; otherwise, <c>false</c>.
+        /// </value>
+        private bool Debug => this.MyInvocation.BoundParameters.ContainsKey("Debug")
+                              && ((SwitchParameter)this.MyInvocation.BoundParameters["Debug"]).ToBool();
+
         #endregion
 
         /// <summary>
@@ -658,6 +673,12 @@
         /// </summary>
         protected override void BeginProcessing()
         {
+            this.WriteDebugMessage("Argument info");
+            this.WriteDebugMessage($"ConnectionString: {ArgumentHelpers.DescribeArgument(this.ConnectionString)}");
+            this.WriteDebugMessage($"InputFile:        {ArgumentHelpers.DescribeArgument(this.InputFile)}");
+            this.WriteDebugMessage($"Query:            {ArgumentHelpers.DescribeArgument(this.Query)}");
+            this.WriteDebugMessage($"Parallel:         {ArgumentHelpers.DescribeArgument(this.Parallel.ToBool())}");
+
             // Do some argument checks
             if (!(ArgumentHelpers.IsEmptyArgument(this.InputFile) ^ ArgumentHelpers.IsEmptyArgument(this.Query)))
             {
@@ -666,17 +687,24 @@
 
             if (!(ArgumentHelpers.IsEmptyArgument(this.ConnectionString)
                   || ArgumentHelpers.IsEmptyArgument(this.InputFile))
-                && this.ConnectionString.Length != this.InputFile.Length
-                && this.ConnectionString.Length > 1 
+                && this.ConnectionString.Length != this.InputFile.Length && this.ConnectionString.Length > 1
                 && this.InputFile.Length > 1)
             {
                 // Must be 1 connection, many inputs or 1 input, many connections
-                throw new ArgumentException("Number of connection strings does not match number of input files. Must be 1 connection many files, or 1 file many connections, or an equal number of both.");
+                throw new ArgumentException(
+                    "Number of connection strings does not match number of input files. Must be 1 connection many files, or 1 file many connections, or an equal number of both.");
+            }
+
+            if (ArgumentHelpers.IsSingleRunConfiguration(this.ConnectionString, this.InputFile))
+            {
+                // Override -Parallel argument for single run configuration.
+                this.Parallel = false;
             }
 
             if (this.RunParallel && !(this.OutputAs == OutputAs.None || this.OutputAs == OutputAs.Text))
             {
-                throw new ArgumentException("Cannot send results to pipeline in parallel execution mode. Please use Text or None for -OutputAs");
+                this.WriteWarning("Cannot send results to pipeline in parallel execution mode. Query output will be sent as text to the console.");
+                this.OutputAs = OutputAs.Text;
             }
 
             this.OutputMessage = this.OnOutputMessage;
@@ -742,6 +770,7 @@
         {
             if (objectValue is string s)
             {
+                // ReSharper disable once StyleCop.SA1126
                 return s;
             }
 
@@ -970,6 +999,7 @@
 
         /// <summary>
         /// Called to output a message to the console (e.g. PRINT, RAISERROR, info messages from commands etc.).
+        /// File redirection is handled within the <c>SqlCmdParser</c> assembly.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="args">The <see cref="OutputMessageEventArgs"/> instance containing the event data.</param>
@@ -991,7 +1021,6 @@
                 {
                     // Reformat the message to indicate execution node number
                     var lines = new List<string>();
-                    var sb = new StringBuilder();
                     var firstLine = true;
 
                     foreach (var line in args.Message.TrimEnd(Environment.NewLine.ToCharArray()).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
@@ -1111,46 +1140,27 @@
         /// <param name="args">The <see cref="ConnectEventArgs"/> instance containing the event data.</param>
         private void OnConnect(object sender, ConnectEventArgs args)
         {
-            if (args.OutputDestination != OutputDestination.StdOut)
+        }
+
+        /// <summary>
+        /// Writes a debug message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <remarks>
+        /// Using this method as I don't seem to be able to change $DebugPreference from within the cmdlet,
+        /// so we end up getting nasty confirmation prompts.
+        /// </remarks>
+        private void WriteDebugMessage(string message)
+        {
+            if (!this.Debug)
             {
                 return;
             }
 
-            var connectionStringBuilder = new SqlConnectionStringBuilder(args.Connection.ConnectionString);
-            var integratedSecurity = connectionStringBuilder.IntegratedSecurity
-                                     || string.IsNullOrEmpty(connectionStringBuilder.UserID);
-
-            var edition = string.Empty;
-
-            try
-            {
-                using (var cmd = args.Connection.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "select SERVERPROPERTY('Edition')";
-                    edition = "- " + (string)cmd.ExecuteScalar();
-                }
-            }
-            catch
-            {
-                // We probably don't care if we can't retrieve this
-            }
-
-            var authType = integratedSecurity ? "Windows" : "SQL";
-            var user = integratedSecurity
-                           ? WindowsIdentity.GetCurrent().Name
-                           : connectionStringBuilder.UserID;
-
-            var msg = string.Join(
-                Environment.NewLine,
-                new List<string>()
-                    {
-                        $"Connected to: [{args.Connection.DataSource}] as [{user}] ({authType})",
-                        $"Version:      {args.Connection.ServerVersion} {edition}",
-                        $"Database:     [{args.Connection.Database}]"
-                    });
-
-            this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, msg, OutputDestination.StdOut));
+            var fg = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine($"DEBUG: {message}");
+            Console.ForegroundColor = fg;
         }
 
         /// <inheritdoc />

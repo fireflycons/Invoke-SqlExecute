@@ -42,6 +42,7 @@
     <Compile Include="ConnectEventArgs.cs" />
     <Compile Include="ICurrentDirectoryResolver.cs" />
     <Compile Include="InputSourceChangedEventArgs.cs" />
+    <Compile Include="IOutputFileProperties.cs" />
     <Compile Include="OutputAs.cs" />
     <Compile Include="OutputMessageEventArgs.cs" />
     <Compile Include="OutputResultEventArgs.cs" />

@@ -11,9 +11,10 @@
         /// </summary>
         /// <param name="nodeNumber">The execution node number.</param>
         /// <param name="newSource">The new source.</param>
+        /// <param name="outputDestination">The output destination.</param>
         /// <inheritdoc />
-        internal InputSourceChangedEventArgs(int nodeNumber, IBatchSource newSource)
-            : base(nodeNumber)
+        internal InputSourceChangedEventArgs(int nodeNumber, IBatchSource newSource, OutputDestination outputDestination)
+            : base(nodeNumber, outputDestination)
         {
             this.Source = newSource;
         }

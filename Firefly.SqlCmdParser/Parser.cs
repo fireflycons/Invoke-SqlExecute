@@ -161,6 +161,15 @@
         /// or</exception>
         public void Parse()
         {
+            if (this.runConfiguration.OutputFile != null)
+            {
+                this.CommandExecuter.Out(OutputDestination.File, this.runConfiguration.OutputFile);
+            }
+
+            this.InputSourceChanged += this.CommandExecuter.OnInputSourceChanged;
+
+            this.CommandExecuter.ConnectWithConnectionString(this.runConfiguration.ConnectionString);
+
             this.SetInputSource(this.runConfiguration.InitialBatchSource);
             var tokenizer = new Tokenizer();
 
@@ -302,7 +311,7 @@
 
                                         case EdCommand _:
 
-                                            if (!this.disableInteractiveCommands)
+                                            if (!this.disableInteractiveCommands && Environment.UserInteractive)
                                             {
                                                 var currentBatchStr = this.currentBatch.Sql;
                                                 var batchToEdit =
@@ -336,12 +345,12 @@
 
                                         case ErrorCommand error:
 
-                                            this.CommandExecuter.Error(error.OutputDestination, error.Filename);
+                                            this.CommandExecuter.Error(error.OutputDestination, FileParameterCommand.GetNodeFilepath(this.nodeNumber, error.Filename));
                                             break;
 
                                         case OutCommand @out:
 
-                                            this.CommandExecuter.Out(@out.OutputDestination, @out.Filename);
+                                            this.CommandExecuter.Out(@out.OutputDestination, FileParameterCommand.GetNodeFilepath(this.nodeNumber, @out.Filename));
                                             break;
 
                                         // ReSharper disable once UnusedVariable
@@ -484,7 +493,7 @@
         private void SetInputSource(IBatchSource newSource)
         {
             this.sourceStack.Push(newSource);
-            this.InputSourceChanged?.Invoke(this, new InputSourceChangedEventArgs(this.nodeNumber, newSource));
+            this.InputSourceChanged?.Invoke(this, new InputSourceChangedEventArgs(this.nodeNumber, newSource, this.CommandExecuter.StdoutDestination));
         }
 
         /// <summary>
