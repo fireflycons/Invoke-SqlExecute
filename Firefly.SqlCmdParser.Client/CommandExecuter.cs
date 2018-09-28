@@ -611,6 +611,60 @@ namespace Firefly.SqlCmdParser.Client
         {
         }
 
+        /// <summary>
+        /// Writes a message to current <c>stderr</c> destination
+        /// </summary>
+        /// <param name="message">The message.</param>
+        public void WriteStderrMessage(string message)
+        {
+            if (this.StderrDestination == OutputDestination.File)
+            {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(message);
+                this.stderrFile.Write(bytes, 0, bytes.Length);
+
+                // in case someone is tailing the file, flush to keep it up to date.
+                this.stderrFile.Flush();
+            }
+            else
+            {
+                this.Message?.Invoke(
+                    this,
+                    new OutputMessageEventArgs(this.NodeNumber, message, this.StderrDestination));
+            }
+        }
+
+        /// <summary>
+        /// Writes a message to current <c>stdout</c> destination
+        /// /// </summary>
+        /// <param name="message">The message.</param>
+        public void WriteStdoutMessage(string message)
+        {
+            if (this.StdoutDestination == OutputDestination.File)
+            {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(message);
+                this.stdoutFile.Write(bytes, 0, bytes.Length);
+
+                // in case someone is tailing the file, flush to keep it up to date.
+                this.stdoutFile.Flush();
+            }
+            else
+            {
+                this.Message?.Invoke(
+                    this,
+                    new OutputMessageEventArgs(this.NodeNumber, message, this.StdoutDestination));
+            }
+        }
+
         /// <inheritdoc />
         /// <summary>
         /// <c>:XML</c> directive.
@@ -977,60 +1031,6 @@ namespace Firefly.SqlCmdParser.Client
                         this,
                         new OutputResultEventArgs(this.NodeNumber, dataSet, this.StdoutDestination, this.stdoutFile));
                 }
-            }
-        }
-
-        /// <summary>
-        /// Writes a message to current <c>stderr</c> destination
-        /// </summary>
-        /// <param name="message">The message.</param>
-        private void WriteStderrMessage(string message)
-        {
-            if (this.StderrDestination == OutputDestination.File)
-            {
-                if (!message.EndsWith(Environment.NewLine))
-                {
-                    message += Environment.NewLine;
-                }
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-                this.stderrFile.Write(bytes, 0, bytes.Length);
-
-                // in case someone is tailing the file, flush to keep it up to date.
-                this.stderrFile.Flush();
-            }
-            else
-            {
-                this.Message?.Invoke(
-                    this,
-                    new OutputMessageEventArgs(this.NodeNumber, message, this.StderrDestination));
-            }
-        }
-
-        /// <summary>
-        /// Writes a message to current <c>stdout</c> destination
-        /// /// </summary>
-        /// <param name="message">The message.</param>
-        private void WriteStdoutMessage(string message)
-        {
-            if (this.StdoutDestination == OutputDestination.File)
-            {
-                if (!message.EndsWith(Environment.NewLine))
-                {
-                    message += Environment.NewLine;
-                }
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-                this.stdoutFile.Write(bytes, 0, bytes.Length);
-
-                // in case someone is tailing the file, flush to keep it up to date.
-                this.stdoutFile.Flush();
-            }
-            else
-            {
-                this.Message?.Invoke(
-                    this,
-                    new OutputMessageEventArgs(this.NodeNumber, message, this.StdoutDestination));
             }
         }
 

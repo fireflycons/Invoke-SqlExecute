@@ -21,7 +21,7 @@
         public abstract CommandType CommandType { get; }
 
         /// <summary>
-        /// Gets the command text (out, perftrace etc.)
+        /// Gets the command text (out, perf trace etc.)
         /// </summary>
         /// <value>
         /// The command text.
@@ -72,10 +72,11 @@
                 return filepath;
             }
 
-            var fn = Path.GetFileName(filepath);
+            var fn = Path.GetFileNameWithoutExtension(filepath);
+            var ext = Path.GetExtension(filepath);
             var dir = Path.GetDirectoryName(filepath);
 
-            fn = $"{nodeNumber:D2}-{fn}";
+            fn = $"{fn}.{nodeNumber:D2}{ext}";
 
             if (!string.IsNullOrEmpty(dir))
             {

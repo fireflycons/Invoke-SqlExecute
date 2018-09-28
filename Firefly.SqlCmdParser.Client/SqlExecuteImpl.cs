@@ -260,33 +260,14 @@
                 this.arguments.DisableVariablesSet,
                 this.arguments.CurrentDirectoryResolver);
 
-            var sw = new Stopwatch();
-            sw.Start();
-
             try
             {
                 parser.Parse();
             }
             finally
             {
-                sw.Stop();
-
                 this.BatchCount += parser.BatchCount;
                 this.ErrorCount += runConfiguration.CommandExecuter.ErrorCount;
-                var batch = parser.BatchCount == 1 ? "batch" : "batches";
-                var error = runConfiguration.CommandExecuter.ErrorCount == 1 ? "error" : "errors";
-                this.arguments.OutputMessage?.Invoke(
-                    this,
-                    new OutputMessageEventArgs(
-                        nodeNumber,
-                        $"{parser.BatchCount} {batch} processed in {sw.Elapsed.Minutes} min, {sw.Elapsed.Seconds}.{sw.Elapsed.Milliseconds:D3} sec.",
-                        runConfiguration.CommandExecuter.StdoutDestination));
-                this.arguments.OutputMessage?.Invoke(
-                    this,
-                    new OutputMessageEventArgs(
-                        nodeNumber,
-                        $"{runConfiguration.CommandExecuter.ErrorCount} SQL {error} in execution.",
-                        runConfiguration.CommandExecuter.StdoutDestination));
             }
         }
     }

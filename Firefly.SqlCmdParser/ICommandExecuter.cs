@@ -212,5 +212,17 @@
         /// <param name="sender">The sender.</param>
         /// <param name="args">The <see cref="InputSourceChangedEventArgs"/> instance containing the event data.</param>
         void OnInputSourceChanged(object sender, InputSourceChangedEventArgs args);
+
+        /// <summary>
+        /// Writes a message to current <c>stderr</c> destination
+        /// /// </summary>
+        /// <param name="message">The message.</param>
+        void WriteStderrMessage(string message);
+
+        /// <summary>
+        /// Writes a message to current <c>stdout</c> destination
+        /// /// </summary>
+        /// <param name="message">The message.</param>
+        void WriteStdoutMessage(string message);
     }
 }

@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Data.SqlClient;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -161,20 +162,22 @@
         /// or</exception>
         public void Parse()
         {
-            if (this.runConfiguration.OutputFile != null)
-            {
-                this.CommandExecuter.Out(OutputDestination.File, this.runConfiguration.OutputFile);
-            }
-
-            this.InputSourceChanged += this.CommandExecuter.OnInputSourceChanged;
-
-            this.CommandExecuter.ConnectWithConnectionString(this.runConfiguration.ConnectionString);
-
-            this.SetInputSource(this.runConfiguration.InitialBatchSource);
-            var tokenizer = new Tokenizer();
+            var sw = new Stopwatch();
 
             try
             {
+                if (this.runConfiguration.OutputFile != null)
+                {
+                    this.CommandExecuter.Out(OutputDestination.File, this.runConfiguration.OutputFile);
+                }
+
+                this.InputSourceChanged += this.CommandExecuter.OnInputSourceChanged;
+
+                this.CommandExecuter.ConnectWithConnectionString(this.runConfiguration.ConnectionString);
+
+                this.SetInputSource(this.runConfiguration.InitialBatchSource);
+                var tokenizer = new Tokenizer();
+
                 while (this.sourceStack.Count > 0)
                 {
                     this.Source = this.sourceStack.Peek();
@@ -232,13 +235,14 @@
 
                                             try
                                             {
+                                                // Increment first, so a failed batch is counted
+                                                ++this.BatchCount;
                                                 this.CommandExecuter.ProcessBatch(this.currentBatch, go.ExecutionCount);
                                             }
                                             finally
                                             {
                                                 this.previousBatch = this.currentBatch;
                                                 this.currentBatch = new SqlBatch();
-                                                ++this.BatchCount;
                                             }
 
                                             break;
@@ -345,12 +349,16 @@
 
                                         case ErrorCommand error:
 
-                                            this.CommandExecuter.Error(error.OutputDestination, FileParameterCommand.GetNodeFilepath(this.nodeNumber, error.Filename));
+                                            this.CommandExecuter.Error(
+                                                error.OutputDestination,
+                                                FileParameterCommand.GetNodeFilepath(this.nodeNumber, error.Filename));
                                             break;
 
                                         case OutCommand @out:
 
-                                            this.CommandExecuter.Out(@out.OutputDestination, FileParameterCommand.GetNodeFilepath(this.nodeNumber, @out.Filename));
+                                            this.CommandExecuter.Out(
+                                                @out.OutputDestination,
+                                                FileParameterCommand.GetNodeFilepath(this.nodeNumber, @out.Filename));
                                             break;
 
                                         // ReSharper disable once UnusedVariable
@@ -457,8 +465,9 @@
                 // If we have anything left, it's the last batch
                 if (!string.IsNullOrWhiteSpace(this.currentBatch.Sql))
                 {
-                    this.CommandExecuter.ProcessBatch(this.currentBatch, 1);
+                    // Increment first, so a failed batch is counted
                     ++this.BatchCount;
+                    this.CommandExecuter.ProcessBatch(this.currentBatch, 1);
                 }
             }
             catch (ParserException)
@@ -472,6 +481,21 @@
             catch (Exception ex)
             {
                 throw new ParserException(ex.Message, ex, this.Source);
+            }
+            finally
+            {
+                // Output statistics
+                sw.Stop();
+
+                var batches = this.BatchCount == 1 ? "batch" : "batches";
+                var errors = this.CommandExecuter.ErrorCount == 1 ? "error" : "errors";
+
+                this.CommandExecuter.WriteStdoutMessage(
+                    string.Join(
+                        Environment.NewLine,
+                        Environment.NewLine,
+                        $"{this.BatchCount} {batches} processed in {sw.Elapsed.Minutes} min, {sw.Elapsed.Seconds}.{sw.Elapsed.Milliseconds:D3} sec.",
+                        $"{this.CommandExecuter.ErrorCount} SQL {errors} in execution."));
             }
         }
 
