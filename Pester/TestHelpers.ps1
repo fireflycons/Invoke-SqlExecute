@@ -229,6 +229,23 @@ function Get-TestName
     <#
         .SYNOPSIS
             Get name of enclosing It block
+    #>
+
+    $test = Get-PSCallStack | Where-Object { $_.Command -ieq 'It' }
+
+    if (-not $test)
+    {
+        throw 'Get-TestPath must be called from within It {} block.'
+    }
+
+    $test.InvocationInfo.BoundParameters['name']
+}
+
+function Get-TestPath
+{
+    <#
+        .SYNOPSIS
+            Get name of enclosing It block
 
         .PARAMETER Sanitize
             Sanitize test name by replacing invalid filename characters with underscores
@@ -239,18 +256,11 @@ function Get-TestName
         [switch]$Sanitize
     )
 
-    $test = Get-PSCallStack | Where-Object { $_.Command -ieq 'It' }
-
-    if (-not $test)
-    {
-        throw 'Get-TestName must be called from within It {} block.'
-    }
-
+    $testName = Get-TestName
     $context = Get-PSCallStack | Where-Object { $_.Command -ieq 'Context' }
     $describe = Get-PSCallStack | Where-Object { $_.Command -ieq 'Describe' }
 
     $contextName = $context.InvocationInfo.BoundParameters['name']
-    $testName = $test.InvocationInfo.BoundParameters['name']
     $describeName = $describe.InvocationInfo.BoundParameters['name']
 
     if ($Sanitize)
@@ -261,18 +271,28 @@ function Get-TestName
             $describeName, $contextName, $testName |
             ForEach-Object {
 
-                foreach ($c in $invalidChars)
-                {
-                    $_ = $_.Replace($c, '_')
-                }
-
-                $_
+                Get-SanitizedFilename -Text $_
             }
         ) -join '\'
     }
     else {
         $describeName + '\' + $contextName + '\' + $testName
     }
+}
+
+function Get-SanitizedFilename
+{
+    param
+    (
+        [string]$Text
+    )
+
+    foreach ($c in [IO.Path]::GetInvalidFileNameChars())
+    {
+        $Text = $Text.Replace($c, '_')
+    }
+
+    $Text
 }
 
 function Get-TestOutputPath
@@ -289,7 +309,7 @@ function Get-TestOutputPath
         [string]$TestOutputDirectory
     )
 
-    $testOutputFile = Join-Path $TestOutputDirectory (Get-TestName -Sanitize)
+    $testOutputFile = Join-Path $TestOutputDirectory (Get-TestPath -Sanitize)
     $dir = Split-Path -Parent $testOutputFile
 
     if (-not (Test-Path -Path $dir -PathType Container))

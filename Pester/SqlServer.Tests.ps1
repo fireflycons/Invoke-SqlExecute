@@ -136,18 +136,18 @@ Describe 'SQLCMD Commands' {
 
         It 'Should :CONNECT to all discovered SQL Servers' {
 
-            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest -OutputAs DataRows
+            Invoke-SqlExecute -ConnectionString $instances[0].Connection -InputFile $connectTest -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
         }
 
         It 'Should throw if server does not exist' {
 
-            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT LJSDFGPDFK" @suppressConsole } | Should Throw
+            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT LJSDFGPDFK"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) } | Should Throw
         }
 
         It 'Should throw with invalid credentials' {
 
             $cb = New-Object System.Data.SqlClient.SqlConnectionStringBuilder ($instances[0].Connection)
-            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT $($cb.DataSource) -U adssad -P dfsgsdfsd" @suppressConsole } | Should Throw
+            { Invoke-SqlExecute -ConnectionString $instances[0].Connection -Query ":CONNECT $($cb.DataSource) -U adssad -P dfsgsdfsd"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)} | Should Throw
         }
     }
 
@@ -204,7 +204,7 @@ Describe 'SQLCMD Commands' {
                 VAR3 = 'Value2'
             }
 
-            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose -OutputFile $outFile -Debug
+            Invoke-SqlExecute -ConnectionString $firstInstance.Connection -Variable $vars -Query "USE [tempdb]`nGO`n:SETVAR VAR4 `"Value4`"`n:LISTVAR" -Verbose -OutputFile $outFile
         }
     }
 
@@ -224,7 +224,7 @@ Describe 'SQLCMD Commands' {
 
         It 'Should process included file successfully' {
 
-            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_process_included_file_successfully.sql" -OutputAs Scalar | Should Be 1
+            Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_process_included_file_successfully.sql" -OutputAs Scalar -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot) | Should Be 1
         }
 
         It 'Should report exception with detail of included file' {
@@ -233,7 +233,7 @@ Describe 'SQLCMD Commands' {
 
             try
             {
-                Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql" @suppressConsole
+                Invoke-SqlExecute -ConnectionString "$($firstInstance.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_exception_with_detail_of_included_file.sql"  -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
             }
             catch
             {
@@ -341,7 +341,7 @@ Describe 'Deploy databases from script' {
                     $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
 
                     {
-                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables -OutputAs None -OutputFile $outFile -Debug
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.OltpDir 'instawdb.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.OltpDir)\" } -OverrideScriptVariables -OutputAs None -OutputFile $outFile
                     } |
                         Should Not Throw
                 }
@@ -358,7 +358,7 @@ Describe 'Deploy databases from script' {
                     $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
 
                     {
-                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs None -OutputFile $outFile -Debug
+                        Invoke-SqlExecute -ConnectionString $instanceInfo.Connection -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs None -OutputFile $outFile
                     } |
                         Should Not Throw
                 }
@@ -401,7 +401,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_correctly_RAISERROR_when_database_set_to_single_user_mode.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_correctly_RAISERROR_when_database_set_to_single_user_mode.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
                 }
                 catch
                 {
@@ -427,7 +427,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\Should_report_stored_procedure_details_in_error_raised_within_an_executing_procedure.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
                 }
                 catch
                 {
@@ -456,7 +456,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)' @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -Query 'SELECT convert(int,100000000000)'  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
                 }
                 catch
                 {
@@ -481,7 +481,7 @@ Describe 'Known Invoke-Sqlcmd bugs are fixed in this implementation' {
 
                 try
                 {
-                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\RunStackOverflow33271446.sql" @suppressConsole
+                    Invoke-SqlExecute -ConnectionString "$($instanceInfo.Connection);Database=$testDatabase" -InputFile "$PSScriptRoot\TestResources\RunStackOverflow33271446.sql"  -OutputAs Text -OutputFile (Get-TestOutputPath -TestOutputDirectory $testOutputRoot)
                 }
                 catch
                 {
@@ -577,6 +577,32 @@ Describe 'Parallel Execution' {
 
                 {
                     Invoke-SqlExecute -Parallel -ConnectionString $connections -InputFile (Join-Path $awDirs.DwDir 'instawdbdw.sql') -Variable @{ SqlSamplesSourceDataPath = "$($awDirs.DwDir)\" } -OverrideScriptVariables -OutputAs Text -Verbose -OutputFile $outFile
+                } |
+                    Should Not Throw
+            }
+        }
+
+        It 'Should run different scripts with differerent connections' {
+
+            if ((($instances | Measure-Object).Count -le 1))
+            {
+                Set-TestInconclusive -Message "Insufficient SQL server instances to run this test"
+            }
+            else
+            {
+                # Set up a test script for each instance
+                $testscripts = $instances |
+                ForEach-Object {
+
+                    $scriptFile = Join-Path ${env:TEMP} (Get-SanitizedFileName -Text ((Get-TestName) + '_' + $_.Instance + '.sql'))
+                    "SELECT @@SERVERNAME AS [ServerName]" | Out-File $scriptFile -Encoding ascii
+                    $scriptFile
+                }
+
+                $outFile = Get-TestOutputPath -TestOutputDirectory $testOutputRoot
+
+                {
+                    Invoke-SqlExecute -Parallel -ConnectionString $instances.Connection -InputFile $testScripts -OutputAs Text -Verbose -OutputFile $outFile
                 } |
                     Should Not Throw
             }
