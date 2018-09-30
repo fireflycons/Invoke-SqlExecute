@@ -126,10 +126,11 @@ This is an enhancement over standard Invoke-Sqlcmd behaviour.
 
 For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages that would otherwise go to the console.
 
-The script block is presented with a variable $OutputMessage which has two fields:
+The script block is presented with a variable $OutputMessage which has these fields:
 
 - OutputDestination: Either 'StdOut' or 'StdError'
 - Message: The message text.
+- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.
 
 ```yaml
 Type: ScriptBlock
@@ -180,7 +181,7 @@ Accept wildcard characters: False
 ```
 
 ### -DisableCommands
-Indicates that this cmdlet turns off some sqlcmd features that might compromise security when run in batch files.
+Indicates that this cmdlet turns off some SQLCMD features that might compromise security when run in batch files.
 
 ```yaml
 Type: SwitchParameter
@@ -211,7 +212,7 @@ Accept wildcard characters: False
 ```
 
 ### -DisableVariables
-Indicates that this cmdlet ignores sqlcmd scripting variables.
+Indicates that this cmdlet ignores SQLCMD scripting variables.
 This is useful when a script contains many INSERT statements that may contain strings that have the same format as variables, such as $(variable_name).
 
 ```yaml
@@ -324,7 +325,7 @@ Accept wildcard characters: False
 ```
 
 ### -MultiSubnetFailover
-This is an enhancement over standard SQLCMD behaviour.
+This is an enhancement over standard SQLCMD behavior.
 If set, enable Multi Subnet Fail-over - required for connection to Always On listeners.
 
 ```yaml
@@ -380,7 +381,7 @@ Accept wildcard characters: False
 ```
 
 ### -OverrideScriptVariables
-This is an enhancement over standard Invoke-sqlcmd behaviour.
+This is an enhancement over standard Invoke-sqlcmd behavior.
 
 If set, this switch prevents any SETVAR commands within the executed script from overriding the values of scripting variables supplied on the command line.
 
@@ -397,7 +398,7 @@ Accept wildcard characters: False
 ```
 
 ### -Parallel
-This is an enhancement over standard Invoke-sqlcmd behaviour.
+This is an enhancement over standard Invoke-sqlcmd behavior.
 
 If set, and multiple input files or connection strings are specified, then run on multiple threads.
 Useful to push the same script to multiple instances simultaneously.
@@ -406,8 +407,9 @@ Useful to push the same script to multiple instances simultaneously.
 - Multiple connection strings, one input file or -Query: Run the input against all connections.
 - Equal number of connection strings and input files: Run each input against corresponding connection.
 
-It is not possible to send query results to the pipeline in parallel execution mode.
-An exception will be thrown if -OutputAs is not None or Text
+Delivery of query results to the pipeline in parallel execution mode is currently not supported.
+Whilst technically it is possible, results from each input script will be delivered in an undefined order.
+A warning will be printed and -OutputAs overridden to Text if -OutputAs is not None or Text
 
 ```yaml
 Type: SwitchParameter
@@ -553,7 +555,7 @@ Accept wildcard characters: False
 ```
 
 ### -Variable
-Specifies initial scripting variables for use in the sqlcmd script.
+Specifies initial scripting variables for use in the SQLCMD script.
 
 Various data types may be used for the type of this input:
 
@@ -574,7 +576,8 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

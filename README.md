@@ -40,8 +40,23 @@ WITH (
 );
 ```
 
+## Enhancements
+
+### SQLCMD command support
+
 This implementation also includes support for more non-interactive 'colon commands' than are available in Invoke-sqlcmd such as `:CONNECT`, `:OUT`, `:!!` etc.
 
+### Parallel Execution
+
+Using the `-Parallel` switch, the following scenarios will run simultaneously. If the switch is omitted the scripts will run sequentially in the order they were presented to the command.
+
+* Run a single script on multiple connections, e.g. deploy database to several servers
+* Run multiple scripts on a single connection
+* Run multiple scripts each with their own connection.
+
+### :SETVAR Enhancement
+
+Using the `-OverrideScriptVariables` switch will prevent any `:SETVAR` within scripts from resetting the value of a scripting variable set from the command line.
 
 ## Supported Environments
 

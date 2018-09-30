@@ -376,8 +376,8 @@
         /// <para type="description">- Multiple connection strings, one input file or -Query: Run the input against all connections.</para>
         /// <para type="description">- Equal number of connection strings and input files: Run each input against corresponding connection.</para>
         /// <para type="description">
-        /// It is not possible to send query results to the pipeline in parallel execution mode.
-        /// An exception will be thrown if -OutputAs is not None or Text
+        /// Delivery of query results to the pipeline in parallel execution mode is currently not supported. Whilst technically it is possible, results from each input script will be delivered in an undefined order.
+        /// A warning will be printed and -OutputAs overridden to Text if -OutputAs is not None or Text
         /// </para>
         /// </summary>
         /// <value>
