@@ -163,6 +163,7 @@
         public void Parse()
         {
             var sw = new Stopwatch();
+            sw.Start();
 
             try
             {
