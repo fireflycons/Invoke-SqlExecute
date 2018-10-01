@@ -35,10 +35,14 @@ namespace SqlExecuteTests.SqlServerIntegration
         {
             var initArgs = new TestArguments
                                {
-                                   Query = TestUtils.LoadSqlResource(
-                                       "InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure"),
+                                   Query =
+                                       TestUtils.LoadSqlResource(
+                                           "InvokeSqlcmdDoesNotReturnSpNameNorLineWhenErrorOccursInProcedure"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=1_{testContext.TestName}"
+                                       new[]
+                                           {
+                                               $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=1_{testContext.TestName}"
+                                           }
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -50,7 +54,8 @@ namespace SqlExecuteTests.SqlServerIntegration
             // ReSharper disable once StringLiteralTypo
             initArgs.Query = "EXEC dbo.geterror";
             initArgs.ConnectionString =
-                $"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=2_{testContext.TestName}";
+                new[]
+                    {$"{this.SqlServerInstanceInfo.GetServerConnection()};Database={TestUtils.DatabaseName};Application Name=2_{testContext.TestName}"};
 
             using (var impl = new SqlExecuteImpl(initArgs))
             {
@@ -83,7 +88,8 @@ namespace SqlExecuteTests.SqlServerIntegration
                                    Query = TestUtils.LoadSqlResource(
                                        "InvokeSqlcmdDoesNotReturnRaisedErrorIfQueryWasRunInSingleUserMode"),
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}"
+                                       new[]
+                                           { $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}"}
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))
@@ -108,7 +114,8 @@ namespace SqlExecuteTests.SqlServerIntegration
                                {
                                    Query = "SELECT convert(int,100000000000)",
                                    ConnectionString =
-                                       $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}"
+                                       new[]
+                                           { $"{this.SqlServerInstanceInfo.GetServerConnection()};Application Name={testContext.TestName}"}
                                };
 
             using (var impl = new SqlExecuteImpl(initArgs))

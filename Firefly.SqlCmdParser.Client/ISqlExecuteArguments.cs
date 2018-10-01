@@ -31,7 +31,7 @@
         /// <value>
         /// The connection string.
         /// </value>
-        string ConnectionString { get; }
+        string[] ConnectionString { get; }
 
         /// <summary>
         /// Gets the current directory resolver.
@@ -79,7 +79,7 @@
         /// <value>
         /// The input file.
         /// </value>
-        string InputFile { get; }
+        string[] InputFile { get; }
 
         /// <summary>
         /// Gets the maximum length of binary data to return.
@@ -157,6 +157,14 @@
         /// The retry count.
         /// </value>
         int RetryCount { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether to run multiple connections/input files in parallel.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [run parallel]; otherwise, <c>false</c>.
+        /// </value>
+        bool RunParallel { get;  }
 
         /// <summary>
         /// Gets or sets the exit code.

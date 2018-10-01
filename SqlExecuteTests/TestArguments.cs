@@ -14,6 +14,8 @@ namespace SqlExecuteTests
     /// <seealso cref="Firefly.SqlCmdParser.Client.ISqlExecuteArguments" />
     internal class TestArguments : ISqlExecuteArguments
     {
+        private string[] inputFile;
+
         /// <summary>
         /// Gets or sets a value indicating whether [abort on error].
         /// </summary>
@@ -36,7 +38,7 @@ namespace SqlExecuteTests
         /// <value>
         /// The connection string.
         /// </value>
-        public string ConnectionString { get; set; }
+        public string[] ConnectionString { get; set; }
 
         /// <summary>
         /// Gets the current directory resolver.
@@ -62,6 +64,8 @@ namespace SqlExecuteTests
         /// </value>
         public bool DisableVariablesSet => false;
 
+        public bool RunParallel { get; }
+
         /// <summary>
         /// Gets or sets the exit code.
         /// </summary>
@@ -77,6 +81,8 @@ namespace SqlExecuteTests
         /// The initial variables.
         /// </value>
         public IDictionary InitialVariables { get; set; } = null;
+
+        string[] ISqlExecuteArguments.InputFile => this.inputFile;
 
         /// <summary>
         /// Gets or sets the input file.

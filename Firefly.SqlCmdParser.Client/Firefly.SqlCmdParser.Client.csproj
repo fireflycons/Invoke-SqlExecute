@@ -38,10 +38,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArgumentHelpers.cs" />
     <Compile Include="BatchSourceFile.cs" />
     <Compile Include="BatchSourceString.cs" />
     <Compile Include="CommandExecuter.cs" />
     <Compile Include="ISqlExecuteArguments.cs" />
+    <Compile Include="OutputFileProperties.cs" />
     <Compile Include="SqlExecuteImpl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="VariableResolver.cs" />

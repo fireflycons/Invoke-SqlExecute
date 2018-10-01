@@ -42,10 +42,13 @@
     <Compile Include="ConnectEventArgs.cs" />
     <Compile Include="ICurrentDirectoryResolver.cs" />
     <Compile Include="InputSourceChangedEventArgs.cs" />
+    <Compile Include="IOutputFileProperties.cs" />
     <Compile Include="OutputAs.cs" />
     <Compile Include="OutputMessageEventArgs.cs" />
     <Compile Include="OutputResultEventArgs.cs" />
+    <Compile Include="ParallelNodeEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RunConfiguration.cs" />
     <Compile Include="SimpleParser\Commands\CommandSyntaxException.cs" />
     <Compile Include="SimpleParser\Commands\CommandType.cs" />
     <Compile Include="SimpleParser\Commands\ConnectCommand.cs" />

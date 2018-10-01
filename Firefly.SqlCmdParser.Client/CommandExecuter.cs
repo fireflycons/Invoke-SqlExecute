@@ -1,4 +1,5 @@
 ﻿// ReSharper disable InheritdocConsiderUsage
+
 namespace Firefly.SqlCmdParser.Client
 {
     using System;
@@ -16,11 +17,17 @@ namespace Firefly.SqlCmdParser.Client
     // ReSharper disable once CommentTypo
 
     /// <summary>
-    /// Concrete command executer with virtual methods permitting creation of custom executers with some behaviour redefined
+    /// Concrete command executer with virtual methods permitting creation of custom executers with some behavior redefined
     /// </summary>
     // ReSharper disable once InheritdocConsiderUsage
     public class CommandExecuter : ICommandExecuter
     {
+        /// <summary>
+        /// The database context changed regex
+        /// </summary>
+        private static readonly Regex DatabaseContextChangedRx =
+            new Regex(@"Changed database context to '(?<dbname>.*)'");
+
         /// <summary>
         /// SQL server or provider error codes that represent failures that can be retried.
         /// </summary>
@@ -30,11 +37,6 @@ namespace Firefly.SqlCmdParser.Client
                                                                 11, // General network error
                                                                 1205 // Deadlock victim
                                                             };
-
-        /// <summary>
-        /// The database context changed regex
-        /// </summary>
-        private static readonly Regex DatabaseContextChangedRx = new Regex(@"Changed database context to '(?<dbname>.*)'");
 
         /// <summary>
         /// The arguments
@@ -57,32 +59,24 @@ namespace Firefly.SqlCmdParser.Client
         private SqlConnection connection;
 
         /// <summary>
-        /// The stderr destination
-        /// </summary>
-        private OutputDestination stderrDestination = OutputDestination.StdError;
-
-        /// <summary>
-        /// The stderr file
+        /// The STDERR file
         /// </summary>
         private Stream stderrFile;
 
         /// <summary>
-        /// The stdout destination
-        /// </summary>
-        private OutputDestination stdoutDestination = OutputDestination.StdOut;
-
-        /// <summary>
-        /// The stdout file
+        /// The STDOUT file
         /// </summary>
         private Stream stdoutFile;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="CommandExecuter" /> class.
         /// </summary>
+        /// <param name="nodeNumber">The execution node number.</param>
         /// <param name="arguments">The arguments.</param>
         /// <param name="variableResolver">The variable resolver.</param>
-        public CommandExecuter(ISqlExecuteArguments arguments, IVariableResolver variableResolver)
+        public CommandExecuter(int nodeNumber, ISqlExecuteArguments arguments, IVariableResolver variableResolver)
         {
+            this.NodeNumber = nodeNumber;
             this.resultsAs = arguments.OutputAs;
             this.arguments = arguments;
             this.variableResolver = variableResolver;
@@ -121,12 +115,20 @@ namespace Firefly.SqlCmdParser.Client
 
         /// <summary>
         /// Gets or sets the number of <see cref="SqlException"/> errors recorded by <see cref="ProcessBatch"/>.
-        /// Retryable errors that retried and then successfully executed are not counted.
+        /// Retriable errors that retried and then successfully executed are not counted.
         /// </summary>
         /// <value>
         /// The error count.
         /// </value>
         public int ErrorCount => this.SqlExceptions.Count;
+
+        /// <summary>
+        /// Gets the execution node number.
+        /// </summary>
+        /// <value>
+        /// The node number, needed for raising message events.
+        /// </value>
+        public int NodeNumber { get; }
 
         /// <summary>
         /// Gets or sets the list of SQL exceptions thrown during the batch execution.
@@ -135,6 +137,16 @@ namespace Firefly.SqlCmdParser.Client
         /// The SQL exceptions.
         /// </value>
         public IList<SqlException> SqlExceptions { get; protected set; } = new List<SqlException>();
+
+        /// <summary>
+        /// Gets the STDERR destination
+        /// </summary>
+        public OutputDestination StderrDestination { get; private set; } = OutputDestination.StdError;
+
+        /// <summary>
+        /// Gets the STDOUT destination
+        /// </summary>
+        public OutputDestination StdoutDestination { get; private set; } = OutputDestination.StdOut;
 
         /// <inheritdoc />
         /// <summary>
@@ -216,18 +228,18 @@ namespace Firefly.SqlCmdParser.Client
         {
             if (od == OutputDestination.File)
             {
-                if (!TryCreateOutputFile(fileName, out var stream))
+                if (!TryCreateOutputFile(fileName, FileMode.Create, out var stream))
                 {
                     // If the file is not available because of permissions or other reasons, the output will not be switched and will be sent to the last specified or default destination.
                     return;
                 }
 
-                this.stderrDestination = od;
+                this.StderrDestination = od;
                 this.stderrFile = stream;
             }
             else
             {
-                this.stderrDestination = od;
+                this.StderrDestination = od;
 
                 if (this.stderrFile == null)
                 {
@@ -279,14 +291,20 @@ namespace Firefly.SqlCmdParser.Client
                     {
                         if (e.Data != null)
                         {
-                            outputData.Add(new ShellExecuteOutput { OutputDestination = OutputDestination.StdOut, Data = e.Data });
+                            outputData.Add(
+                                new ShellExecuteOutput { OutputDestination = OutputDestination.StdOut, Data = e.Data });
                         }
                     };
                 process.ErrorDataReceived += (sender, e) =>
                     {
                         if (e.Data != null)
                         {
-                            outputData.Add(new ShellExecuteOutput { OutputDestination = OutputDestination.StdError, Data = e.Data });
+                            outputData.Add(
+                                new ShellExecuteOutput
+                                    {
+                                        OutputDestination = OutputDestination.StdError,
+                                        Data = e.Data
+                                    });
                         }
                     };
 
@@ -431,35 +449,36 @@ namespace Firefly.SqlCmdParser.Client
             this.ErrorAction = ea;
         }
 
+        /// <summary>
+        /// Called when [input source changed].
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="args">The <see cref="T:Firefly.SqlCmdParser.InputSourceChangedEventArgs" /> instance containing the event data.</param>
+        public void OnInputSourceChanged(object sender, InputSourceChangedEventArgs args)
+        {
+            this.WriteStdoutMessage(
+                $"Input Source: '{args.Source.Filename}', Encoding: {args.Source.Encoding.EncodingName}");
+        }
+
         /// <inheritdoc />
         /// <summary>
         /// <c>:OUT</c> directive.
         /// </summary>
-        /// <param name="od">The od.</param>
+        /// <param name="outputDestination">The outputDestination.</param>
         /// <param name="fileName">Name of the file.</param>
-        public virtual void Out(OutputDestination od, string fileName)
+        public virtual void Out(OutputDestination outputDestination, string fileName)
         {
-            if (od == OutputDestination.File)
-            {
-                if (!TryCreateOutputFile(fileName, out var stream))
-                {
-                    // If the file is not available because of permissions or other reasons, the output will not be switched and will be sent to the last specified or default destination.
-                    return;
-                }
+            this.CreateStdoutFile(outputDestination, FileMode.Create, fileName);
+        }
 
-                this.stdoutDestination = od;
-                this.stdoutFile = stream;
-            }
-            else
-            {
-                this.stdoutDestination = od;
-
-                if (this.stdoutFile != null)
-                {
-                    this.stdoutFile.Dispose();
-                    this.stdoutFile = null;
-                }
-            }
+        /// <summary>
+        /// <c>:OUT</c> directive.
+        /// </summary>
+        /// <param name="outputDestination">The od.</param>
+        /// <param name="outputFileProperties">The output file properties.</param>
+        public virtual void Out(OutputDestination outputDestination, IOutputFileProperties outputFileProperties)
+        {
+            this.CreateStdoutFile(outputDestination, outputFileProperties.CreateMode, outputFileProperties.Path);
         }
 
         /// <inheritdoc />
@@ -541,7 +560,7 @@ namespace Firefly.SqlCmdParser.Client
                         }
                         catch (SqlException ex)
                         {
-                            if (!IsRetryableError(ex) || numTries >= this.arguments.RetryCount)
+                            if (!IsRetriableError(ex) || numTries >= this.arguments.RetryCount)
                             {
                                 // Can't retry this command
                                 // Exit both the while loop and the go count as it will always fail.
@@ -592,6 +611,60 @@ namespace Firefly.SqlCmdParser.Client
         {
         }
 
+        /// <summary>
+        /// Writes a message to current <c>stderr</c> destination
+        /// </summary>
+        /// <param name="message">The message.</param>
+        public void WriteStderrMessage(string message)
+        {
+            if (this.StderrDestination == OutputDestination.File)
+            {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(message);
+                this.stderrFile.Write(bytes, 0, bytes.Length);
+
+                // in case someone is tailing the file, flush to keep it up to date.
+                this.stderrFile.Flush();
+            }
+            else
+            {
+                this.Message?.Invoke(
+                    this,
+                    new OutputMessageEventArgs(this.NodeNumber, message, this.StderrDestination));
+            }
+        }
+
+        /// <summary>
+        /// Writes a message to current <c>stdout</c> destination
+        /// /// </summary>
+        /// <param name="message">The message.</param>
+        public void WriteStdoutMessage(string message)
+        {
+            if (this.StdoutDestination == OutputDestination.File)
+            {
+                if (!message.EndsWith(Environment.NewLine))
+                {
+                    message += Environment.NewLine;
+                }
+
+                var bytes = Encoding.UTF8.GetBytes(message);
+                this.stdoutFile.Write(bytes, 0, bytes.Length);
+
+                // in case someone is tailing the file, flush to keep it up to date.
+                this.stdoutFile.Flush();
+            }
+            else
+            {
+                this.Message?.Invoke(
+                    this,
+                    new OutputMessageEventArgs(this.NodeNumber, message, this.StdoutDestination));
+            }
+        }
+
         /// <inheritdoc />
         /// <summary>
         /// <c>:XML</c> directive.
@@ -602,18 +675,60 @@ namespace Firefly.SqlCmdParser.Client
         }
 
         /// <summary>
+        /// Gets the connection information message.
+        /// </summary>
+        /// <param name="connection">The connection.</param>
+        /// <returns>A string to output to the output device</returns>
+        private static string GetConnectionInformationMessage(SqlConnection connection)
+        {
+            var connectionStringBuilder = new SqlConnectionStringBuilder(connection.ConnectionString);
+            var integratedSecurity = connectionStringBuilder.IntegratedSecurity
+                                     || string.IsNullOrEmpty(connectionStringBuilder.UserID);
+
+            var edition = string.Empty;
+
+            try
+            {
+                using (var cmd = connection.CreateCommand())
+                {
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "select SERVERPROPERTY('Edition')";
+                    edition = "- " + (string)cmd.ExecuteScalar();
+                }
+            }
+            catch
+            {
+                // We probably don't care if we can't retrieve this
+            }
+
+            var authType = integratedSecurity ? "Windows" : "SQL";
+            var user = integratedSecurity ? WindowsIdentity.GetCurrent().Name : connectionStringBuilder.UserID;
+
+            var msg = string.Join(
+                Environment.NewLine,
+                new List<string>()
+                    {
+                        $"Connected to: [{connection.DataSource}] as [{user}] ({authType})",
+                        $"Version:      {connection.ServerVersion} {edition}",
+                        $"Database:     [{connection.Database}]"
+                    });
+
+            return msg;
+        }
+
+        /// <summary>
         /// Determines whether the given exception represents a condition that can be retried.
         /// </summary>
         /// <param name="ex">The exception.</param>
         /// <returns>
-        ///   <c>true</c> if [is retryable error] [the specified ex]; otherwise, <c>false</c>.
+        ///   <c>true</c> if [is retriable error] [the specified ex]; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
-        /// Examples of retryable errors:
+        /// Examples of retriable errors:
         /// - Deadlock victim
         /// - Timeout (could be blocked)
         /// </remarks>
-        private static bool IsRetryableError(SqlException ex)
+        private static bool IsRetriableError(SqlException ex)
         {
             return RetryableErrors.Any(e => ex.Number == e);
         }
@@ -622,13 +737,16 @@ namespace Firefly.SqlCmdParser.Client
         /// Tries to create a new output file in response to e.g. :OUT or :ERROR
         /// </summary>
         /// <param name="path">The path.</param>
+        /// <param name="mode">The mode.</param>
         /// <param name="fileStream">The newly created file stream if the function succeeds.</param>
-        /// <returns><c>true</c> if the file was created; else <c>false</c></returns>
-        private static bool TryCreateOutputFile(string path, out Stream fileStream)
+        /// <returns>
+        ///   <c>true</c> if the file was created; else <c>false</c>
+        /// </returns>
+        private static bool TryCreateOutputFile(string path, FileMode mode, out Stream fileStream)
         {
             try
             {
-                fileStream = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.Read);
+                fileStream = File.Open(path, mode, FileAccess.Write, FileShare.Read);
             }
             catch
             {
@@ -637,6 +755,37 @@ namespace Firefly.SqlCmdParser.Client
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Creates the STDOUT file.
+        /// </summary>
+        /// <param name="od">The output destination.</param>
+        /// <param name="mode">The file creation mode for a file.</param>
+        /// <param name="fileName">Name of the file.</param>
+        private void CreateStdoutFile(OutputDestination od, FileMode mode, string fileName)
+        {
+            if (od == OutputDestination.File)
+            {
+                if (!TryCreateOutputFile(fileName, mode, out var stream))
+                {
+                    // If the file is not available because of permissions or other reasons, the output will not be switched and will be sent to the last specified or default destination.
+                    return;
+                }
+
+                this.StdoutDestination = od;
+                this.stdoutFile = stream;
+            }
+            else
+            {
+                this.StdoutDestination = od;
+
+                if (this.stdoutFile != null)
+                {
+                    this.stdoutFile.Dispose();
+                    this.stdoutFile = null;
+                }
+            }
         }
 
         /// <summary>
@@ -701,15 +850,23 @@ namespace Firefly.SqlCmdParser.Client
             SqlConnection.ClearPool(this.connection);
 
             this.variableResolver.SetSystemVariable("SQLCMDSERVER", this.connection.DataSource);
+
+            // ReSharper disable once StyleCop.SA1118
             this.variableResolver.SetSystemVariable(
                 "SQLCMDUSER",
-                connectionStringBuilder.IntegratedSecurity ? WindowsIdentity.GetCurrent().Name : connectionStringBuilder.UserID);
+                connectionStringBuilder.IntegratedSecurity
+                    ? WindowsIdentity.GetCurrent().Name
+                    : connectionStringBuilder.UserID);
             this.variableResolver.SetSystemVariable(
                 "SQLCMDPASSWORD",
                 connectionStringBuilder.IntegratedSecurity ? string.Empty : connectionStringBuilder.Password);
             this.variableResolver.SetSystemVariable("SQLCMDDBNAME", this.connection.Database);
 
-            this.Connected?.Invoke(this, new ConnectEventArgs(this.connection, this.stdoutDestination));
+            this.WriteStdoutMessage(GetConnectionInformationMessage(this.connection));
+
+            this.Connected?.Invoke(
+                this,
+                new ConnectEventArgs(this.NodeNumber, this.connection, this.StdoutDestination));
 
             // ReSharper restore StringLiteralTypo
         }
@@ -768,7 +925,13 @@ namespace Firefly.SqlCmdParser.Client
                     {
                         if (!scalarResultReturned && sqlDataReader.Read() && sqlDataReader.FieldCount > 0)
                         {
-                            this.Result?.Invoke(this, new OutputResultEventArgs(sqlDataReader.GetValue(0), this.stdoutDestination, this.stdoutFile));
+                            this.Result?.Invoke(
+                                this,
+                                new OutputResultEventArgs(
+                                    this.NodeNumber,
+                                    sqlDataReader.GetValue(0),
+                                    this.StdoutDestination,
+                                    this.stdoutFile));
                             scalarResultReturned = true;
                         }
                     }
@@ -825,7 +988,13 @@ namespace Firefly.SqlCmdParser.Client
 
                             if (this.resultsAs == OutputAs.DataRows)
                             {
-                                this.Result?.Invoke(this, new OutputResultEventArgs(newRow, this.stdoutDestination, this.stdoutFile));
+                                this.Result?.Invoke(
+                                    this,
+                                    new OutputResultEventArgs(
+                                        this.NodeNumber,
+                                        newRow,
+                                        this.StdoutDestination,
+                                        this.stdoutFile));
                             }
                             else
                             {
@@ -839,7 +1008,13 @@ namespace Firefly.SqlCmdParser.Client
                         case OutputAs.DataTables:
                         case OutputAs.Text:
 
-                            this.Result?.Invoke(this, new OutputResultEventArgs(dataTable, this.stdoutDestination, this.stdoutFile));
+                            this.Result?.Invoke(
+                                this,
+                                new OutputResultEventArgs(
+                                    this.NodeNumber,
+                                    dataTable,
+                                    this.StdoutDestination,
+                                    this.stdoutFile));
                             break;
 
                         case OutputAs.DataSet:
@@ -852,58 +1027,10 @@ namespace Firefly.SqlCmdParser.Client
 
                 if (this.resultsAs == OutputAs.DataSet)
                 {
-                    this.Result?.Invoke(this, new OutputResultEventArgs(dataSet, this.stdoutDestination, this.stdoutFile));
+                    this.Result?.Invoke(
+                        this,
+                        new OutputResultEventArgs(this.NodeNumber, dataSet, this.StdoutDestination, this.stdoutFile));
                 }
-            }
-        }
-
-        /// <summary>
-        /// Writes the stderr message.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        private void WriteStderrMessage(string message)
-        {
-            if (this.stderrDestination == OutputDestination.File)
-            {
-                if (!message.EndsWith(Environment.NewLine))
-                {
-                    message += Environment.NewLine;
-                }
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-                this.stderrFile.Write(bytes, 0, bytes.Length);
-
-                // in case someone is tailing the file, flush to keep it up to date.
-                this.stderrFile.Flush();
-            }
-            else
-            {
-                this.Message?.Invoke(this, new OutputMessageEventArgs(message, this.stderrDestination));
-            }
-        }
-
-        /// <summary>
-        /// Writes the stdout message.
-        /// </summary>
-        /// <param name="message">The message.</param>
-        private void WriteStdoutMessage(string message)
-        {
-            if (this.stdoutDestination == OutputDestination.File)
-            {
-                if (!message.EndsWith(Environment.NewLine))
-                {
-                    message += Environment.NewLine;
-                }
-
-                var bytes = Encoding.UTF8.GetBytes(message);
-                this.stdoutFile.Write(bytes, 0, bytes.Length);
-
-                // in case someone is tailing the file, flush to keep it up to date.
-                this.stdoutFile.Flush();
-            }
-            else
-            {
-                this.Message?.Invoke(this, new OutputMessageEventArgs(message, this.stdoutDestination));
             }
         }
 
@@ -913,20 +1040,20 @@ namespace Firefly.SqlCmdParser.Client
         private class ShellExecuteOutput
         {
             /// <summary>
-            /// Gets or sets the output destination.
-            /// </summary>
-            /// <value>
-            /// The output destination.
-            /// </value>
-            public OutputDestination OutputDestination { get; set; }
-
-            /// <summary>
             /// Gets or sets the data.
             /// </summary>
             /// <value>
             /// The data.
             /// </value>
             public string Data { get; set; }
+
+            /// <summary>
+            /// Gets or sets the output destination.
+            /// </summary>
+            /// <value>
+            /// The output destination.
+            /// </value>
+            public OutputDestination OutputDestination { get; set; }
         }
     }
 }

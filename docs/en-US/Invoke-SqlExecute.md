@@ -14,10 +14,10 @@ Runs a script containing statements supported by the SQL Server SQLCMD utility.
 
 ### ConnectionString
 ```
-Invoke-SqlExecute [-AbortOnError] -ConnectionString <String> [-ConsoleMessageHandler <ScriptBlock>]
+Invoke-SqlExecute [-AbortOnError] -ConnectionString <String[]> [-ConsoleMessageHandler <ScriptBlock>]
  [-DisableCommands] [-DryRun] [-DisableVariables] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
- [-MaxCharLength <Int32>] [-InputFile <String>] [-OutputAs <OutputAs>] [-OutputFile <String>]
- [-OverrideScriptVariables] [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>]
+ [-MaxCharLength <Int32>] [-InputFile <String[]>] [-OutputAs <OutputAs>] [-OutputFile <String>]
+ [-OverrideScriptVariables] [-Parallel] [[-Query] <String>] [-QueryTimeout <Int32>] [-RetryCount <Int32>]
  [-Variable <Object>] [<CommonParameters>]
 ```
 
@@ -26,8 +26,8 @@ Invoke-SqlExecute [-AbortOnError] -ConnectionString <String> [-ConsoleMessageHan
 Invoke-SqlExecute [-AbortOnError] [-ConnectionTimeout <Int32>] [-ConsoleMessageHandler <ScriptBlock>]
  [-Database <String>] [-DedicatedAdministratorConnection] [-DisableCommands] [-DryRun] [-DisableVariables]
  [-EncryptConnection] [-IgnoreProviderContext] [-IncludeSqlUserErrors] [-MaxBinaryLength <Int32>]
- [-MaxCharLength <Int32>] [-InputFile <String>] [-MultiSubnetFailover] [-OutputAs <OutputAs>]
- [-OutputFile <String>] [-OverrideScriptVariables] [-Password <String>] [[-Query] <String>]
+ [-MaxCharLength <Int32>] [-InputFile <String[]>] [-MultiSubnetFailover] [-OutputAs <OutputAs>]
+ [-OutputFile <String>] [-OverrideScriptVariables] [-Parallel] [-Password <String>] [[-Query] <String>]
  [-QueryTimeout <Int32>] [-RetryCount <Int32>] [-ServerInstance <PSObject>] [-SuppressProviderContextWarning]
  [-Username <String>] [-Variable <Object>] [<CommonParameters>]
 ```
@@ -91,7 +91,7 @@ Accept wildcard characters: False
 Specifies a connection string to connect to the server.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: ConnectionString
 Aliases:
 
@@ -126,10 +126,11 @@ This is an enhancement over standard Invoke-Sqlcmd behaviour.
 
 For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages that would otherwise go to the console.
 
-The script block is presented with a variable $OutputMessage which has two fields:
+The script block is presented with a variable $OutputMessage which has these fields:
 
 - OutputDestination: Either 'StdOut' or 'StdError'
 - Message: The message text.
+- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.
 
 ```yaml
 Type: ScriptBlock
@@ -180,7 +181,7 @@ Accept wildcard characters: False
 ```
 
 ### -DisableCommands
-Indicates that this cmdlet turns off some sqlcmd features that might compromise security when run in batch files.
+Indicates that this cmdlet turns off some SQLCMD features that might compromise security when run in batch files.
 
 ```yaml
 Type: SwitchParameter
@@ -211,7 +212,7 @@ Accept wildcard characters: False
 ```
 
 ### -DisableVariables
-Indicates that this cmdlet ignores sqlcmd scripting variables.
+Indicates that this cmdlet ignores SQLCMD scripting variables.
 This is useful when a script contains many INSERT statements that may contain strings that have the same format as variables, such as $(variable_name).
 
 ```yaml
@@ -312,7 +313,7 @@ The file can contain Transact-SQL statements, sqlcmd commands and scripting vari
 Specify the full path to the file.
 
 ```yaml
-Type: String
+Type: String[]
 Parameter Sets: (All)
 Aliases: Path
 
@@ -324,7 +325,7 @@ Accept wildcard characters: False
 ```
 
 ### -MultiSubnetFailover
-This is an enhancement over standard SQLCMD behaviour.
+This is an enhancement over standard SQLCMD behavior.
 If set, enable Multi Subnet Fail-over - required for connection to Always On listeners.
 
 ```yaml
@@ -380,8 +381,35 @@ Accept wildcard characters: False
 ```
 
 ### -OverrideScriptVariables
-This is an enhancement over standard SQLCMD behaviour.
+This is an enhancement over standard Invoke-sqlcmd behavior.
+
 If set, this switch prevents any SETVAR commands within the executed script from overriding the values of scripting variables supplied on the command line.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Parallel
+This is an enhancement over standard Invoke-sqlcmd behavior.
+
+If set, and multiple input files or connection strings are specified, then run on multiple threads.
+Useful to push the same script to multiple instances simultaneously.
+
+- One connection string, multiple input files: Run all files on this connection. Use :CONNECT in the input files to redirect to other instances.
+- Multiple connection strings, one input file or -Query: Run the input against all connections.
+- Equal number of connection strings and input files: Run each input against corresponding connection.
+
+Delivery of query results to the pipeline in parallel execution mode is currently not supported.
+Whilst technically it is possible, results from each input script will be delivered in an undefined order.
+A warning will be printed and -OutputAs overridden to Text if -OutputAs is not None or Text
 
 ```yaml
 Type: SwitchParameter
@@ -527,7 +555,7 @@ Accept wildcard characters: False
 ```
 
 ### -Variable
-Specifies initial scripting variables for use in the sqlcmd script.
+Specifies initial scripting variables for use in the SQLCMD script.
 
 Various data types may be used for the type of this input:
 

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Data;
     using System.Data.Common;
@@ -9,9 +10,10 @@
     using System.IO;
     using System.Linq;
     using System.Management.Automation;
+    using System.Management.Automation.Runspaces;
     using System.Reflection;
-    using System.Security.Principal;
     using System.Text;
+    using System.Threading;
 
     using Firefly.SqlCmdParser;
     using Firefly.SqlCmdParser.Client;
@@ -71,8 +73,18 @@
     [OutputType(typeof(DataSet))]
 
     // ReSharper disable once InheritdocConsiderUsage
+    // ReSharper disable once StyleCop.SA1650
     public class InvokeSqlExecuteCommand : PSCmdlet, ISqlExecuteArguments
     {
+        #region Fields
+
+        /// <summary>
+        /// Queue of actions to perform on the main thread (interacting with the PowerShell host) when running in parallel mode.
+        /// </summary>
+        private ConcurrentQueue<MainThreadAction> mainThreadActions = new ConcurrentQueue<MainThreadAction>();
+
+        #endregion
+
         /// <summary>
         /// Initializes a new instance of the <see cref="InvokeSqlExecuteCommand"/> class.
         /// </summary>
@@ -102,7 +114,7 @@
         /// The connection string.
         /// </value>
         [Parameter(ParameterSetName = "ConnectionString", Mandatory = true), ValidateNotNullOrEmpty]
-        public string ConnectionString { get; set; }
+        public string[] ConnectionString { get; set; }
 
         /// <summary>
         /// Gets or sets the login timeout.
@@ -127,14 +139,16 @@
         /// For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages 
         /// that would otherwise go to the console.
         /// </para>
-        /// <para type="description">The script block is presented with a variable $OutputMessage which has two fields:</para>
+        /// <para type="description">The script block is presented with a variable $OutputMessage which has these fields:</para>
         /// <para type="description">- OutputDestination: Either 'StdOut' or 'StdError'</para>
         /// <para type="description">- Message: The message text.</para>
+        /// <para type="description">- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.</para>
         /// </summary>
         /// <value>
         /// The console message handler.
         /// </value>
         [Parameter]
+        // ReSharper disable once StyleCop.SA1650
         public ScriptBlock ConsoleMessageHandler { get; set; }
 
         /// <summary>
@@ -169,7 +183,7 @@
         /// <summary>
         /// Gets or sets the disable commands.
         /// <para type="description">
-        /// Indicates that this cmdlet turns off some sqlcmd features that might compromise security when run in batch files.
+        /// Indicates that this cmdlet turns off some SQLCMD features that might compromise security when run in batch files.
         /// </para>
         /// </summary>
         /// <value>
@@ -193,7 +207,7 @@
         /// <summary>
         /// Gets or sets the disable variables.
         /// <para type="description">
-        /// Indicates that this cmdlet ignores sqlcmd scripting variables.
+        /// Indicates that this cmdlet ignores SQLCMD scripting variables.
         /// This is useful when a script contains many INSERT statements that may contain strings that have the same format as variables, such as $(variable_name).
         /// </para>
         /// </summary>
@@ -244,6 +258,7 @@
         /// </value>
         // ReSharper disable once UnusedMember.Global
         [Parameter]
+        // ReSharper disable once StyleCop.SA1650
         public SwitchParameter IncludeSqlUserErrors { get; set; }
 
         /// <inheritdoc />
@@ -287,12 +302,12 @@
         /// </value>
         [Parameter]
         [Alias("Path")]
-        public string InputFile { get; set; }
+        public string[] InputFile { get; set; }
 
         /// <summary>
         /// Gets or sets the multi subnet fail over.
         /// <para type="description">
-        /// This is an enhancement over standard SQLCMD behaviour.
+        /// This is an enhancement over standard SQLCMD behavior.
         /// If set, enable Multi Subnet Fail-over - required for connection to Always On listeners.
         /// </para>
         /// </summary>
@@ -335,7 +350,9 @@
         /// <summary>
         /// Gets or sets the override script variables.
         /// <para type="description">
-        /// This is an enhancement over standard SQLCMD behaviour.
+        /// This is an enhancement over standard Invoke-sqlcmd behavior.
+        /// </para>
+        /// <para type="description">
         /// If set, this switch prevents any SETVAR commands within the executed script from overriding the values of scripting variables supplied on the command line.
         /// </para>
         /// </summary>
@@ -343,7 +360,32 @@
         /// The override script variables.
         /// </value>
         [Parameter]
+        // ReSharper disable once StyleCop.SA1650
         public SwitchParameter OverrideScriptVariables { get; set; }
+
+        /// <summary>
+        /// Gets or sets the parallel.
+        /// <para type="description">
+        /// This is an enhancement over standard Invoke-sqlcmd behavior.
+        /// </para>
+        /// <para type="description">
+        /// If set, and multiple input files or connection strings are specified, then run on multiple threads.
+        /// Useful to push the same script to multiple instances simultaneously.
+        /// </para>
+        /// <para type="description">- One connection string, multiple input files: Run all files on this connection. Use :CONNECT in the input files to redirect to other instances.</para>
+        /// <para type="description">- Multiple connection strings, one input file or -Query: Run the input against all connections.</para>
+        /// <para type="description">- Equal number of connection strings and input files: Run each input against corresponding connection.</para>
+        /// <para type="description">
+        /// Delivery of query results to the pipeline in parallel execution mode is currently not supported. Whilst technically it is possible, results from each input script will be delivered in an undefined order.
+        /// A warning will be printed and -OutputAs overridden to Text if -OutputAs is not None or Text
+        /// </para>
+        /// </summary>
+        /// <value>
+        /// The parallel.
+        /// </value>
+        [Parameter] 
+        // ReSharper disable once StyleCop.SA1650
+        public SwitchParameter Parallel { get; set; }
 
         /// <summary>
         /// Gets or sets the password.
@@ -451,7 +493,7 @@
         /// <summary>
         /// Gets or sets the variable.
         /// <para type="description">
-        /// Specifies initial scripting variables for use in the sqlcmd script.
+        /// Specifies initial scripting variables for use in the SQLCMD script.
         /// </para>
         /// <para type="description">
         /// Various data types may be used for the type of this input:
@@ -465,6 +507,7 @@
         /// </value>
         [Parameter]
         [Alias("SqlCmdParameters")]
+        // ReSharper disable once StyleCop.SA1650
         public object Variable { get; set; }
 
         #endregion
@@ -598,6 +641,14 @@
         /// </value>
         public bool OverrideScriptVariablesSet => this.OverrideScriptVariables;
 
+        /// <summary>
+        /// Gets a value indicating whether to run multiple connections/input files in parallel.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> if [run parallel]; otherwise, <c>false</c>.
+        /// </value>
+        public bool RunParallel => this.Parallel;
+
         /// <inheritdoc />
         /// <summary>
         /// Gets or sets the exit code.
@@ -607,6 +658,24 @@
         /// </value>
         public int ExitCode { get; set; }
 
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="InvokeSqlExecuteCommand"/> is verbose.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if verbose; otherwise, <c>false</c>.
+        /// </value>
+        private bool Verbose =>
+            this.MyInvocation.BoundParameters.ContainsKey("Verbose")
+            && ((SwitchParameter)this.MyInvocation.BoundParameters["Verbose"]).ToBool();
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="InvokeSqlExecuteCommand"/> is debug.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if debug; otherwise, <c>false</c>.
+        /// </value>
+        private bool Debug => this.MyInvocation.BoundParameters.ContainsKey("Debug")
+                              && ((SwitchParameter)this.MyInvocation.BoundParameters["Debug"]).ToBool();
 
         #endregion
 
@@ -615,6 +684,40 @@
         /// </summary>
         protected override void BeginProcessing()
         {
+            this.WriteDebugMessage("Argument info");
+            this.WriteDebugMessage($"ConnectionString: {ArgumentHelpers.DescribeArgument(this.ConnectionString)}");
+            this.WriteDebugMessage($"InputFile:        {ArgumentHelpers.DescribeArgument(this.InputFile)}");
+            this.WriteDebugMessage($"Query:            {ArgumentHelpers.DescribeArgument(this.Query)}");
+            this.WriteDebugMessage($"Parallel:         {ArgumentHelpers.DescribeArgument(this.Parallel.ToBool())}");
+
+            // Do some argument checks
+            if (!(ArgumentHelpers.IsEmptyArgument(this.InputFile) ^ ArgumentHelpers.IsEmptyArgument(this.Query)))
+            {
+                throw new ArgumentException("Must specify either -Query or -InputFile, bur not both or neither.");
+            }
+
+            if (!(ArgumentHelpers.IsEmptyArgument(this.ConnectionString)
+                  || ArgumentHelpers.IsEmptyArgument(this.InputFile))
+                && this.ConnectionString.Length != this.InputFile.Length && this.ConnectionString.Length > 1
+                && this.InputFile.Length > 1)
+            {
+                // Must be 1 connection, many inputs or 1 input, many connections
+                throw new ArgumentException(
+                    "Number of connection strings does not match number of input files. Must be 1 connection many files, or 1 file many connections, or an equal number of both.");
+            }
+
+            if (ArgumentHelpers.IsSingleRunConfiguration(this.ConnectionString, this.InputFile))
+            {
+                // Override -Parallel argument for single run configuration.
+                this.Parallel = false;
+            }
+
+            if (this.RunParallel && !(this.OutputAs == OutputAs.None || this.OutputAs == OutputAs.Text))
+            {
+                this.WriteWarning("Cannot send results to pipeline in parallel execution mode. Query output will be sent as text to the console.");
+                this.OutputAs = OutputAs.Text;
+            }
+
             this.OutputMessage = this.OnOutputMessage;
             this.OutputResult = this.OnOutputResult;
             this.Connected = this.OnConnect;
@@ -634,7 +737,26 @@
             {
                 try
                 {
-                    sqlcmd.Execute();
+                    var task = sqlcmd.Execute();
+
+                    if (task != null)
+                    {
+                        // Parallel execution. Loop until tasks complete whilst looking for stuff that needs to be processed on this thread.
+                        while (!task.Wait(100) || this.mainThreadActions.Count > 0)
+                        {
+                            if (this.mainThreadActions.TryDequeue(out var action))
+                            {
+                                try
+                                {
+                                    action.Action();
+                                }
+                                finally
+                                {
+                                    action.CompletionToken.Set();
+                                }
+                            }
+                        }
+                    }
 
                     if (sqlcmd.ErrorCount > 0)
                     {
@@ -649,7 +771,7 @@
                 catch (SqlException e)
                 {
                     // -AbortOnError was set, or the initial connect failed
-                    this.OnOutputMessage(this, new OutputMessageEventArgs(e.Format(), OutputDestination.StdError));
+                    this.OnOutputMessage(this, new OutputMessageEventArgs(0, e.Format(), OutputDestination.StdError));
                     this.AssignExitCode(1);
                     throw new ScriptExecutionException(e);
                 }
@@ -678,6 +800,7 @@
         {
             if (objectValue is string s)
             {
+                // ReSharper disable once StyleCop.SA1126
                 return s;
             }
 
@@ -726,7 +849,7 @@
         /// Builds a connection string out of whatever parameter combination was supplied.
         /// </summary>
         /// <returns>The connection string.</returns>
-        private string BuildConnectionString()
+        private string[] BuildConnectionString()
         {
             var providerPath = this.SessionState.Path.CurrentLocation.ProviderPath;
             dynamic serverConnection = null;
@@ -901,11 +1024,12 @@
                 connectionStringBuilder.Add("MultiSubnetFailover", "yes");
             }
 
-            return connectionStringBuilder.ConnectionString;
+            return new[] { connectionStringBuilder.ConnectionString };
         }
 
         /// <summary>
         /// Called to output a message to the console (e.g. PRINT, RAISERROR, info messages from commands etc.).
+        /// File redirection is handled within the <c>SqlCmdParser</c> assembly.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="args">The <see cref="OutputMessageEventArgs"/> instance containing the event data.</param>
@@ -914,18 +1038,80 @@
             if (this.ConsoleMessageHandler != null)
             {
                 // User supplied a scriptblock with -ConsoleMessageHandler, then execute it.
-                this.ConsoleMessageHandler.InvokeWithContext(
-                    null,
-                    new List<PSVariable> { new PSVariable("OutputMessage", args, ScopedItemOptions.Constant) },
-                    null);
+                var action = new Action(
+                    () =>
+                        {
+                            this.ConsoleMessageHandler.InvokeWithContext(
+                                null,
+                                new List<PSVariable>
+                                    {
+                                        new PSVariable(
+                                            "OutputMessage",
+                                            args,
+                                            ScopedItemOptions.Constant)
+                                    },
+                                null);
+                        });
+
+                if (this.RunParallel)
+                {
+                    // Must be run on main thread.
+                    var completionToken = new ManualResetEvent(false);
+                    var qa = new MainThreadAction { Action = action };
+                    this.mainThreadActions.Enqueue(new MainThreadAction { Action = action, CompletionToken = completionToken});
+                    completionToken.WaitOne();
+                }
+                else
+                {
+                    action();
+                }
             }
             else
             {
+                string message;
+
+                if (this.Parallel)
+                {
+                    // Reformat the message to indicate execution node number
+                    var lines = new List<string>();
+                    var firstLine = true;
+
+                    foreach (var line in args.Message.TrimEnd(Environment.NewLine.ToCharArray()).Split(new[] { Environment.NewLine }, StringSplitOptions.None))
+                    {
+                        if (firstLine)
+                        {
+                            lines.Add($"{args.NodeNumber:D2}> {line}");
+                            firstLine = false;
+                        }
+                        else
+                        {
+                            lines.Add($"    {line}");
+                        }
+                    }
+
+                    message = string.Join(Environment.NewLine, lines);
+                }
+                else
+                {
+                    message = args.Message;
+                }
+
                 switch (args.OutputDestination)
                 {
                     case OutputDestination.StdOut:
 
-                        this.WriteVerbose(args.Message);
+                        if (this.Verbose)
+                        {
+                            if (this.Host.Name == "ConsoleHost")
+                            {
+                                Console.WriteLine(message);
+                            }
+                            else
+                            {
+                                this.Host.UI.WriteLine(message);
+                            }
+                        }
+
                         break;
 
                     case OutputDestination.StdError:
@@ -935,12 +1121,12 @@
                             var c = Console.ForegroundColor;
 
                             Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Error.WriteLine(args.Message);
+                            Console.Error.WriteLine(message);
                             Console.ForegroundColor = c;
                         }
                         else
                         {
-                            this.Host.UI.WriteErrorLine(args.Message);
+                            this.Host.UI.WriteErrorLine(message);
                         }
 
                         break;
@@ -958,10 +1144,23 @@
         {
             if (this.OutputAs == OutputAs.Text)
             {
-                // Create a small scriptblock to get PowerShell to format the result DataTable to a text table and harvest that text.
-                var scriptBlock = ScriptBlock.Create("param($dt) $dt | Format-Table | Out-String");
+                string formattedTable;
                 var dt = (DataTable)args.Result;
-                var formattedTable = scriptBlock.InvokeReturnAsIs(dt).ToString();
+
+                // Get PowerShell to format the result DataTable to a text table and harvest that text.
+                // Need to create a runspace in case we are executing in parallel.
+                using (var runspace = RunspaceFactory.CreateRunspace())
+                {
+                    runspace.Open();
+
+                    using (var ps = PowerShell.Create().AddScript("param($dt) $dt | Format-Table | Out-String"))
+                    {
+                        ps.Runspace = runspace;
+                        ps.AddArgument(dt);
+
+                        formattedTable = string.Join(Environment.NewLine, ps.Invoke<string>());
+                    }
+                }
 
                 // Generate a rows affected message.
                 var rows = dt.Rows.Count == 1 ? "row" : "rows";
@@ -971,13 +1170,23 @@
                 {
                     case OutputDestination.StdOut:
 
-                        Console.WriteLine(formattedTable + rowsaffected);
+                        this.OnOutputMessage(sender, new OutputMessageEventArgs(args.NodeNumber, formattedTable + rowsaffected, OutputDestination.StdOut));
                         break;
 
                     case OutputDestination.File:
 
-                        var bytes = Encoding.UTF8.GetBytes(formattedTable + rowsaffected);
-                        args.OutputStream.Write(bytes, 0, bytes.Length);
+                        if (args.OutputStream == null)
+                        {
+#if DEBUG
+                            Console.WriteLine("Attempt to write output to file, but stream is null");
+#endif
+                        }
+                        else
+                        {
+                            var bytes = Encoding.UTF8.GetBytes(formattedTable + rowsaffected);
+                            args.OutputStream.Write(bytes, 0, bytes.Length);
+                        }
+
                         break;
                 }
             }
@@ -994,41 +1203,27 @@
         /// <param name="args">The <see cref="ConnectEventArgs"/> instance containing the event data.</param>
         private void OnConnect(object sender, ConnectEventArgs args)
         {
-            if (args.OutputDestination != OutputDestination.StdOut)
+        }
+
+        /// <summary>
+        /// Writes a debug message.
+        /// </summary>
+        /// <param name="message">The message.</param>
+        /// <remarks>
+        /// Using this method as I don't seem to be able to change $DebugPreference from within the cmdlet,
+        /// so we end up getting nasty confirmation prompts.
+        /// </remarks>
+        private void WriteDebugMessage(string message)
+        {
+            if (!this.Debug)
             {
                 return;
             }
 
-            var connectionStringBuilder = new SqlConnectionStringBuilder(args.Connection.ConnectionString);
-            var integratedSecurity = connectionStringBuilder.IntegratedSecurity
-                                     || string.IsNullOrEmpty(connectionStringBuilder.UserID);
-
-            var edition = string.Empty;
-
-            try
-            {
-                using (var cmd = args.Connection.CreateCommand())
-                {
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "select SERVERPROPERTY('Edition')";
-                    edition = "- " + (string)cmd.ExecuteScalar();
-                }
-            }
-            catch
-            {
-                // We probably don't care if we can't retrieve this
-            }
-
-            var authType = integratedSecurity ? "Windows" : "SQL";
-            var user = integratedSecurity
-                           ? WindowsIdentity.GetCurrent().Name
-                           : connectionStringBuilder.UserID;
-
-            this.OnOutputMessage(sender, new OutputMessageEventArgs($"Connected to: [{args.Connection.DataSource}] as [{user}] ({authType})", OutputDestination.StdOut));
-            this.OnOutputMessage(sender, new OutputMessageEventArgs($"Version:      {args.Connection.ServerVersion} {edition}", OutputDestination.StdOut));
-            this.OnOutputMessage(
-                sender,
-                new OutputMessageEventArgs($"Database:     [{args.Connection.Database}]", OutputDestination.StdOut));
+            var fg = Console.ForegroundColor;
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine($"DEBUG: {message}");
+            Console.ForegroundColor = fg;
         }
 
         /// <inheritdoc />
@@ -1061,6 +1256,28 @@
             {
                 return this.cmdlet.SessionState.Path.CurrentFileSystemLocation.Path;
             }
+        }
+
+        /// <summary>
+        /// Wrapper for an action to be performed on the main thread.
+        /// </summary>
+        private class MainThreadAction
+        {
+            /// <summary>
+            /// Gets or sets the action.
+            /// </summary>
+            /// <value>
+            /// The action.
+            /// </value>
+            public Action Action { get; set; }
+
+            /// <summary>
+            /// Gets or sets the completion token.
+            /// </summary>
+            /// <value>
+            /// The completion token.
+            /// </value>
+            public ManualResetEvent CompletionToken { get; set; }
         }
     }
 }

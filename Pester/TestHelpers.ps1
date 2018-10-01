@@ -223,3 +223,99 @@ function Invoke-RawQueryScalar
             }
     }
 }
+
+function Get-TestName
+{
+    <#
+        .SYNOPSIS
+            Get name of enclosing It block
+    #>
+
+    $test = Get-PSCallStack | Where-Object { $_.Command -ieq 'It' }
+
+    if (-not $test)
+    {
+        throw 'Get-TestPath must be called from within It {} block.'
+    }
+
+    $test.InvocationInfo.BoundParameters['name']
+}
+
+function Get-TestPath
+{
+    <#
+        .SYNOPSIS
+            Get name of enclosing It block
+
+        .PARAMETER Sanitize
+            Sanitize test name by replacing invalid filename characters with underscores
+    #>
+
+    param
+    (
+        [switch]$Sanitize
+    )
+
+    $testName = Get-TestName
+    $context = Get-PSCallStack | Where-Object { $_.Command -ieq 'Context' }
+    $describe = Get-PSCallStack | Where-Object { $_.Command -ieq 'Describe' }
+
+    $contextName = $context.InvocationInfo.BoundParameters['name']
+    $describeName = $describe.InvocationInfo.BoundParameters['name']
+
+    if ($Sanitize)
+    {
+        $invalidChars = [IO.Path]::GetInvalidFileNameChars()
+
+        (
+            $describeName, $contextName, $testName |
+            ForEach-Object {
+
+                Get-SanitizedFilename -Text $_
+            }
+        ) -join '\'
+    }
+    else {
+        $describeName + '\' + $contextName + '\' + $testName
+    }
+}
+
+function Get-SanitizedFilename
+{
+    param
+    (
+        [string]$Text
+    )
+
+    foreach ($c in [IO.Path]::GetInvalidFileNameChars())
+    {
+        $Text = $Text.Replace($c, '_')
+    }
+
+    $Text
+}
+
+function Get-TestOutputPath
+{
+    <#
+        .SYNOPSIS
+            Create path to test output file, creating directories as needed
+
+        .PARAMETER TestOutputDirectory
+            Root path for test outputs
+    #>
+    param
+    (
+        [string]$TestOutputDirectory
+    )
+
+    $testOutputFile = Join-Path $TestOutputDirectory (Get-TestPath -Sanitize)
+    $dir = Split-Path -Parent $testOutputFile
+
+    if (-not (Test-Path -Path $dir -PathType Container))
+    {
+        New-Item -Path $dir -ItemType Container | Out-Null
+    }
+
+    $testOutputFile + '.txt'
+}
