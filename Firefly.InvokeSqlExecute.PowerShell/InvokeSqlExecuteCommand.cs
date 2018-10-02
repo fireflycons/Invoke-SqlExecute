@@ -743,7 +743,7 @@
                     if (task != null)
                     {
                         // Parallel execution. Loop until tasks complete whilst looking for stuff that needs to be processed on this thread.
-                        while (!task.Wait(100) || this.mainThreadActions.Count > 0)
+                        while (!task.Wait(20) || this.mainThreadActions.Count > 0)
                         {
                             if (this.mainThreadActions.TryDequeue(out var action))
                             {
