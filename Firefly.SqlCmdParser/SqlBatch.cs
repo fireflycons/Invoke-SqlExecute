@@ -66,15 +66,6 @@
         }
 
         /// <summary>
-        /// Appends a new line to the internal buffer.
-        /// </summary>
-        /// <param name="source">The source.</param>
-        internal void AppendLine(IBatchSource source)
-        {
-            this.batchItems.Add(new SqlBatchItem(string.Empty, source));
-        }
-
-        /// <summary>
         /// Clears the internal buffer.
         /// </summary>
         internal void Clear()

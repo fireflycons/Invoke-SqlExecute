@@ -1,7 +1,5 @@
 ﻿namespace Firefly.SqlCmdParser
 {
-    using System;
-
     /// <inheritdoc />
     /// <summary>
     /// Event arguments for messages that should be output

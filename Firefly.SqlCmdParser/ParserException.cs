@@ -122,6 +122,7 @@
                     return new ParserException($"Unexpected state {tokenizerState}", batchSource);
             }
         }
+
         /// <summary>
         /// Gets the filename.
         /// </summary>

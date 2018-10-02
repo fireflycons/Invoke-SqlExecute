@@ -1,6 +1,5 @@
 ﻿namespace Firefly.SqlCmdParser
 {
-    using System;
     using System.IO;
 
     /// <inheritdoc />

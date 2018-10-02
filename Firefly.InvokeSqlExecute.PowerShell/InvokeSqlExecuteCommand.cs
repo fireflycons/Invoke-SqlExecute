@@ -81,7 +81,7 @@
         /// <summary>
         /// Queue of actions to perform on the main thread (interacting with the PowerShell host) when running in parallel mode.
         /// </summary>
-        private ConcurrentQueue<MainThreadAction> mainThreadActions = new ConcurrentQueue<MainThreadAction>();
+        private readonly ConcurrentQueue<MainThreadAction> mainThreadActions = new ConcurrentQueue<MainThreadAction>();
 
         #endregion
 
@@ -259,6 +259,7 @@
         // ReSharper disable once UnusedMember.Global
         [Parameter]
         // ReSharper disable once StyleCop.SA1650
+        // ReSharper disable once UnusedMember.Global
         public SwitchParameter IncludeSqlUserErrors { get; set; }
 
         /// <inheritdoc />
@@ -1057,7 +1058,7 @@
                 {
                     // Must be run on main thread.
                     var completionToken = new ManualResetEvent(false);
-                    var qa = new MainThreadAction { Action = action };
+
                     this.mainThreadActions.Enqueue(new MainThreadAction { Action = action, CompletionToken = completionToken});
                     completionToken.WaitOne();
                 }
