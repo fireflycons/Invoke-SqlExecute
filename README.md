@@ -58,6 +58,16 @@ Using the `-Parallel` switch, the following scenarios will run simultaneously. I
 
 Using the `-OverrideScriptVariables` switch will prevent any `:SETVAR` within scripts from resetting the value of a scripting variable set from the command line.
 
+### Capture console output with a PowerShell ScriptBlock
+
+Whilst you can use `-OutFile` or even pipe console output to `Tee-Object`, using `-ConsoleMessageHandler` with a PowerShell script block gives you far more control over how you handle the output, as context is provided along with the message text - which node it came from (when `-Parallel`) and whether it is destined for the output or error stream. Use this mechanism to feed information to custom loggers e.g. build engines, or simply to change the formatting of the message.
+
+### Batch Retry
+
+With `-RetryCount` you can specify a number of times to retry a failed batch. Retrys are possible for timeout or deadlock victim errors. 
+
+Be aware that the entire batch is resubmitted if you use this feature.
+
 ## Supported Environments
 
 CI builds are run against the following SQL server versions. This is not to say that other versions won't work, however they aren't present in the AppVeyor CI system.
@@ -65,6 +75,7 @@ CI builds are run against the following SQL server versions. This is not to say 
 * Microsoft SQL Server 2014 - 12.0.4100.1
 * Microsoft SQL Server 2016 (SP1-CU8) (KB4077064) - 13.0.4474.0
 * Microsoft SQL Server 2017 (RTM) - 14.0.1000.169
+* Microsoft LocalDB 2016 (SP1-CU8) (KB4077064) - 13.0.4474.0
 
 ## Specific Bugs Addressed
 
