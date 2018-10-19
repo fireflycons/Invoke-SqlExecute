@@ -11,6 +11,14 @@ You are strongly advised to test thoroughly within a non-production environment 
 
 TL;DR - Jump to [Invoke-SqlExecute command syntax](./docs/en-US/Invoke-SqlExecute.md)
 
+# Installation
+
+The module is published on the PowerShell Gallery and can be installed by following the instructions there
+
+https://www.powershellgallery.com/packages/Firefly.InvokeSqlExecute
+
+# About
+
 A complete replacement for the Invoke-Sqlcmd cmdlet with bugs in the former addressed. The code has no external dependencies and should work with whatever SMO version it finds when running within the PowerShell SQL provider context.
 
 Another big bugbear of mine is the tersity of error messages returned by the standard implementations. SQL server only knows about the currently executing batch and thus the error details will refer to the line number within the batch. If you have a huge SQL file with hundreds or thousands of batches in, it is more useful to know which line within the *entire* input file is the one with the error. The parser in this implementation tracks the line number of the start of each batch within the input and adds this to the line number reported by SQL server to give you the true location of the erroneous statement as near as possible, and that includes descent into files refrenced with `:r` - for instance:
