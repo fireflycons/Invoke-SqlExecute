@@ -70,6 +70,29 @@ PS SQLSERVER:\SQL\MyComputer\MyInstance> Invoke-SqlExecute -Query "SELECT @@SERV
 
 This is an example of calling Invoke-Sqlcmd to execute a simple query, using the provider context for the connection:
 
+### EXAMPLE 3
+```
+PS C:\> Invoke-SqlExecute -ConnectionString @("Data Source=server1", "Data Source=Server2") -InputFile script.sql -Parallel
+```
+
+This is an example of calling Invoke-Sqlcmd to execute a SQL input file on multiple connections in parallel:
+
+### EXAMPLE 4
+```
+PS C:\> Invoke-SqlExecute -ConnectionString "Data Source=server1" -InputFile @("script1.sql", "script2.sql") -Parallel
+```
+
+This is an example of calling Invoke-Sqlcmd to execute multiple SQL input files on a single instance in parallel.
+A separate SPID is created for each input file:
+
+### EXAMPLE 5
+```
+PS C:\> Invoke-SqlExecute -ConnectionString @("Data Source=server1", "Data Source=Server2") -InputFile @("script1.sql", "script2.sql") -Parallel
+```
+
+This is an example of calling Invoke-Sqlcmd to execute different SQL input files on different instances in parallel.
+script1 runs on server1, script2 on server2 etc.
+
 ## PARAMETERS
 
 ### -AbortOnError
@@ -125,12 +148,13 @@ Accept wildcard characters: False
 This is an enhancement over standard Invoke-Sqlcmd behaviour.
 
 For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages that would otherwise go to the console.
+This is extremely useful when combined with -Parallel as it enables you to collate the output of multiple scripts executing simultaneously.
 
 The script block is presented with a variable $OutputMessage which has these fields:
 
 - OutputDestination: Either 'StdOut' or 'StdError'
 - Message: The message text.
-- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.
+- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order. Numbers are integers and start at 1. If you have multiple connection strings, the first in the list is node 1, second is 2 etc. Similarly if you have multiple input files.
 
 ```yaml
 Type: ScriptBlock
@@ -403,6 +427,8 @@ This is an enhancement over standard Invoke-sqlcmd behavior.
 If set, and multiple input files or connection strings are specified, then run on multiple threads.
 Useful to push the same script to multiple instances simultaneously.
 
+Combine with -ConsoleMessageHandler to facilitate the collation of messages coming from multiple script executions simultaneously.
+
 - One connection string, multiple input files: Run all files on this connection. Use :CONNECT in the input files to redirect to other instances.
 - Multiple connection strings, one input file or -Query: Run the input against all connections.
 - Equal number of connection strings and input files: Run each input against corresponding connection.
@@ -576,7 +602,8 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable.
+For more information, see about_CommonParameters (http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 

@@ -64,6 +64,21 @@
     ///   <code>PS SQLSERVER:\SQL\MyComputer\MyInstance> Invoke-SqlExecute -Query "SELECT @@SERVERNAME AS ServerName"</code>
     ///   <para>This is an example of calling Invoke-Sqlcmd to execute a simple query, using the provider context for the connection:</para>
     /// </example>
+    /// <example>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute a SQL input file on multiple connections in parallel:</para>
+    ///   <code>PS C:\> Invoke-SqlExecute -ConnectionString @("Data Source=server1", "Data Source=Server2") -InputFile script.sql -Parallel</code>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute a SQL input file on multiple connections in parallel:</para>
+    /// </example>
+    /// <example>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute multiple SQL input files on a single instance in parallel. A separate SPID is created for each input file:</para>
+    ///   <code>PS C:\> Invoke-SqlExecute -ConnectionString "Data Source=server1" -InputFile @("script1.sql", "script2.sql") -Parallel</code>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute multiple SQL input files on a single instance in parallel. A separate SPID is created for each input file:</para>
+    /// </example>
+    /// <example>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute different SQL input files on different instances in parallel. script1 runs on server1, script2 on server2 etc.</para>
+    ///   <code>PS C:\> Invoke-SqlExecute -ConnectionString @("Data Source=server1", "Data Source=Server2") -InputFile @("script1.sql", "script2.sql") -Parallel</code>
+    ///   <para>This is an example of calling Invoke-Sqlcmd to execute different SQL input files on different instances in parallel. script1 runs on server1, script2 on server2 etc.</para>
+    /// </example>
     /// <seealso cref="T:System.Management.Automation.PSCmdlet" />
     /// <seealso cref="T:Firefly.InvokeSqlExecute.IInvokeSqlExecuteArguments" />
     [Cmdlet(VerbsLifecycle.Invoke, "SqlExecute")]
@@ -137,12 +152,16 @@
         /// </para>
         /// <para type="description">
         /// For server message output and sqlcmd commands that produce output, this argument specifies a script block that will consume messages 
-        /// that would otherwise go to the console.
+        /// that would otherwise go to the console. This is extremely useful when combined with -Parallel as it enables you to collate the output
+        /// of multiple scripts executing simultaneously.
         /// </para>
         /// <para type="description">The script block is presented with a variable $OutputMessage which has these fields:</para>
         /// <para type="description">- OutputDestination: Either 'StdOut' or 'StdError'</para>
         /// <para type="description">- Message: The message text.</para>
-        /// <para type="description">- NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.</para>
+        /// <para type="description">
+        /// - NodeNumber: If running multiple scripts, each gets a unique number. If running in parallel, messages from all nodes will appear as they are raised, i.e. in no particular order.
+        /// Numbers are integers and start at 1. If you have multiple connection strings, the first in the list is node 1, second is 2 etc. Similarly if you have multiple input files.
+        /// </para>
         /// </summary>
         /// <value>
         /// The console message handler.
@@ -372,6 +391,9 @@
         /// <para type="description">
         /// If set, and multiple input files or connection strings are specified, then run on multiple threads.
         /// Useful to push the same script to multiple instances simultaneously.
+        /// </para>
+        /// <para type="description">
+        /// Combine with -ConsoleMessageHandler to facilitate the collation of messages coming from multiple script executions simultaneously.
         /// </para>
         /// <para type="description">- One connection string, multiple input files: Run all files on this connection. Use :CONNECT in the input files to redirect to other instances.</para>
         /// <para type="description">- Multiple connection strings, one input file or -Query: Run the input against all connections.</para>
