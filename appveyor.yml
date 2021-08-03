@@ -20,7 +20,7 @@ environment:
   APPVEYOR_RDP_PASSWORD:
     secure: 6RnJH3K6Be0FsXWvj3TxTQ==
   NuGetApiKey:
-    secure: ZwF65Rl156oMAenHhi8BAY0LySWhhjDvNNt91dpU7D5N88E8ToZyZHCziktv7sz3
+    secure: zq0+IBIITvBHIsVd7MmRQl09X2q4erMzK7LBi2UTpjNFgJeY/R+Krm4dZWAcb4E1
   matrix:
 #    - platform: Any CPU
 #      configuration: Debug
